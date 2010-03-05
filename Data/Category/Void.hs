@@ -11,7 +11,6 @@ data instance Funct Void d (FunctO Void d f) (FunctO Void d g) =
   VoidNat
 instance CategoryO (Funct Void d) (FunctO Void d f) where
   id = VoidNat
-
 instance (CategoryO (~>) a, CategoryO (~>) b) => FunctorA (Diag Void (~>)) a b where
   Diag % f = VoidNat
 

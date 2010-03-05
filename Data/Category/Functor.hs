@@ -16,6 +16,7 @@ data FunctO (c :: * -> * -> *) (d :: * -> * -> *) (f :: * -> *) = (Dom f ~ c, Co
 -- Each category C needs its own instance.
 
 -- Arrows of the category Funct(Funct(C, D), E)
+-- I.e. natural transformations between functors of type D^C -> E
 data instance Funct (Funct c d) e (FunctO (Funct c d) e f) (FunctO (Funct c d) e g) =
   FunctNat (forall h. (Dom h ~ c, Cod h ~ d) => Component f g (FunctO c d h))
 
@@ -44,6 +45,5 @@ type Colimit (f :: * -> *) l = InitialUniversal  (FunctO (Dom f) (Cod f) f) (Dia
 
 data Adjunction f g = Adjunction 
   { unit :: Id (Dom f) :~> (g :.: f)
-  , counit :: (f :.: g) :~> Id (Dom g),
-  , leftAdjunct :: Cod f (F f a) b -> Cod g a (F g b)
+  , counit :: (f :.: g) :~> Id (Dom g)
   }

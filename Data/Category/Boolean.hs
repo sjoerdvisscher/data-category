@@ -62,10 +62,10 @@ type instance And Tru Fls = Fls
 type instance And Tru Tru = Tru
 
 prodLimitInBooleanFF :: Limit (PairF Boolean Fls Fls) (And Fls Fls)
-prodLimitInBooleanFF = TerminalUniversal (PairNat IdFls IdFls) $ BooleanNat (\(PairNat f s) -> f) (\(PairNat f s) -> s)
+prodLimitInBooleanFF = TerminalUniversal (IdFls :***: IdFls) $ BooleanNat (\(f :***: s) -> f) (\(f :***: s) -> s)
 prodLimitInBooleanFT :: Limit (PairF Boolean Fls Tru) (And Fls Tru)
-prodLimitInBooleanFT = TerminalUniversal (PairNat IdFls FlsTru) $ BooleanNat (\(PairNat f s) -> f) (\(PairNat f s) -> f)
+prodLimitInBooleanFT = TerminalUniversal (IdFls :***: FlsTru) $ BooleanNat (\(f :***: s) -> f) (\(f :***: s) -> f)
 prodLimitInBooleanTF :: Limit (PairF Boolean Tru Fls) (And Tru Fls)
-prodLimitInBooleanTF = TerminalUniversal (PairNat FlsTru IdFls) $ BooleanNat (\(PairNat f s) -> s) (\(PairNat f s) -> s)
+prodLimitInBooleanTF = TerminalUniversal (FlsTru :***: IdFls) $ BooleanNat (\(f :***: s) -> s) (\(f :***: s) -> s)
 prodLimitInBooleanTT :: Limit (PairF Boolean Tru Tru) (And Tru Tru)
-prodLimitInBooleanTT = TerminalUniversal (PairNat IdTru IdTru) $ BooleanNat (\(PairNat f s) -> f) (\(PairNat f s) -> s)
+prodLimitInBooleanTT = TerminalUniversal (IdTru :***: IdTru) $ BooleanNat (\(f :***: s) -> f) (\(f :***: s) -> s)

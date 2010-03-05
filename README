@@ -1,0 +1,4 @@
+Data-category is a collection of categories, and some categorical constructions on them.
+
+The Control.Category definition of a category is limited, as it only allows to define categories which have the same objects as Hask, i.e. all Haskell types.
+In Data.Category a type o is only an object in category c if there is an instance CategoryO c o.
