@@ -37,7 +37,7 @@ instance (CategoryO (~>) a, CategoryO (~>) b) => FunctorA (Diag Pair (~>)) a b w
   Diag % f = f :***: f
 
 
-data PairF ((~>) :: * -> * -> *) x y a = PairF
+data PairF ((~>) :: * -> * -> *) x y = PairF
 type instance Dom (PairF (~>) x y) = Pair
 type instance Cod (PairF (~>) x y) = (~>)
 type instance F (PairF (~>) x y) Fst = x

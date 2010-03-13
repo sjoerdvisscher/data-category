@@ -14,6 +14,6 @@ instance CategoryO (Funct Void d) (FunctO Void d f) where
 instance (CategoryO (~>) a, CategoryO (~>) b) => FunctorA (Diag Void (~>)) a b where
   Diag % f = VoidNat
 
-data VoidF ((~>) :: * -> * -> *) a = Prod
+data VoidF ((~>) :: * -> * -> *) = Prod
 type instance Dom (VoidF (~>)) = Void
 type instance Cod (VoidF (~>)) = (~>)

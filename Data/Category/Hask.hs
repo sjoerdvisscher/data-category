@@ -49,7 +49,7 @@ prodLimitInHask :: Limit (PairF (->) x y) (x, y)
 prodLimitInHask = TerminalUniversal (fst :***: snd) $ HaskNat (\(f :***: s) -> f &&& s)
 
 
-data ProdInHask a = ProdInHask
+data ProdInHask = ProdInHask
 type instance Dom ProdInHask = Funct Pair (->)
 type instance Cod ProdInHask = (->)
 type instance F ProdInHask (FunctO Pair (->) f) = (F f Fst, F f Snd)
@@ -59,7 +59,7 @@ instance (Dom f ~ Pair, Cod f ~ (->), Dom g ~ Pair, Cod g ~ (->)) => FunctorA Pr
 prodInHaskAdj :: Adjunction (Diag Pair (->)) ProdInHask
 prodInHaskAdj = Adjunction { unit = HaskNat $ id &&& id, counit = FunctNat $ fst :***: snd }
 
-data SumInHask a = SumInHask
+data SumInHask = SumInHask
 type instance Dom SumInHask = Funct Pair (->)
 type instance Cod SumInHask = (->)
 type instance F SumInHask (FunctO Pair (->) f) = Either (F f Fst) (F f Snd)

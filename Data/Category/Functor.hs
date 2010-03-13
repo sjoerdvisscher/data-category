@@ -10,7 +10,7 @@ import Data.Category
 data family Funct (c :: * -> * -> *) (d :: * -> * -> *) (a :: *) (b :: *) :: *
 
 -- Objects of Funct(C, D) are functors from C to D
-data FunctO (c :: * -> * -> *) (d :: * -> * -> *) (f :: * -> *) = (Dom f ~ c, Cod f ~ d) => FunctO (W f)
+data FunctO (c :: * -> * -> *) (d :: * -> * -> *) (f :: *) = (Dom f ~ c, Cod f ~ d) => FunctO f
 
 -- Arrows of Funct(C, D) are natural transformations
 -- Each category C needs its own instance.
@@ -26,7 +26,7 @@ type f :~> g = (c ~ Dom f, c ~ Dom g, d ~ Cod f, d ~ Cod g) => Funct c d (FunctO
 
 
 -- Diagonal functor
-data Diag (j :: * -> * -> *) ((~>) :: * -> * -> *) a = Diag
+data Diag (j :: * -> * -> *) ((~>) :: * -> * -> *) = Diag
 type instance Dom (Diag j (~>)) = (~>)
 type instance Cod (Diag j (~>)) = Funct j (~>)
 type instance F (Diag j (~>)) a = FunctO j (~>) (Const j (~>) a)
@@ -37,11 +37,11 @@ type TermMorF x u = (Cod u :-*: x) :.: u
 data InitialUniversal  x u a = InitialUniversal  (F (InitMorF x u) a) (InitMorF x u :~> (a :*-: Dom u))
 data TerminalUniversal x u a = TerminalUniversal (F (TermMorF x u) a) (TermMorF x u :~> (Dom u :-*: a))
 
-type Cone   (f :: * -> *) n = Const (Dom f) (Cod f) n :~> f
-type Cocone (f :: * -> *) n = f :~> Const (Dom f) (Cod f) n
+type Cone   f n = Const (Dom f) (Cod f) n :~> f
+type Cocone f n = f :~> Const (Dom f) (Cod f) n
 
-type Limit   (f :: * -> *) l = TerminalUniversal (FunctO (Dom f) (Cod f) f) (Diag (Dom f) (Cod f)) l
-type Colimit (f :: * -> *) l = InitialUniversal  (FunctO (Dom f) (Cod f) f) (Diag (Dom f) (Cod f)) l
+type Limit   f l = TerminalUniversal (FunctO (Dom f) (Cod f) f) (Diag (Dom f) (Cod f)) l
+type Colimit f l = InitialUniversal  (FunctO (Dom f) (Cod f) f) (Diag (Dom f) (Cod f)) l
 
 data Adjunction f g = Adjunction 
   { unit :: Id (Dom f) :~> (g :.: f)
