@@ -11,7 +11,7 @@ class CategoryO (~>) a where
 class (CategoryO (~>) a, CategoryO (~>) b, CategoryO (~>) c) => CategoryA (~>) a b c where
   (.) :: b ~> c -> a ~> b -> a ~> c
 
-class Apply (~>) a b where
+class (CategoryO (~>) a, CategoryO (~>) b) => Apply (~>) a b where
   -- Would have liked to use ($) here, but that causes GHC to crash.
   -- http://hackage.haskell.org/trac/ghc/ticket/3297
   ($$) :: a ~> b -> a -> b

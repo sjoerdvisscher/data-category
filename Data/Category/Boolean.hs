@@ -7,7 +7,6 @@ import Data.Category
 import Data.Category.Functor
 import Data.Category.Void
 import Data.Category.Pair
-import Data.Category.Hask
 
 
 -- "2", Boolean Category
@@ -44,15 +43,19 @@ instance CategoryA Boolean Tru Tru Tru where
 
   
 data instance Funct Boolean d (FunctO Boolean d f) (FunctO Boolean d g) = 
-  BooleanNat (Component f g Fls) (Component f g Tru)
+  BooleanNat { flsComp :: Component f g Fls, truComp :: Component f g Tru }
 instance (CategoryO (Cod f) (F f Fls), CategoryO (Cod f) (F f Tru)) => CategoryO (Funct Boolean d) (FunctO Boolean d f) where
   id = BooleanNat id id
 
 initObjInBoolean :: Colimit (VoidF Boolean) Fls
 initObjInBoolean = InitialUniversal VoidNat $ BooleanNat (\VoidNat -> IdFls) (\VoidNat -> FlsTru)
+initObjInBoolean' :: Limit (Id Boolean) Fls
+initObjInBoolean' = TerminalUniversal (BooleanNat IdFls FlsTru) $ BooleanNat flsComp flsComp
 
 termObjInBoolean :: Limit (VoidF Boolean) Tru
 termObjInBoolean = TerminalUniversal VoidNat $ BooleanNat (\VoidNat -> FlsTru) (\VoidNat -> IdTru)
+termObjInBoolean' :: Colimit (Id Boolean) Tru
+termObjInBoolean' = InitialUniversal (BooleanNat FlsTru IdTru) $ BooleanNat truComp truComp
 
 
 type family And x y :: *
