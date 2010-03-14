@@ -1,4 +1,17 @@
 {-# LANGUAGE TypeFamilies, MultiParamTypeClasses, FlexibleInstances, FlexibleContexts, UndecidableInstances, RankNTypes, ScopedTypeVariables #-}
+-----------------------------------------------------------------------------
+-- |
+-- Module      :  Data.Category.Omega
+-- Copyright   :  (c) Sjoerd Visscher 2010
+-- License     :  BSD-style (see the file LICENSE)
+--
+-- Maintainer  :  sjoerd@w3future.com
+-- Stability   :  experimental
+-- Portability :  non-portable
+--
+-- Omega, the category 0 -> 1 -> 2 -> 3 -> ... 
+-- The objects are the natural numbers, and there's an arrow from a to b iff a <= b.
+-----------------------------------------------------------------------------
 module Data.Category.Omega where
 
 import Prelude hiding ((.), id)
@@ -9,29 +22,21 @@ import Data.Category.Void
 import Data.Category.Pair
 
 
--- Natural numbers, the omega Category 0 -> 1 -> 2 -> 3 ...
-data family Omega a b :: * 
-
--- Objects
+-- | The object Z represents zero.
 data Z = Z deriving Show
+-- | The object S n represents the successor of n.
 newtype S n = S { unS :: n } deriving Show
-
--- Arrows, there's an arrow from a to b when a is less than or equal to b
-data instance Omega Z Z = IdZ
-newtype instance Omega Z (S n) = GTZ { unGTZ :: Omega Z n }
-newtype instance Omega (S a) (S b) = StepS { unStepS :: Omega a b }
-
-instance Apply Omega Z Z where
-  IdZ $$ Z = Z
-instance Apply Omega Z n => Apply Omega Z (S n) where
-  GTZ d $$ Z = S (d $$ Z)
-instance Apply Omega a b => Apply Omega (S a) (S b) where
-  StepS d $$ S a = S (d $$ a)
 
 instance CategoryO Omega Z where
   id = IdZ
 instance (CategoryO Omega n) => CategoryO Omega (S n) where
   id = StepS id
+
+-- | The arrows of omega, there's an arrow from a to b iff a <= b.
+data family Omega a b :: * 
+data instance Omega Z Z = IdZ
+newtype instance Omega Z (S n) = GTZ { unGTZ :: Omega Z n }
+newtype instance Omega (S a) (S b) = StepS { unStepS :: Omega a b }
 
 instance (CategoryO Omega n) => CategoryA Omega Z Z n where
   a . IdZ = a
@@ -39,6 +44,13 @@ instance (CategoryA Omega Z n p) => CategoryA Omega Z (S n) (S p) where
   (StepS a) . (GTZ n) = GTZ (a . n)
 instance (CategoryA Omega n p q) => CategoryA Omega (S n) (S p) (S q) where
   (StepS a) . (StepS b) = StepS (a . b)
+
+instance Apply Omega Z Z where
+  IdZ $$ Z = Z
+instance Apply Omega Z n => Apply Omega Z (S n) where
+  GTZ d $$ Z = S (d $$ Z)
+instance Apply Omega a b => Apply Omega (S a) (S b) where
+  StepS d $$ S a = S (d $$ a)
 
 
 data instance Funct Omega d (FunctO Omega d f) (FunctO Omega d g) = 

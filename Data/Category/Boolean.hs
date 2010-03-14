@@ -1,4 +1,14 @@
 {-# LANGUAGE TypeFamilies, MultiParamTypeClasses, FlexibleInstances, FlexibleContexts, UndecidableInstances #-}
+-----------------------------------------------------------------------------
+-- |
+-- Module      :  Data.Category.Boolean
+-- Copyright   :  (c) Sjoerd Visscher 2010
+-- License     :  BSD-style (see the file LICENSE)
+--
+-- Maintainer  :  sjoerd@w3future.com
+-- Stability   :  experimental
+-- Portability :  non-portable
+-----------------------------------------------------------------------------
 module Data.Category.Boolean where
 
 import Prelude hiding ((.), id)
@@ -9,7 +19,7 @@ import Data.Category.Void
 import Data.Category.Pair
 
 
--- "2", Boolean Category
+-- | /2/, or the Boolean category
 data family Boolean a b :: *
 
 data Fls = Fls deriving Show

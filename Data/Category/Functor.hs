@@ -1,4 +1,14 @@
 {-# LANGUAGE TypeOperators, TypeFamilies, MultiParamTypeClasses, FunctionalDependencies, FlexibleInstances, FlexibleContexts, UndecidableInstances, RankNTypes, GADTs #-}
+-----------------------------------------------------------------------------
+-- |
+-- Module      :  Data.Category.Functor
+-- Copyright   :  (c) Sjoerd Visscher 2010
+-- License     :  BSD-style (see the file LICENSE)
+--
+-- Maintainer  :  sjoerd@w3future.com
+-- Stability   :  experimental
+-- Portability :  non-portable
+-----------------------------------------------------------------------------
 module Data.Category.Functor where
   
 import Prelude hiding ((.), id)

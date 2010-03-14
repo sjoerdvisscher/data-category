@@ -1,12 +1,27 @@
 {-# LANGUAGE TypeFamilies, TypeOperators, MultiParamTypeClasses, FlexibleInstances, FlexibleContexts, UndecidableInstances, RankNTypes, ScopedTypeVariables #-}
+-----------------------------------------------------------------------------
+-- |
+-- Module      :  Data.Category.Kleisli
+-- Copyright   :  (c) Sjoerd Visscher 2010
+-- License     :  BSD-style (see the file LICENSE)
+--
+-- Maintainer  :  sjoerd@w3future.com
+-- Stability   :  experimental
+-- Portability :  non-portable
+--
+-- This is an attempt at the Kleisli category, and the construction 
+-- of an adjunction for each monad.
+-- But the typing issues with natural transformations in Hask make this problematic.
+-----------------------------------------------------------------------------
 module Data.Category.Kleisli where
   
 import Prelude hiding ((.), id, Monad(..))
+-- Getting desperate
+import Unsafe.Coerce
 
 import Data.Category
 import Data.Category.Functor
 import Data.Category.Hask
-import Unsafe.Coerce
 
 class Pointed m where
   point :: m -> Id (Cod m) :~> m

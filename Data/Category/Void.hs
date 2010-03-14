@@ -1,11 +1,25 @@
-{-# LANGUAGE TypeFamilies, FlexibleInstances, MultiParamTypeClasses #-}
+{-# LANGUAGE TypeFamilies, FlexibleInstances, MultiParamTypeClasses, EmptyDataDecls #-}
+-----------------------------------------------------------------------------
+-- |
+-- Module      :  Data.Category.Void
+-- Copyright   :  (c) Sjoerd Visscher 2010
+-- License     :  BSD-style (see the file LICENSE)
+--
+-- Maintainer  :  sjoerd@w3future.com
+-- Stability   :  experimental
+-- Portability :  non-portable
+--
+-- /0/, the empty category. 
+-- The limit and colimit of the functor from /0/ to some category provide 
+-- terminal and initial objects in that category.
+-----------------------------------------------------------------------------
 module Data.Category.Void where
 
 import Data.Category
 import Data.Category.Functor
 
--- Void, the empty category
-data family Void a b :: *
+-- | The (empty) data type of the arrows in /0/. 
+data Void a b
 
 data instance Funct Void d (FunctO Void d f) (FunctO Void d g) = 
   VoidNat
@@ -14,13 +28,16 @@ instance CategoryO (Funct Void d) (FunctO Void d f) where
 instance (CategoryO (~>) a, CategoryO (~>) b) => FunctorA (Diag Void (~>)) a b where
   Diag % f = VoidNat
 
+-- | The functor from /0/ to (~>), the empty diagram in (~>).
 data VoidF ((~>) :: * -> * -> *) = VoidF
 type instance Dom (VoidF (~>)) = Void
 type instance Cod (VoidF (~>)) = (~>)
 
+-- | An initial object is the colimit of the functor from /0/ to (~>).
 class VoidColimit (~>) where
   type InitialObject (~>) :: *
   voidColimit :: Colimit (VoidF (~>)) (InitialObject (~>))
+-- | A terminal object is the limit of the functor from /0/ to (~>).
 class VoidLimit (~>) where
   type TerminalObject (~>) :: *
   voidLimit :: Limit (VoidF (~>)) (TerminalObject (~>))

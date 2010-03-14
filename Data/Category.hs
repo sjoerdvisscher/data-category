@@ -1,4 +1,14 @@
 {-# LANGUAGE TypeOperators, TypeFamilies, MultiParamTypeClasses, FlexibleInstances, FlexibleContexts, UndecidableInstances, RankNTypes #-}
+-----------------------------------------------------------------------------
+-- |
+-- Module      :  Data.Category
+-- Copyright   :  (c) Sjoerd Visscher 2010
+-- License     :  BSD-style (see the file LICENSE)
+--
+-- Maintainer  :  sjoerd@w3future.com
+-- Stability   :  experimental
+-- Portability :  non-portable
+-----------------------------------------------------------------------------
 module Data.Category (
   
   -- * Categories

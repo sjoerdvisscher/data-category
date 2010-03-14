@@ -1,9 +1,21 @@
 {-# LANGUAGE TypeOperators, TypeFamilies, MultiParamTypeClasses, FlexibleInstances, FlexibleContexts, UndecidableInstances, RankNTypes, GADTs, EmptyDataDecls #-}
+-----------------------------------------------------------------------------
+-- |
+-- Module      :  Data.Category.Hask
+-- Copyright   :  (c) Sjoerd Visscher 2010
+-- License     :  BSD-style (see the file LICENSE)
+--
+-- Maintainer  :  sjoerd@w3future.com
+-- Stability   :  experimental
+-- Portability :  non-portable
+-----------------------------------------------------------------------------
 module Data.Category.Hask where
 
 import Prelude hiding ((.), id)
 import qualified Prelude
 import Control.Arrow ((&&&), (***), (+++))
+-- Getting desperate
+import Unsafe.Coerce
 
 import Data.Category
 import Data.Category.Functor
@@ -24,11 +36,16 @@ instance CategoryA (->) a b c where
 
 
 newtype instance Funct (->) d (FunctO (->) d f) (FunctO (->) d g) = 
-  HaskNat { unHaskNat :: forall a. Component f g a }
+  HaskNat (forall a. Component f g a)
+
+-- | This isn't really working, and there really needs to be a solution for this.
+unHaskNat :: Funct (->) d (FunctO (->) d f) (FunctO (->) d g) -> Component f g a
+unHaskNat (HaskNat c) = unsafeCoerce c
+
 instance (CategoryO (~>) a, CategoryO (~>) b) => FunctorA (Diag (->) (~>)) a b where
   Diag % f = HaskNat f
 
-
+-- | Any empty data type is an initial object in Hask.
 data Zero
 -- With thanks to Conor McBride
 magic :: Zero -> a
@@ -41,8 +58,10 @@ instance VoidLimit (->) where
   type TerminalObject (->) = ()
   voidLimit = TerminalUniversal VoidNat (HaskNat $ \VoidNat -> const ())
 
+-- | An alternative way to define the initial object.
 initObjInHask :: Limit (Id (->)) Zero
 initObjInHask = TerminalUniversal (HaskNat $ magic) (HaskNat unHaskNat)
+-- | An alternative way to define the terminal object.
 termObjInHask :: Colimit (Id (->)) ()
 termObjInHask = InitialUniversal (HaskNat $ const ()) (HaskNat unHaskNat)
 
@@ -53,7 +72,7 @@ instance PairLimit (->) x y where
   type Product x y = (x, y)
   pairLimit = TerminalUniversal (fst :***: snd) (HaskNat $ \(f :***: s) -> f &&& s)
 
-
+-- | The product functor, Hask^2 -> Hask
 data ProdInHask = ProdInHask
 type instance Dom ProdInHask = Funct Pair (->)
 type instance Cod ProdInHask = (->)
@@ -61,15 +80,18 @@ type instance F ProdInHask (FunctO Pair (->) f) = (F f Fst, F f Snd)
 instance (Dom f ~ Pair, Cod f ~ (->), Dom g ~ Pair, Cod g ~ (->)) => FunctorA ProdInHask (FunctO Pair (->) f) (FunctO Pair (->) g) where
   ProdInHask % (f :***: g) = f *** g
 
+-- | The product functor is right adjoint to the diagonal functor.
 prodInHaskAdj :: Adjunction (Diag Pair (->)) ProdInHask
 prodInHaskAdj = Adjunction { unit = HaskNat $ id &&& id, counit = FunctNat $ fst :***: snd }
 
-data SumInHask = SumInHask
-type instance Dom SumInHask = Funct Pair (->)
-type instance Cod SumInHask = (->)
-type instance F SumInHask (FunctO Pair (->) f) = Either (F f Fst) (F f Snd)
-instance (Dom f ~ Pair, Cod f ~ (->), Dom g ~ Pair, Cod g ~ (->)) => FunctorA SumInHask (FunctO Pair (->) f) (FunctO Pair (->) g) where
-  SumInHask % (f :***: g) = f +++ g
+-- | The coproduct functor, Hask^2 -> Hask
+data CoprodInHask = CoprodInHask
+type instance Dom CoprodInHask = Funct Pair (->)
+type instance Cod CoprodInHask = (->)
+type instance F CoprodInHask (FunctO Pair (->) f) = Either (F f Fst) (F f Snd)
+instance (Dom f ~ Pair, Cod f ~ (->), Dom g ~ Pair, Cod g ~ (->)) => FunctorA CoprodInHask (FunctO Pair (->) f) (FunctO Pair (->) g) where
+  CoprodInHask % (f :***: g) = f +++ g
 
-sumInHaskAdj :: Adjunction SumInHask (Diag Pair (->))
-sumInHaskAdj = Adjunction { unit = FunctNat $ Left :***: Right, counit = HaskNat $ either id id }
+-- | The coproduct functor is left adjoint to the diagonal functor.
+coprodInHaskAdj :: Adjunction CoprodInHask (Diag Pair (->))
+coprodInHaskAdj = Adjunction { unit = FunctNat $ Left :***: Right, counit = HaskNat $ either id id }
