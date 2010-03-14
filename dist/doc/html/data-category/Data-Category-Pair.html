@@ -1,0 +1,1315 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!--Rendered using the Haskell Html Library v0.2-->
+<HTML
+><HEAD
+><META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8"
+><TITLE
+>Data.Category.Pair</TITLE
+><LINK HREF="haddock.css" REL="stylesheet" TYPE="text/css"
+><SCRIPT SRC="haddock-util.js" TYPE="text/javascript"
+></SCRIPT
+><SCRIPT TYPE="text/javascript"
+>window.onload = function () {setSynopsis("mini_Data-Category-Pair.html")};</SCRIPT
+></HEAD
+><BODY
+><TABLE CLASS="vanilla" CELLSPACING="0" CELLPADDING="0"
+><TR
+><TD CLASS="topbar"
+><TABLE CLASS="vanilla" CELLSPACING="0" CELLPADDING="0"
+><TR
+><TD
+><IMG SRC="haskell_icon.gif" WIDTH="16" HEIGHT="16" ALT=" "
+></TD
+><TD CLASS="title"
+>data-category-0.0.1: Restricted categories</TD
+><TD CLASS="topbut"
+><A HREF="index.html"
+>Contents</A
+></TD
+><TD CLASS="topbut"
+><A HREF="doc-index.html"
+>Index</A
+></TD
+></TR
+></TABLE
+></TD
+></TR
+><TR
+><TD CLASS="modulebar"
+><TABLE CLASS="vanilla" CELLSPACING="0" CELLPADDING="0"
+><TR
+><TD
+><FONT SIZE="6"
+>Data.Category.Pair</FONT
+></TD
+></TR
+></TABLE
+></TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="section1"
+>Documentation</TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><SPAN CLASS="keyword"
+>data family</SPAN
+> <A NAME="t:Pair"
+><A NAME="t%3APair"
+></A
+></A
+><B
+>Pair</B
+> a b :: *</TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><SPAN CLASS="keyword"
+>data</SPAN
+>  <A NAME="t:Fst"
+><A NAME="t%3AFst"
+></A
+></A
+><B
+>Fst</B
+>  </TD
+></TR
+><TR
+><TD CLASS="body"
+><TABLE CLASS="vanilla" CELLSPACING="0" CELLPADDING="0"
+><TR
+><TD CLASS="section4"
+>Constructors</TD
+></TR
+><TR
+><TD CLASS="body"
+><TABLE CLASS="vanilla" CELLSPACING="1" CELLPADDING="0"
+><TR
+><TD CLASS="arg"
+><A NAME="v:Fst"
+><A NAME="v%3AFst"
+></A
+></A
+><B
+>Fst</B
+></TD
+><TD CLASS="rdoc"
+></TD
+></TR
+></TABLE
+></TD
+></TR
+><TR
+><TD CLASS="section4"
+><IMG SRC="minus.gif" CLASS="coll" ONCLICK="toggle(this,'i:Fst')" ALT="show/hide"
+> Instances</TD
+></TR
+><TR
+><TD CLASS="body"
+><DIV ID="i:Fst" STYLE="display:block;"
+><TABLE CLASS="vanilla" CELLSPACING="1" CELLPADDING="0"
+><TR
+><TD CLASS="decl"
+><A HREF="/Library/Frameworks/GHC.framework/Versions/610/usr/share/doc/ghc/libraries/base/Text-Show.html#t%3AShow"
+>Show</A
+> <A HREF="Data-Category-Pair.html#t%3AFst"
+>Fst</A
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A HREF="Data-Category.html#t%3ACategoryO"
+>CategoryO</A
+> <A HREF="Data-Category-Pair.html#t%3APair"
+>Pair</A
+> <A HREF="Data-Category-Pair.html#t%3AFst"
+>Fst</A
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A HREF="Data-Category.html#t%3AApply"
+>Apply</A
+> <A HREF="Data-Category-Pair.html#t%3APair"
+>Pair</A
+> <A HREF="Data-Category-Pair.html#t%3AFst"
+>Fst</A
+> <A HREF="Data-Category-Pair.html#t%3AFst"
+>Fst</A
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A HREF="Data-Category.html#t%3ACategoryA"
+>CategoryA</A
+> <A HREF="Data-Category-Pair.html#t%3APair"
+>Pair</A
+> <A HREF="Data-Category-Pair.html#t%3AFst"
+>Fst</A
+> <A HREF="Data-Category-Pair.html#t%3AFst"
+>Fst</A
+> <A HREF="Data-Category-Pair.html#t%3AFst"
+>Fst</A
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A HREF="Data-Category.html#t%3ACategoryO"
+>CategoryO</A
+> ~&gt; x =&gt; <A HREF="Data-Category.html#t%3AFunctorA"
+>FunctorA</A
+> (<A HREF="Data-Category-Pair.html#t%3APairF"
+>PairF</A
+> ~&gt; x y) <A HREF="Data-Category-Pair.html#t%3AFst"
+>Fst</A
+> <A HREF="Data-Category-Pair.html#t%3AFst"
+>Fst</A
+></TD
+></TR
+></TABLE
+></DIV
+></TD
+></TR
+></TABLE
+></TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><SPAN CLASS="keyword"
+>data</SPAN
+>  <A NAME="t:Snd"
+><A NAME="t%3ASnd"
+></A
+></A
+><B
+>Snd</B
+>  </TD
+></TR
+><TR
+><TD CLASS="body"
+><TABLE CLASS="vanilla" CELLSPACING="0" CELLPADDING="0"
+><TR
+><TD CLASS="section4"
+>Constructors</TD
+></TR
+><TR
+><TD CLASS="body"
+><TABLE CLASS="vanilla" CELLSPACING="1" CELLPADDING="0"
+><TR
+><TD CLASS="arg"
+><A NAME="v:Snd"
+><A NAME="v%3ASnd"
+></A
+></A
+><B
+>Snd</B
+></TD
+><TD CLASS="rdoc"
+></TD
+></TR
+></TABLE
+></TD
+></TR
+><TR
+><TD CLASS="section4"
+><IMG SRC="minus.gif" CLASS="coll" ONCLICK="toggle(this,'i:Snd')" ALT="show/hide"
+> Instances</TD
+></TR
+><TR
+><TD CLASS="body"
+><DIV ID="i:Snd" STYLE="display:block;"
+><TABLE CLASS="vanilla" CELLSPACING="1" CELLPADDING="0"
+><TR
+><TD CLASS="decl"
+><A HREF="/Library/Frameworks/GHC.framework/Versions/610/usr/share/doc/ghc/libraries/base/Text-Show.html#t%3AShow"
+>Show</A
+> <A HREF="Data-Category-Pair.html#t%3ASnd"
+>Snd</A
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A HREF="Data-Category.html#t%3ACategoryO"
+>CategoryO</A
+> <A HREF="Data-Category-Pair.html#t%3APair"
+>Pair</A
+> <A HREF="Data-Category-Pair.html#t%3ASnd"
+>Snd</A
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A HREF="Data-Category.html#t%3AApply"
+>Apply</A
+> <A HREF="Data-Category-Pair.html#t%3APair"
+>Pair</A
+> <A HREF="Data-Category-Pair.html#t%3ASnd"
+>Snd</A
+> <A HREF="Data-Category-Pair.html#t%3ASnd"
+>Snd</A
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A HREF="Data-Category.html#t%3ACategoryA"
+>CategoryA</A
+> <A HREF="Data-Category-Pair.html#t%3APair"
+>Pair</A
+> <A HREF="Data-Category-Pair.html#t%3ASnd"
+>Snd</A
+> <A HREF="Data-Category-Pair.html#t%3ASnd"
+>Snd</A
+> <A HREF="Data-Category-Pair.html#t%3ASnd"
+>Snd</A
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A HREF="Data-Category.html#t%3ACategoryO"
+>CategoryO</A
+> ~&gt; y =&gt; <A HREF="Data-Category.html#t%3AFunctorA"
+>FunctorA</A
+> (<A HREF="Data-Category-Pair.html#t%3APairF"
+>PairF</A
+> ~&gt; x y) <A HREF="Data-Category-Pair.html#t%3ASnd"
+>Snd</A
+> <A HREF="Data-Category-Pair.html#t%3ASnd"
+>Snd</A
+></TD
+></TR
+></TABLE
+></DIV
+></TD
+></TR
+></TABLE
+></TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><SPAN CLASS="keyword"
+>data</SPAN
+>  <A NAME="t:PairF"
+><A NAME="t%3APairF"
+></A
+></A
+><B
+>PairF</B
+> (~&gt;) x y </TD
+></TR
+><TR
+><TD CLASS="body"
+><TABLE CLASS="vanilla" CELLSPACING="0" CELLPADDING="0"
+><TR
+><TD CLASS="section4"
+>Constructors</TD
+></TR
+><TR
+><TD CLASS="body"
+><TABLE CLASS="vanilla" CELLSPACING="1" CELLPADDING="0"
+><TR
+><TD CLASS="arg"
+><A NAME="v:PairF"
+><A NAME="v%3APairF"
+></A
+></A
+><B
+>PairF</B
+></TD
+><TD CLASS="rdoc"
+></TD
+></TR
+></TABLE
+></TD
+></TR
+><TR
+><TD CLASS="section4"
+><IMG SRC="minus.gif" CLASS="coll" ONCLICK="toggle(this,'i:PairF')" ALT="show/hide"
+> Instances</TD
+></TR
+><TR
+><TD CLASS="body"
+><DIV ID="i:PairF" STYLE="display:block;"
+><TABLE CLASS="vanilla" CELLSPACING="1" CELLPADDING="0"
+><TR
+><TD CLASS="decl"
+><A HREF="Data-Category.html#t%3ACategoryO"
+>CategoryO</A
+> ~&gt; y =&gt; <A HREF="Data-Category.html#t%3AFunctorA"
+>FunctorA</A
+> (<A HREF="Data-Category-Pair.html#t%3APairF"
+>PairF</A
+> ~&gt; x y) <A HREF="Data-Category-Pair.html#t%3ASnd"
+>Snd</A
+> <A HREF="Data-Category-Pair.html#t%3ASnd"
+>Snd</A
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A HREF="Data-Category.html#t%3ACategoryO"
+>CategoryO</A
+> ~&gt; x =&gt; <A HREF="Data-Category.html#t%3AFunctorA"
+>FunctorA</A
+> (<A HREF="Data-Category-Pair.html#t%3APairF"
+>PairF</A
+> ~&gt; x y) <A HREF="Data-Category-Pair.html#t%3AFst"
+>Fst</A
+> <A HREF="Data-Category-Pair.html#t%3AFst"
+>Fst</A
+></TD
+></TR
+></TABLE
+></DIV
+></TD
+></TR
+></TABLE
+></TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><SPAN CLASS="keyword"
+>class</SPAN
+> (<A HREF="Data-Category.html#t%3ACategoryO"
+>CategoryO</A
+> ~&gt; x, <A HREF="Data-Category.html#t%3ACategoryO"
+>CategoryO</A
+> ~&gt; y) =&gt; <A NAME="t:PairLimit"
+><A NAME="t%3APairLimit"
+></A
+></A
+><B
+>PairLimit</B
+> (~&gt;) x y  <SPAN CLASS="keyword"
+>where</SPAN
+></TD
+></TR
+><TR
+><TD CLASS="body"
+><TABLE CLASS="vanilla" CELLSPACING="0" CELLPADDING="0"
+><TR
+><TD CLASS="s8"
+></TD
+></TR
+><TR
+><TD CLASS="section4"
+>Associated Types</TD
+></TR
+><TR
+><TD CLASS="body"
+><TABLE CLASS="vanilla" CELLSPACING="0" CELLPADDING="0"
+><TR
+><TD CLASS="decl"
+><SPAN CLASS="keyword"
+>type</SPAN
+> <A NAME="t:Product"
+><A NAME="t%3AProduct"
+></A
+></A
+><B
+>Product</B
+> x y :: *</TD
+></TR
+></TABLE
+></TD
+></TR
+><TR
+><TD CLASS="s8"
+></TD
+></TR
+><TR
+><TD CLASS="section4"
+>Methods</TD
+></TR
+><TR
+><TD CLASS="body"
+><TABLE CLASS="vanilla" CELLSPACING="0" CELLPADDING="0"
+><TR
+><TD CLASS="decl"
+><A NAME="v:pairLimit"
+><A NAME="v%3ApairLimit"
+></A
+></A
+><B
+>pairLimit</B
+> :: <A HREF="Data-Category-Functor.html#t%3ALimit"
+>Limit</A
+> (<A HREF="Data-Category-Pair.html#t%3APairF"
+>PairF</A
+> ~&gt; x y) (<A HREF="Data-Category-Pair.html#t%3AProduct"
+>Product</A
+> x y)</TD
+></TR
+><TR
+><TD CLASS="s8"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A NAME="v:proj1"
+><A NAME="v%3Aproj1"
+></A
+></A
+><B
+>proj1</B
+> :: <A HREF="Data-Category-Pair.html#t%3AProduct"
+>Product</A
+> x y ~&gt; x</TD
+></TR
+><TR
+><TD CLASS="s8"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A NAME="v:proj2"
+><A NAME="v%3Aproj2"
+></A
+></A
+><B
+>proj2</B
+> :: <A HREF="Data-Category-Pair.html#t%3AProduct"
+>Product</A
+> x y ~&gt; y</TD
+></TR
+></TABLE
+></TD
+></TR
+><TR
+><TD CLASS="s8"
+></TD
+></TR
+><TR
+><TD CLASS="section4"
+><IMG SRC="minus.gif" CLASS="coll" ONCLICK="toggle(this,'i:PairLimit')" ALT="show/hide"
+> Instances</TD
+></TR
+><TR
+><TD CLASS="body"
+><DIV ID="i:PairLimit" STYLE="display:block;"
+><TABLE CLASS="vanilla" CELLSPACING="1" CELLPADDING="0"
+><TR
+><TD CLASS="decl"
+><A HREF="Data-Category-Pair.html#t%3APairLimit"
+>PairLimit</A
+> (-&gt;) x y</TD
+></TR
+><TR
+><TD CLASS="decl"
+><A HREF="Data-Category-Pair.html#t%3APairLimit"
+>PairLimit</A
+> <A HREF="Data-Category-Boolean.html#t%3ABoolean"
+>Boolean</A
+> <A HREF="Data-Category-Boolean.html#t%3ATru"
+>Tru</A
+> <A HREF="Data-Category-Boolean.html#t%3ATru"
+>Tru</A
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A HREF="Data-Category-Pair.html#t%3APairLimit"
+>PairLimit</A
+> <A HREF="Data-Category-Boolean.html#t%3ABoolean"
+>Boolean</A
+> <A HREF="Data-Category-Boolean.html#t%3ATru"
+>Tru</A
+> <A HREF="Data-Category-Boolean.html#t%3ATru"
+>Tru</A
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A HREF="Data-Category-Pair.html#t%3APairLimit"
+>PairLimit</A
+> <A HREF="Data-Category-Boolean.html#t%3ABoolean"
+>Boolean</A
+> <A HREF="Data-Category-Boolean.html#t%3ATru"
+>Tru</A
+> <A HREF="Data-Category-Boolean.html#t%3AFls"
+>Fls</A
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A HREF="Data-Category-Pair.html#t%3APairLimit"
+>PairLimit</A
+> <A HREF="Data-Category-Boolean.html#t%3ABoolean"
+>Boolean</A
+> <A HREF="Data-Category-Boolean.html#t%3ATru"
+>Tru</A
+> <A HREF="Data-Category-Boolean.html#t%3AFls"
+>Fls</A
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A HREF="Data-Category-Pair.html#t%3APairLimit"
+>PairLimit</A
+> <A HREF="Data-Category-Boolean.html#t%3ABoolean"
+>Boolean</A
+> <A HREF="Data-Category-Boolean.html#t%3ATru"
+>Tru</A
+> <A HREF="Data-Category-Boolean.html#t%3AFls"
+>Fls</A
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A HREF="Data-Category-Pair.html#t%3APairLimit"
+>PairLimit</A
+> <A HREF="Data-Category-Boolean.html#t%3ABoolean"
+>Boolean</A
+> <A HREF="Data-Category-Boolean.html#t%3AFls"
+>Fls</A
+> <A HREF="Data-Category-Boolean.html#t%3ATru"
+>Tru</A
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A HREF="Data-Category-Pair.html#t%3APairLimit"
+>PairLimit</A
+> <A HREF="Data-Category-Boolean.html#t%3ABoolean"
+>Boolean</A
+> <A HREF="Data-Category-Boolean.html#t%3AFls"
+>Fls</A
+> <A HREF="Data-Category-Boolean.html#t%3ATru"
+>Tru</A
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A HREF="Data-Category-Pair.html#t%3APairLimit"
+>PairLimit</A
+> <A HREF="Data-Category-Boolean.html#t%3ABoolean"
+>Boolean</A
+> <A HREF="Data-Category-Boolean.html#t%3AFls"
+>Fls</A
+> <A HREF="Data-Category-Boolean.html#t%3ATru"
+>Tru</A
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A HREF="Data-Category-Pair.html#t%3APairLimit"
+>PairLimit</A
+> <A HREF="Data-Category-Boolean.html#t%3ABoolean"
+>Boolean</A
+> <A HREF="Data-Category-Boolean.html#t%3AFls"
+>Fls</A
+> <A HREF="Data-Category-Boolean.html#t%3AFls"
+>Fls</A
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A HREF="Data-Category-Pair.html#t%3APairLimit"
+>PairLimit</A
+> <A HREF="Data-Category-Boolean.html#t%3ABoolean"
+>Boolean</A
+> <A HREF="Data-Category-Boolean.html#t%3AFls"
+>Fls</A
+> <A HREF="Data-Category-Boolean.html#t%3AFls"
+>Fls</A
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A HREF="Data-Category-Pair.html#t%3APairLimit"
+>PairLimit</A
+> <A HREF="Data-Category-Omega.html#t%3AOmega"
+>Omega</A
+> <A HREF="Data-Category-Omega.html#t%3AZ"
+>Z</A
+> <A HREF="Data-Category-Omega.html#t%3AZ"
+>Z</A
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A HREF="Data-Category-Pair.html#t%3APairLimit"
+>PairLimit</A
+> <A HREF="Data-Category-Omega.html#t%3AOmega"
+>Omega</A
+> <A HREF="Data-Category-Omega.html#t%3AZ"
+>Z</A
+> <A HREF="Data-Category-Omega.html#t%3AZ"
+>Z</A
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+>(<A HREF="Data-Category-Pair.html#t%3AProduct"
+>Product</A
+> <A HREF="Data-Category-Omega.html#t%3AZ"
+>Z</A
+> n ~ <A HREF="Data-Category-Omega.html#t%3AZ"
+>Z</A
+>, <A HREF="Data-Category-Pair.html#t%3APairLimit"
+>PairLimit</A
+> <A HREF="Data-Category-Omega.html#t%3AOmega"
+>Omega</A
+> <A HREF="Data-Category-Omega.html#t%3AZ"
+>Z</A
+> n) =&gt; <A HREF="Data-Category-Pair.html#t%3APairLimit"
+>PairLimit</A
+> <A HREF="Data-Category-Omega.html#t%3AOmega"
+>Omega</A
+> <A HREF="Data-Category-Omega.html#t%3AZ"
+>Z</A
+> (<A HREF="Data-Category-Omega.html#t%3AS"
+>S</A
+> n)</TD
+></TR
+><TR
+><TD CLASS="decl"
+>(<A HREF="Data-Category-Pair.html#t%3AProduct"
+>Product</A
+> <A HREF="Data-Category-Omega.html#t%3AZ"
+>Z</A
+> n ~ <A HREF="Data-Category-Omega.html#t%3AZ"
+>Z</A
+>, <A HREF="Data-Category-Pair.html#t%3APairLimit"
+>PairLimit</A
+> <A HREF="Data-Category-Omega.html#t%3AOmega"
+>Omega</A
+> <A HREF="Data-Category-Omega.html#t%3AZ"
+>Z</A
+> n) =&gt; <A HREF="Data-Category-Pair.html#t%3APairLimit"
+>PairLimit</A
+> <A HREF="Data-Category-Omega.html#t%3AOmega"
+>Omega</A
+> <A HREF="Data-Category-Omega.html#t%3AZ"
+>Z</A
+> (<A HREF="Data-Category-Omega.html#t%3AS"
+>S</A
+> n)</TD
+></TR
+><TR
+><TD CLASS="decl"
+>(<A HREF="Data-Category-Pair.html#t%3AProduct"
+>Product</A
+> <A HREF="Data-Category-Omega.html#t%3AZ"
+>Z</A
+> n ~ <A HREF="Data-Category-Omega.html#t%3AZ"
+>Z</A
+>, <A HREF="Data-Category-Pair.html#t%3APairLimit"
+>PairLimit</A
+> <A HREF="Data-Category-Omega.html#t%3AOmega"
+>Omega</A
+> <A HREF="Data-Category-Omega.html#t%3AZ"
+>Z</A
+> n) =&gt; <A HREF="Data-Category-Pair.html#t%3APairLimit"
+>PairLimit</A
+> <A HREF="Data-Category-Omega.html#t%3AOmega"
+>Omega</A
+> <A HREF="Data-Category-Omega.html#t%3AZ"
+>Z</A
+> (<A HREF="Data-Category-Omega.html#t%3AS"
+>S</A
+> n)</TD
+></TR
+><TR
+><TD CLASS="decl"
+>(<A HREF="Data-Category-Pair.html#t%3AProduct"
+>Product</A
+> n <A HREF="Data-Category-Omega.html#t%3AZ"
+>Z</A
+> ~ <A HREF="Data-Category-Omega.html#t%3AZ"
+>Z</A
+>, <A HREF="Data-Category-Pair.html#t%3APairLimit"
+>PairLimit</A
+> <A HREF="Data-Category-Omega.html#t%3AOmega"
+>Omega</A
+> n <A HREF="Data-Category-Omega.html#t%3AZ"
+>Z</A
+>) =&gt; <A HREF="Data-Category-Pair.html#t%3APairLimit"
+>PairLimit</A
+> <A HREF="Data-Category-Omega.html#t%3AOmega"
+>Omega</A
+> (<A HREF="Data-Category-Omega.html#t%3AS"
+>S</A
+> n) <A HREF="Data-Category-Omega.html#t%3AZ"
+>Z</A
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+>(<A HREF="Data-Category-Pair.html#t%3AProduct"
+>Product</A
+> n <A HREF="Data-Category-Omega.html#t%3AZ"
+>Z</A
+> ~ <A HREF="Data-Category-Omega.html#t%3AZ"
+>Z</A
+>, <A HREF="Data-Category-Pair.html#t%3APairLimit"
+>PairLimit</A
+> <A HREF="Data-Category-Omega.html#t%3AOmega"
+>Omega</A
+> n <A HREF="Data-Category-Omega.html#t%3AZ"
+>Z</A
+>) =&gt; <A HREF="Data-Category-Pair.html#t%3APairLimit"
+>PairLimit</A
+> <A HREF="Data-Category-Omega.html#t%3AOmega"
+>Omega</A
+> (<A HREF="Data-Category-Omega.html#t%3AS"
+>S</A
+> n) <A HREF="Data-Category-Omega.html#t%3AZ"
+>Z</A
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+>(<A HREF="Data-Category-Pair.html#t%3AProduct"
+>Product</A
+> n <A HREF="Data-Category-Omega.html#t%3AZ"
+>Z</A
+> ~ <A HREF="Data-Category-Omega.html#t%3AZ"
+>Z</A
+>, <A HREF="Data-Category-Pair.html#t%3APairLimit"
+>PairLimit</A
+> <A HREF="Data-Category-Omega.html#t%3AOmega"
+>Omega</A
+> n <A HREF="Data-Category-Omega.html#t%3AZ"
+>Z</A
+>) =&gt; <A HREF="Data-Category-Pair.html#t%3APairLimit"
+>PairLimit</A
+> <A HREF="Data-Category-Omega.html#t%3AOmega"
+>Omega</A
+> (<A HREF="Data-Category-Omega.html#t%3AS"
+>S</A
+> n) <A HREF="Data-Category-Omega.html#t%3AZ"
+>Z</A
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A HREF="Data-Category-Pair.html#t%3APairLimit"
+>PairLimit</A
+> <A HREF="Data-Category-Omega.html#t%3AOmega"
+>Omega</A
+> a b =&gt; <A HREF="Data-Category-Pair.html#t%3APairLimit"
+>PairLimit</A
+> <A HREF="Data-Category-Omega.html#t%3AOmega"
+>Omega</A
+> (<A HREF="Data-Category-Omega.html#t%3AS"
+>S</A
+> a) (<A HREF="Data-Category-Omega.html#t%3AS"
+>S</A
+> b)</TD
+></TR
+><TR
+><TD CLASS="decl"
+><A HREF="Data-Category-Pair.html#t%3APairLimit"
+>PairLimit</A
+> <A HREF="Data-Category-Omega.html#t%3AOmega"
+>Omega</A
+> a b =&gt; <A HREF="Data-Category-Pair.html#t%3APairLimit"
+>PairLimit</A
+> <A HREF="Data-Category-Omega.html#t%3AOmega"
+>Omega</A
+> (<A HREF="Data-Category-Omega.html#t%3AS"
+>S</A
+> a) (<A HREF="Data-Category-Omega.html#t%3AS"
+>S</A
+> b)</TD
+></TR
+></TABLE
+></DIV
+></TD
+></TR
+></TABLE
+></TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><SPAN CLASS="keyword"
+>class</SPAN
+> (<A HREF="Data-Category.html#t%3ACategoryO"
+>CategoryO</A
+> ~&gt; x, <A HREF="Data-Category.html#t%3ACategoryO"
+>CategoryO</A
+> ~&gt; y) =&gt; <A NAME="t:PairColimit"
+><A NAME="t%3APairColimit"
+></A
+></A
+><B
+>PairColimit</B
+> (~&gt;) x y  <SPAN CLASS="keyword"
+>where</SPAN
+></TD
+></TR
+><TR
+><TD CLASS="body"
+><TABLE CLASS="vanilla" CELLSPACING="0" CELLPADDING="0"
+><TR
+><TD CLASS="s8"
+></TD
+></TR
+><TR
+><TD CLASS="section4"
+>Associated Types</TD
+></TR
+><TR
+><TD CLASS="body"
+><TABLE CLASS="vanilla" CELLSPACING="0" CELLPADDING="0"
+><TR
+><TD CLASS="decl"
+><SPAN CLASS="keyword"
+>type</SPAN
+> <A NAME="t:Coproduct"
+><A NAME="t%3ACoproduct"
+></A
+></A
+><B
+>Coproduct</B
+> x y :: *</TD
+></TR
+></TABLE
+></TD
+></TR
+><TR
+><TD CLASS="s8"
+></TD
+></TR
+><TR
+><TD CLASS="section4"
+>Methods</TD
+></TR
+><TR
+><TD CLASS="body"
+><TABLE CLASS="vanilla" CELLSPACING="0" CELLPADDING="0"
+><TR
+><TD CLASS="decl"
+><A NAME="v:pairColimit"
+><A NAME="v%3ApairColimit"
+></A
+></A
+><B
+>pairColimit</B
+> :: <A HREF="Data-Category-Functor.html#t%3AColimit"
+>Colimit</A
+> (<A HREF="Data-Category-Pair.html#t%3APairF"
+>PairF</A
+> ~&gt; x y) (<A HREF="Data-Category-Pair.html#t%3ACoproduct"
+>Coproduct</A
+> x y)</TD
+></TR
+><TR
+><TD CLASS="s8"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A NAME="v:inj1"
+><A NAME="v%3Ainj1"
+></A
+></A
+><B
+>inj1</B
+> :: x ~&gt; <A HREF="Data-Category-Pair.html#t%3ACoproduct"
+>Coproduct</A
+> x y</TD
+></TR
+><TR
+><TD CLASS="s8"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A NAME="v:inj2"
+><A NAME="v%3Ainj2"
+></A
+></A
+><B
+>inj2</B
+> :: y ~&gt; <A HREF="Data-Category-Pair.html#t%3ACoproduct"
+>Coproduct</A
+> x y</TD
+></TR
+></TABLE
+></TD
+></TR
+><TR
+><TD CLASS="s8"
+></TD
+></TR
+><TR
+><TD CLASS="section4"
+><IMG SRC="minus.gif" CLASS="coll" ONCLICK="toggle(this,'i:PairColimit')" ALT="show/hide"
+> Instances</TD
+></TR
+><TR
+><TD CLASS="body"
+><DIV ID="i:PairColimit" STYLE="display:block;"
+><TABLE CLASS="vanilla" CELLSPACING="1" CELLPADDING="0"
+><TR
+><TD CLASS="decl"
+><A HREF="Data-Category-Pair.html#t%3APairColimit"
+>PairColimit</A
+> (-&gt;) x y</TD
+></TR
+><TR
+><TD CLASS="decl"
+><A HREF="Data-Category-Pair.html#t%3APairColimit"
+>PairColimit</A
+> <A HREF="Data-Category-Boolean.html#t%3ABoolean"
+>Boolean</A
+> <A HREF="Data-Category-Boolean.html#t%3ATru"
+>Tru</A
+> <A HREF="Data-Category-Boolean.html#t%3ATru"
+>Tru</A
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A HREF="Data-Category-Pair.html#t%3APairColimit"
+>PairColimit</A
+> <A HREF="Data-Category-Boolean.html#t%3ABoolean"
+>Boolean</A
+> <A HREF="Data-Category-Boolean.html#t%3ATru"
+>Tru</A
+> <A HREF="Data-Category-Boolean.html#t%3ATru"
+>Tru</A
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A HREF="Data-Category-Pair.html#t%3APairColimit"
+>PairColimit</A
+> <A HREF="Data-Category-Boolean.html#t%3ABoolean"
+>Boolean</A
+> <A HREF="Data-Category-Boolean.html#t%3ATru"
+>Tru</A
+> <A HREF="Data-Category-Boolean.html#t%3AFls"
+>Fls</A
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A HREF="Data-Category-Pair.html#t%3APairColimit"
+>PairColimit</A
+> <A HREF="Data-Category-Boolean.html#t%3ABoolean"
+>Boolean</A
+> <A HREF="Data-Category-Boolean.html#t%3ATru"
+>Tru</A
+> <A HREF="Data-Category-Boolean.html#t%3AFls"
+>Fls</A
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A HREF="Data-Category-Pair.html#t%3APairColimit"
+>PairColimit</A
+> <A HREF="Data-Category-Boolean.html#t%3ABoolean"
+>Boolean</A
+> <A HREF="Data-Category-Boolean.html#t%3ATru"
+>Tru</A
+> <A HREF="Data-Category-Boolean.html#t%3AFls"
+>Fls</A
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A HREF="Data-Category-Pair.html#t%3APairColimit"
+>PairColimit</A
+> <A HREF="Data-Category-Boolean.html#t%3ABoolean"
+>Boolean</A
+> <A HREF="Data-Category-Boolean.html#t%3AFls"
+>Fls</A
+> <A HREF="Data-Category-Boolean.html#t%3ATru"
+>Tru</A
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A HREF="Data-Category-Pair.html#t%3APairColimit"
+>PairColimit</A
+> <A HREF="Data-Category-Boolean.html#t%3ABoolean"
+>Boolean</A
+> <A HREF="Data-Category-Boolean.html#t%3AFls"
+>Fls</A
+> <A HREF="Data-Category-Boolean.html#t%3ATru"
+>Tru</A
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A HREF="Data-Category-Pair.html#t%3APairColimit"
+>PairColimit</A
+> <A HREF="Data-Category-Boolean.html#t%3ABoolean"
+>Boolean</A
+> <A HREF="Data-Category-Boolean.html#t%3AFls"
+>Fls</A
+> <A HREF="Data-Category-Boolean.html#t%3ATru"
+>Tru</A
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A HREF="Data-Category-Pair.html#t%3APairColimit"
+>PairColimit</A
+> <A HREF="Data-Category-Boolean.html#t%3ABoolean"
+>Boolean</A
+> <A HREF="Data-Category-Boolean.html#t%3AFls"
+>Fls</A
+> <A HREF="Data-Category-Boolean.html#t%3AFls"
+>Fls</A
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A HREF="Data-Category-Pair.html#t%3APairColimit"
+>PairColimit</A
+> <A HREF="Data-Category-Boolean.html#t%3ABoolean"
+>Boolean</A
+> <A HREF="Data-Category-Boolean.html#t%3AFls"
+>Fls</A
+> <A HREF="Data-Category-Boolean.html#t%3AFls"
+>Fls</A
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A HREF="Data-Category-Pair.html#t%3APairColimit"
+>PairColimit</A
+> <A HREF="Data-Category-Omega.html#t%3AOmega"
+>Omega</A
+> <A HREF="Data-Category-Omega.html#t%3AZ"
+>Z</A
+> <A HREF="Data-Category-Omega.html#t%3AZ"
+>Z</A
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A HREF="Data-Category-Pair.html#t%3APairColimit"
+>PairColimit</A
+> <A HREF="Data-Category-Omega.html#t%3AOmega"
+>Omega</A
+> <A HREF="Data-Category-Omega.html#t%3AZ"
+>Z</A
+> <A HREF="Data-Category-Omega.html#t%3AZ"
+>Z</A
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+>(<A HREF="Data-Category-Pair.html#t%3ACoproduct"
+>Coproduct</A
+> <A HREF="Data-Category-Omega.html#t%3AZ"
+>Z</A
+> n ~ n, <A HREF="Data-Category-Pair.html#t%3APairColimit"
+>PairColimit</A
+> <A HREF="Data-Category-Omega.html#t%3AOmega"
+>Omega</A
+> <A HREF="Data-Category-Omega.html#t%3AZ"
+>Z</A
+> n) =&gt; <A HREF="Data-Category-Pair.html#t%3APairColimit"
+>PairColimit</A
+> <A HREF="Data-Category-Omega.html#t%3AOmega"
+>Omega</A
+> <A HREF="Data-Category-Omega.html#t%3AZ"
+>Z</A
+> (<A HREF="Data-Category-Omega.html#t%3AS"
+>S</A
+> n)</TD
+></TR
+><TR
+><TD CLASS="decl"
+>(<A HREF="Data-Category-Pair.html#t%3ACoproduct"
+>Coproduct</A
+> <A HREF="Data-Category-Omega.html#t%3AZ"
+>Z</A
+> n ~ n, <A HREF="Data-Category-Pair.html#t%3APairColimit"
+>PairColimit</A
+> <A HREF="Data-Category-Omega.html#t%3AOmega"
+>Omega</A
+> <A HREF="Data-Category-Omega.html#t%3AZ"
+>Z</A
+> n) =&gt; <A HREF="Data-Category-Pair.html#t%3APairColimit"
+>PairColimit</A
+> <A HREF="Data-Category-Omega.html#t%3AOmega"
+>Omega</A
+> <A HREF="Data-Category-Omega.html#t%3AZ"
+>Z</A
+> (<A HREF="Data-Category-Omega.html#t%3AS"
+>S</A
+> n)</TD
+></TR
+><TR
+><TD CLASS="decl"
+>(<A HREF="Data-Category-Pair.html#t%3ACoproduct"
+>Coproduct</A
+> <A HREF="Data-Category-Omega.html#t%3AZ"
+>Z</A
+> n ~ n, <A HREF="Data-Category-Pair.html#t%3APairColimit"
+>PairColimit</A
+> <A HREF="Data-Category-Omega.html#t%3AOmega"
+>Omega</A
+> <A HREF="Data-Category-Omega.html#t%3AZ"
+>Z</A
+> n) =&gt; <A HREF="Data-Category-Pair.html#t%3APairColimit"
+>PairColimit</A
+> <A HREF="Data-Category-Omega.html#t%3AOmega"
+>Omega</A
+> <A HREF="Data-Category-Omega.html#t%3AZ"
+>Z</A
+> (<A HREF="Data-Category-Omega.html#t%3AS"
+>S</A
+> n)</TD
+></TR
+><TR
+><TD CLASS="decl"
+>(<A HREF="Data-Category-Pair.html#t%3ACoproduct"
+>Coproduct</A
+> n <A HREF="Data-Category-Omega.html#t%3AZ"
+>Z</A
+> ~ n, <A HREF="Data-Category-Pair.html#t%3APairColimit"
+>PairColimit</A
+> <A HREF="Data-Category-Omega.html#t%3AOmega"
+>Omega</A
+> n <A HREF="Data-Category-Omega.html#t%3AZ"
+>Z</A
+>) =&gt; <A HREF="Data-Category-Pair.html#t%3APairColimit"
+>PairColimit</A
+> <A HREF="Data-Category-Omega.html#t%3AOmega"
+>Omega</A
+> (<A HREF="Data-Category-Omega.html#t%3AS"
+>S</A
+> n) <A HREF="Data-Category-Omega.html#t%3AZ"
+>Z</A
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+>(<A HREF="Data-Category-Pair.html#t%3ACoproduct"
+>Coproduct</A
+> n <A HREF="Data-Category-Omega.html#t%3AZ"
+>Z</A
+> ~ n, <A HREF="Data-Category-Pair.html#t%3APairColimit"
+>PairColimit</A
+> <A HREF="Data-Category-Omega.html#t%3AOmega"
+>Omega</A
+> n <A HREF="Data-Category-Omega.html#t%3AZ"
+>Z</A
+>) =&gt; <A HREF="Data-Category-Pair.html#t%3APairColimit"
+>PairColimit</A
+> <A HREF="Data-Category-Omega.html#t%3AOmega"
+>Omega</A
+> (<A HREF="Data-Category-Omega.html#t%3AS"
+>S</A
+> n) <A HREF="Data-Category-Omega.html#t%3AZ"
+>Z</A
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+>(<A HREF="Data-Category-Pair.html#t%3ACoproduct"
+>Coproduct</A
+> n <A HREF="Data-Category-Omega.html#t%3AZ"
+>Z</A
+> ~ n, <A HREF="Data-Category-Pair.html#t%3APairColimit"
+>PairColimit</A
+> <A HREF="Data-Category-Omega.html#t%3AOmega"
+>Omega</A
+> n <A HREF="Data-Category-Omega.html#t%3AZ"
+>Z</A
+>) =&gt; <A HREF="Data-Category-Pair.html#t%3APairColimit"
+>PairColimit</A
+> <A HREF="Data-Category-Omega.html#t%3AOmega"
+>Omega</A
+> (<A HREF="Data-Category-Omega.html#t%3AS"
+>S</A
+> n) <A HREF="Data-Category-Omega.html#t%3AZ"
+>Z</A
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A HREF="Data-Category-Pair.html#t%3APairColimit"
+>PairColimit</A
+> <A HREF="Data-Category-Omega.html#t%3AOmega"
+>Omega</A
+> a b =&gt; <A HREF="Data-Category-Pair.html#t%3APairColimit"
+>PairColimit</A
+> <A HREF="Data-Category-Omega.html#t%3AOmega"
+>Omega</A
+> (<A HREF="Data-Category-Omega.html#t%3AS"
+>S</A
+> a) (<A HREF="Data-Category-Omega.html#t%3AS"
+>S</A
+> b)</TD
+></TR
+><TR
+><TD CLASS="decl"
+><A HREF="Data-Category-Pair.html#t%3APairColimit"
+>PairColimit</A
+> <A HREF="Data-Category-Omega.html#t%3AOmega"
+>Omega</A
+> a b =&gt; <A HREF="Data-Category-Pair.html#t%3APairColimit"
+>PairColimit</A
+> <A HREF="Data-Category-Omega.html#t%3AOmega"
+>Omega</A
+> (<A HREF="Data-Category-Omega.html#t%3AS"
+>S</A
+> a) (<A HREF="Data-Category-Omega.html#t%3AS"
+>S</A
+> b)</TD
+></TR
+></TABLE
+></DIV
+></TD
+></TR
+></TABLE
+></TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="botbar"
+>Produced by <A HREF="http://www.haskell.org/haddock/"
+>Haddock</A
+> version 2.4.2</TD
+></TR
+></TABLE
+></BODY
+></HTML
+>

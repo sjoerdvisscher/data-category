@@ -1,0 +1,26 @@
+name:                data-category
+version:             0.0.1
+synopsis:            Restricted categories
+description:         
+  Data-category is a collection of categories, and some categorical constructions on them.
+category:            Data
+license:             BSD3
+license-file:        LICENSE
+author:              Sjoerd Visscher
+maintainer:          sjoerd@w3future.com
+build-type:          Simple
+cabal-version:       >= 1.2
+
+Library
+  exposed-modules:     
+    Data.Category,
+    Data.Category.Functor,
+    Data.Category.Void,
+    Data.Category.Unit,
+    Data.Category.Pair,
+    Data.Category.Boolean,
+    Data.Category.Omega,
+    Data.Category.Hask,
+    Data.Category.Kleisli
+    
+  build-depends:       base >= 3 && < 5

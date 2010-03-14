@@ -1,0 +1,1185 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!--Rendered using the Haskell Html Library v0.2-->
+<HTML
+><HEAD
+><META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8"
+><TITLE
+>Data.Category.Functor</TITLE
+><LINK HREF="haddock.css" REL="stylesheet" TYPE="text/css"
+><SCRIPT SRC="haddock-util.js" TYPE="text/javascript"
+></SCRIPT
+><SCRIPT TYPE="text/javascript"
+>window.onload = function () {setSynopsis("mini_Data-Category-Functor.html")};</SCRIPT
+></HEAD
+><BODY
+><TABLE CLASS="vanilla" CELLSPACING="0" CELLPADDING="0"
+><TR
+><TD CLASS="topbar"
+><TABLE CLASS="vanilla" CELLSPACING="0" CELLPADDING="0"
+><TR
+><TD
+><IMG SRC="haskell_icon.gif" WIDTH="16" HEIGHT="16" ALT=" "
+></TD
+><TD CLASS="title"
+>data-category-0.0.1: Restricted categories</TD
+><TD CLASS="topbut"
+><A HREF="index.html"
+>Contents</A
+></TD
+><TD CLASS="topbut"
+><A HREF="doc-index.html"
+>Index</A
+></TD
+></TR
+></TABLE
+></TD
+></TR
+><TR
+><TD CLASS="modulebar"
+><TABLE CLASS="vanilla" CELLSPACING="0" CELLPADDING="0"
+><TR
+><TD
+><FONT SIZE="6"
+>Data.Category.Functor</FONT
+></TD
+></TR
+></TABLE
+></TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="section1"
+>Synopsis</TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="body"
+><TABLE CLASS="vanilla" CELLSPACING="0" CELLPADDING="0"
+><TR
+><TD CLASS="decl"
+><SPAN CLASS="keyword"
+>data family</SPAN
+> <A HREF="#t%3AFunct"
+>Funct</A
+> c d a b :: *</TD
+></TR
+><TR
+><TD CLASS="s8"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><SPAN CLASS="keyword"
+>data</SPAN
+>  <A HREF="#t%3AFunctO"
+>FunctO</A
+> c d f = (<A HREF="Data-Category.html#t%3ADom"
+>Dom</A
+> f ~ c, <A HREF="Data-Category.html#t%3ACod"
+>Cod</A
+> f ~ d) =&gt; <A HREF="#v%3AFunctO"
+>FunctO</A
+> f</TD
+></TR
+><TR
+><TD CLASS="s8"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><SPAN CLASS="keyword"
+>type</SPAN
+> <A HREF="#t%3AComponent"
+>Component</A
+> f g z = <A HREF="Data-Category.html#t%3ACod"
+>Cod</A
+> f (<A HREF="Data-Category.html#t%3AF"
+>F</A
+> f z) (<A HREF="Data-Category.html#t%3AF"
+>F</A
+> g z)</TD
+></TR
+><TR
+><TD CLASS="s8"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><SPAN CLASS="keyword"
+>type</SPAN
+> <A HREF="#t%3A%3A~%3E"
+>:~&gt;</A
+> f g = (c ~ <A HREF="Data-Category.html#t%3ADom"
+>Dom</A
+> f, c ~ <A HREF="Data-Category.html#t%3ADom"
+>Dom</A
+> g, d ~ <A HREF="Data-Category.html#t%3ACod"
+>Cod</A
+> f, d ~ <A HREF="Data-Category.html#t%3ACod"
+>Cod</A
+> g) =&gt; <A HREF="Data-Category-Functor.html#t%3AFunct"
+>Funct</A
+> c d (<A HREF="Data-Category-Functor.html#t%3AFunctO"
+>FunctO</A
+> c d f) (<A HREF="Data-Category-Functor.html#t%3AFunctO"
+>FunctO</A
+> c d g)</TD
+></TR
+><TR
+><TD CLASS="s8"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><SPAN CLASS="keyword"
+>data</SPAN
+>  <A HREF="#t%3ADiag"
+>Diag</A
+> j (~&gt;) = <A HREF="#v%3ADiag"
+>Diag</A
+></TD
+></TR
+><TR
+><TD CLASS="s8"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><SPAN CLASS="keyword"
+>type</SPAN
+> <A HREF="#t%3AInitMorF"
+>InitMorF</A
+> x u = (x <A HREF="Data-Category.html#t%3A%3A%2A-%3A"
+>:*-:</A
+> <A HREF="Data-Category.html#t%3ACod"
+>Cod</A
+> u) <A HREF="Data-Category.html#t%3A%3A.%3A"
+>:.:</A
+> u</TD
+></TR
+><TR
+><TD CLASS="s8"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><SPAN CLASS="keyword"
+>type</SPAN
+> <A HREF="#t%3ATermMorF"
+>TermMorF</A
+> x u = (<A HREF="Data-Category.html#t%3ACod"
+>Cod</A
+> u <A HREF="Data-Category.html#t%3A%3A-%2A%3A"
+>:-*:</A
+> x) <A HREF="Data-Category.html#t%3A%3A.%3A"
+>:.:</A
+> u</TD
+></TR
+><TR
+><TD CLASS="s8"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><SPAN CLASS="keyword"
+>data</SPAN
+>  <A HREF="#t%3AInitialUniversal"
+>InitialUniversal</A
+> x u a = <A HREF="#v%3AInitialUniversal"
+>InitialUniversal</A
+> (<A HREF="Data-Category.html#t%3AF"
+>F</A
+> (<A HREF="Data-Category-Functor.html#t%3AInitMorF"
+>InitMorF</A
+> x u) a) (<A HREF="Data-Category-Functor.html#t%3AInitMorF"
+>InitMorF</A
+> x u <A HREF="Data-Category-Functor.html#t%3A%3A~%3E"
+>:~&gt;</A
+> (a <A HREF="Data-Category.html#t%3A%3A%2A-%3A"
+>:*-:</A
+> <A HREF="Data-Category.html#t%3ADom"
+>Dom</A
+> u))</TD
+></TR
+><TR
+><TD CLASS="s8"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><SPAN CLASS="keyword"
+>data</SPAN
+>  <A HREF="#t%3ATerminalUniversal"
+>TerminalUniversal</A
+> x u a = <A HREF="#v%3ATerminalUniversal"
+>TerminalUniversal</A
+> (<A HREF="Data-Category.html#t%3AF"
+>F</A
+> (<A HREF="Data-Category-Functor.html#t%3ATermMorF"
+>TermMorF</A
+> x u) a) (<A HREF="Data-Category-Functor.html#t%3ATermMorF"
+>TermMorF</A
+> x u <A HREF="Data-Category-Functor.html#t%3A%3A~%3E"
+>:~&gt;</A
+> (<A HREF="Data-Category.html#t%3ADom"
+>Dom</A
+> u <A HREF="Data-Category.html#t%3A%3A-%2A%3A"
+>:-*:</A
+> a))</TD
+></TR
+><TR
+><TD CLASS="s8"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><SPAN CLASS="keyword"
+>type</SPAN
+> <A HREF="#t%3ACone"
+>Cone</A
+> f n = <A HREF="Data-Category.html#t%3AConst"
+>Const</A
+> (<A HREF="Data-Category.html#t%3ADom"
+>Dom</A
+> f) (<A HREF="Data-Category.html#t%3ACod"
+>Cod</A
+> f) n <A HREF="Data-Category-Functor.html#t%3A%3A~%3E"
+>:~&gt;</A
+> f</TD
+></TR
+><TR
+><TD CLASS="s8"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><SPAN CLASS="keyword"
+>type</SPAN
+> <A HREF="#t%3ACocone"
+>Cocone</A
+> f n = f <A HREF="Data-Category-Functor.html#t%3A%3A~%3E"
+>:~&gt;</A
+> <A HREF="Data-Category.html#t%3AConst"
+>Const</A
+> (<A HREF="Data-Category.html#t%3ADom"
+>Dom</A
+> f) (<A HREF="Data-Category.html#t%3ACod"
+>Cod</A
+> f) n</TD
+></TR
+><TR
+><TD CLASS="s8"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><SPAN CLASS="keyword"
+>type</SPAN
+> <A HREF="#t%3ALimit"
+>Limit</A
+> f l = <A HREF="Data-Category-Functor.html#t%3ATerminalUniversal"
+>TerminalUniversal</A
+> (<A HREF="Data-Category-Functor.html#t%3AFunctO"
+>FunctO</A
+> (<A HREF="Data-Category.html#t%3ADom"
+>Dom</A
+> f) (<A HREF="Data-Category.html#t%3ACod"
+>Cod</A
+> f) f) (<A HREF="Data-Category-Functor.html#t%3ADiag"
+>Diag</A
+> (<A HREF="Data-Category.html#t%3ADom"
+>Dom</A
+> f) (<A HREF="Data-Category.html#t%3ACod"
+>Cod</A
+> f)) l</TD
+></TR
+><TR
+><TD CLASS="s8"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><SPAN CLASS="keyword"
+>type</SPAN
+> <A HREF="#t%3AColimit"
+>Colimit</A
+> f l = <A HREF="Data-Category-Functor.html#t%3AInitialUniversal"
+>InitialUniversal</A
+> (<A HREF="Data-Category-Functor.html#t%3AFunctO"
+>FunctO</A
+> (<A HREF="Data-Category.html#t%3ADom"
+>Dom</A
+> f) (<A HREF="Data-Category.html#t%3ACod"
+>Cod</A
+> f) f) (<A HREF="Data-Category-Functor.html#t%3ADiag"
+>Diag</A
+> (<A HREF="Data-Category.html#t%3ADom"
+>Dom</A
+> f) (<A HREF="Data-Category.html#t%3ACod"
+>Cod</A
+> f)) l</TD
+></TR
+><TR
+><TD CLASS="s8"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><SPAN CLASS="keyword"
+>data</SPAN
+>  <A HREF="#t%3AAdjunction"
+>Adjunction</A
+> f g = <A HREF="#v%3AAdjunction"
+>Adjunction</A
+> {<TABLE CLASS="vanilla" CELLSPACING="0" CELLPADDING="0"
+><TR
+><TD CLASS="recfield"
+><A HREF="#v%3Aunit"
+>unit</A
+> :: <A HREF="Data-Category.html#t%3AId"
+>Id</A
+> (<A HREF="Data-Category.html#t%3ADom"
+>Dom</A
+> f) <A HREF="Data-Category-Functor.html#t%3A%3A~%3E"
+>:~&gt;</A
+> (g <A HREF="Data-Category.html#t%3A%3A.%3A"
+>:.:</A
+> f)</TD
+></TR
+><TR
+><TD CLASS="recfield"
+><A HREF="#v%3Acounit"
+>counit</A
+> :: (f <A HREF="Data-Category.html#t%3A%3A.%3A"
+>:.:</A
+> g) <A HREF="Data-Category-Functor.html#t%3A%3A~%3E"
+>:~&gt;</A
+> <A HREF="Data-Category.html#t%3AId"
+>Id</A
+> (<A HREF="Data-Category.html#t%3ADom"
+>Dom</A
+> g)</TD
+></TR
+></TABLE
+>}</TD
+></TR
+></TABLE
+></TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="section1"
+>Documentation</TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><SPAN CLASS="keyword"
+>data family</SPAN
+> <A NAME="t:Funct"
+><A NAME="t%3AFunct"
+></A
+></A
+><B
+>Funct</B
+> c d a b :: *</TD
+></TR
+><TR
+><TD CLASS="body"
+><TABLE CLASS="vanilla" CELLSPACING="0" CELLPADDING="0"
+><TR
+><TD CLASS="ndoc"
+>Functor category Funct(C, D), or D^C.
+ Arrows of Funct(C, D) are natural transformations.
+ Each category C needs its own data instance.
+</TD
+></TR
+></TABLE
+></TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><SPAN CLASS="keyword"
+>data</SPAN
+>  <A NAME="t:FunctO"
+><A NAME="t%3AFunctO"
+></A
+></A
+><B
+>FunctO</B
+> c d f </TD
+></TR
+><TR
+><TD CLASS="body"
+><TABLE CLASS="vanilla" CELLSPACING="0" CELLPADDING="0"
+><TR
+><TD CLASS="ndoc"
+>Objects of Funct(C, D) are functors from C to D.
+</TD
+></TR
+><TR
+><TD CLASS="section4"
+>Constructors</TD
+></TR
+><TR
+><TD CLASS="body"
+><TABLE CLASS="vanilla" CELLSPACING="1" CELLPADDING="0"
+><TR
+><TD CLASS="arg"
+>(<A HREF="Data-Category.html#t%3ADom"
+>Dom</A
+> f ~ c, <A HREF="Data-Category.html#t%3ACod"
+>Cod</A
+> f ~ d) =&gt; <A NAME="v:FunctO"
+><A NAME="v%3AFunctO"
+></A
+></A
+><B
+>FunctO</B
+> f</TD
+><TD CLASS="rdoc"
+></TD
+></TR
+></TABLE
+></TD
+></TR
+><TR
+><TD CLASS="section4"
+><IMG SRC="minus.gif" CLASS="coll" ONCLICK="toggle(this,'i:FunctO')" ALT="show/hide"
+> Instances</TD
+></TR
+><TR
+><TD CLASS="body"
+><DIV ID="i:FunctO" STYLE="display:block;"
+><TABLE CLASS="vanilla" CELLSPACING="1" CELLPADDING="0"
+><TR
+><TD CLASS="decl"
+>(<A HREF="Data-Category.html#t%3ADom"
+>Dom</A
+> f ~ <A HREF="Data-Category-Pair.html#t%3APair"
+>Pair</A
+>, <A HREF="Data-Category.html#t%3ACod"
+>Cod</A
+> f ~ (-&gt;), <A HREF="Data-Category.html#t%3ADom"
+>Dom</A
+> g ~ <A HREF="Data-Category-Pair.html#t%3APair"
+>Pair</A
+>, <A HREF="Data-Category.html#t%3ACod"
+>Cod</A
+> g ~ (-&gt;)) =&gt; <A HREF="Data-Category.html#t%3AFunctorA"
+>FunctorA</A
+> <A HREF="Data-Category-Hask.html#t%3ASumInHask"
+>SumInHask</A
+> (<A HREF="Data-Category-Functor.html#t%3AFunctO"
+>FunctO</A
+> <A HREF="Data-Category-Pair.html#t%3APair"
+>Pair</A
+> (-&gt;) f) (<A HREF="Data-Category-Functor.html#t%3AFunctO"
+>FunctO</A
+> <A HREF="Data-Category-Pair.html#t%3APair"
+>Pair</A
+> (-&gt;) g)</TD
+></TR
+><TR
+><TD CLASS="decl"
+>(<A HREF="Data-Category.html#t%3ADom"
+>Dom</A
+> f ~ <A HREF="Data-Category-Pair.html#t%3APair"
+>Pair</A
+>, <A HREF="Data-Category.html#t%3ACod"
+>Cod</A
+> f ~ (-&gt;), <A HREF="Data-Category.html#t%3ADom"
+>Dom</A
+> g ~ <A HREF="Data-Category-Pair.html#t%3APair"
+>Pair</A
+>, <A HREF="Data-Category.html#t%3ACod"
+>Cod</A
+> g ~ (-&gt;)) =&gt; <A HREF="Data-Category.html#t%3AFunctorA"
+>FunctorA</A
+> <A HREF="Data-Category-Hask.html#t%3AProdInHask"
+>ProdInHask</A
+> (<A HREF="Data-Category-Functor.html#t%3AFunctO"
+>FunctO</A
+> <A HREF="Data-Category-Pair.html#t%3APair"
+>Pair</A
+> (-&gt;) f) (<A HREF="Data-Category-Functor.html#t%3AFunctO"
+>FunctO</A
+> <A HREF="Data-Category-Pair.html#t%3APair"
+>Pair</A
+> (-&gt;) g)</TD
+></TR
+><TR
+><TD CLASS="decl"
+>(<A HREF="Data-Category.html#t%3ADom"
+>Dom</A
+> f ~ (-&gt;), <A HREF="Data-Category.html#t%3ACod"
+>Cod</A
+> f ~ d) =&gt; <A HREF="Data-Category.html#t%3ACategoryO"
+>CategoryO</A
+> (<A HREF="Data-Category-Functor.html#t%3AFunct"
+>Funct</A
+> (-&gt;) d) (<A HREF="Data-Category-Functor.html#t%3AFunctO"
+>FunctO</A
+> (-&gt;) d f)</TD
+></TR
+><TR
+><TD CLASS="decl"
+><A HREF="Data-Category.html#t%3ACategoryO"
+>CategoryO</A
+> (<A HREF="Data-Category-Functor.html#t%3AFunct"
+>Funct</A
+> <A HREF="Data-Category-Void.html#t%3AVoid"
+>Void</A
+> d) (<A HREF="Data-Category-Functor.html#t%3AFunctO"
+>FunctO</A
+> <A HREF="Data-Category-Void.html#t%3AVoid"
+>Void</A
+> d f)</TD
+></TR
+><TR
+><TD CLASS="decl"
+>(<A HREF="Data-Category.html#t%3ACategoryO"
+>CategoryO</A
+> (<A HREF="Data-Category.html#t%3ACod"
+>Cod</A
+> f) (<A HREF="Data-Category.html#t%3AF"
+>F</A
+> f <A HREF="Data-Category-Pair.html#t%3AFst"
+>Fst</A
+>), <A HREF="Data-Category.html#t%3ACategoryO"
+>CategoryO</A
+> (<A HREF="Data-Category.html#t%3ACod"
+>Cod</A
+> f) (<A HREF="Data-Category.html#t%3AF"
+>F</A
+> f <A HREF="Data-Category-Pair.html#t%3ASnd"
+>Snd</A
+>)) =&gt; <A HREF="Data-Category.html#t%3ACategoryO"
+>CategoryO</A
+> (<A HREF="Data-Category-Functor.html#t%3AFunct"
+>Funct</A
+> <A HREF="Data-Category-Pair.html#t%3APair"
+>Pair</A
+> d) (<A HREF="Data-Category-Functor.html#t%3AFunctO"
+>FunctO</A
+> <A HREF="Data-Category-Pair.html#t%3APair"
+>Pair</A
+> d f)</TD
+></TR
+><TR
+><TD CLASS="decl"
+>(<A HREF="Data-Category.html#t%3ACategoryO"
+>CategoryO</A
+> (<A HREF="Data-Category.html#t%3ACod"
+>Cod</A
+> f) (<A HREF="Data-Category.html#t%3AF"
+>F</A
+> f <A HREF="Data-Category-Boolean.html#t%3AFls"
+>Fls</A
+>), <A HREF="Data-Category.html#t%3ACategoryO"
+>CategoryO</A
+> (<A HREF="Data-Category.html#t%3ACod"
+>Cod</A
+> f) (<A HREF="Data-Category.html#t%3AF"
+>F</A
+> f <A HREF="Data-Category-Boolean.html#t%3ATru"
+>Tru</A
+>)) =&gt; <A HREF="Data-Category.html#t%3ACategoryO"
+>CategoryO</A
+> (<A HREF="Data-Category-Functor.html#t%3AFunct"
+>Funct</A
+> <A HREF="Data-Category-Boolean.html#t%3ABoolean"
+>Boolean</A
+> d) (<A HREF="Data-Category-Functor.html#t%3AFunctO"
+>FunctO</A
+> <A HREF="Data-Category-Boolean.html#t%3ABoolean"
+>Boolean</A
+> d f)</TD
+></TR
+><TR
+><TD CLASS="decl"
+>(<A HREF="Data-Category.html#t%3ADom"
+>Dom</A
+> f ~ <A HREF="Data-Category-Omega.html#t%3AOmega"
+>Omega</A
+>, <A HREF="Data-Category.html#t%3ACod"
+>Cod</A
+> f ~ d, <A HREF="Data-Category.html#t%3ACategoryO"
+>CategoryO</A
+> (<A HREF="Data-Category.html#t%3ACod"
+>Cod</A
+> f) (<A HREF="Data-Category.html#t%3AF"
+>F</A
+> f <A HREF="Data-Category-Omega.html#t%3AZ"
+>Z</A
+>)) =&gt; <A HREF="Data-Category.html#t%3ACategoryO"
+>CategoryO</A
+> (<A HREF="Data-Category-Functor.html#t%3AFunct"
+>Funct</A
+> <A HREF="Data-Category-Omega.html#t%3AOmega"
+>Omega</A
+> d) (<A HREF="Data-Category-Functor.html#t%3AFunctO"
+>FunctO</A
+> <A HREF="Data-Category-Omega.html#t%3AOmega"
+>Omega</A
+> d f)</TD
+></TR
+></TABLE
+></DIV
+></TD
+></TR
+></TABLE
+></TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><SPAN CLASS="keyword"
+>type</SPAN
+> <A NAME="t:Component"
+><A NAME="t%3AComponent"
+></A
+></A
+><B
+>Component</B
+> f g z = <A HREF="Data-Category.html#t%3ACod"
+>Cod</A
+> f (<A HREF="Data-Category.html#t%3AF"
+>F</A
+> f z) (<A HREF="Data-Category.html#t%3AF"
+>F</A
+> g z)</TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><SPAN CLASS="keyword"
+>type</SPAN
+> <A NAME="t::~>"
+><A NAME="t%3A%3A~%3E"
+></A
+></A
+><B
+>:~&gt;</B
+> f g = (c ~ <A HREF="Data-Category.html#t%3ADom"
+>Dom</A
+> f, c ~ <A HREF="Data-Category.html#t%3ADom"
+>Dom</A
+> g, d ~ <A HREF="Data-Category.html#t%3ACod"
+>Cod</A
+> f, d ~ <A HREF="Data-Category.html#t%3ACod"
+>Cod</A
+> g) =&gt; <A HREF="Data-Category-Functor.html#t%3AFunct"
+>Funct</A
+> c d (<A HREF="Data-Category-Functor.html#t%3AFunctO"
+>FunctO</A
+> c d f) (<A HREF="Data-Category-Functor.html#t%3AFunctO"
+>FunctO</A
+> c d g)</TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><SPAN CLASS="keyword"
+>data</SPAN
+>  <A NAME="t:Diag"
+><A NAME="t%3ADiag"
+></A
+></A
+><B
+>Diag</B
+> j (~&gt;) </TD
+></TR
+><TR
+><TD CLASS="body"
+><TABLE CLASS="vanilla" CELLSPACING="0" CELLPADDING="0"
+><TR
+><TD CLASS="ndoc"
+>The diagonal functor from (index-) category J to (~&gt;).
+</TD
+></TR
+><TR
+><TD CLASS="section4"
+>Constructors</TD
+></TR
+><TR
+><TD CLASS="body"
+><TABLE CLASS="vanilla" CELLSPACING="1" CELLPADDING="0"
+><TR
+><TD CLASS="arg"
+><A NAME="v:Diag"
+><A NAME="v%3ADiag"
+></A
+></A
+><B
+>Diag</B
+></TD
+><TD CLASS="rdoc"
+></TD
+></TR
+></TABLE
+></TD
+></TR
+><TR
+><TD CLASS="section4"
+><IMG SRC="minus.gif" CLASS="coll" ONCLICK="toggle(this,'i:Diag')" ALT="show/hide"
+> Instances</TD
+></TR
+><TR
+><TD CLASS="body"
+><DIV ID="i:Diag" STYLE="display:block;"
+><TABLE CLASS="vanilla" CELLSPACING="1" CELLPADDING="0"
+><TR
+><TD CLASS="decl"
+>(<A HREF="Data-Category.html#t%3ACategoryO"
+>CategoryO</A
+> ~&gt; a, <A HREF="Data-Category.html#t%3ACategoryO"
+>CategoryO</A
+> ~&gt; b) =&gt; <A HREF="Data-Category.html#t%3AFunctorA"
+>FunctorA</A
+> (<A HREF="Data-Category-Functor.html#t%3ADiag"
+>Diag</A
+> (-&gt;) ~&gt;) a b</TD
+></TR
+><TR
+><TD CLASS="decl"
+>(<A HREF="Data-Category.html#t%3ACategoryO"
+>CategoryO</A
+> ~&gt; a, <A HREF="Data-Category.html#t%3ACategoryO"
+>CategoryO</A
+> ~&gt; b) =&gt; <A HREF="Data-Category.html#t%3AFunctorA"
+>FunctorA</A
+> (<A HREF="Data-Category-Functor.html#t%3ADiag"
+>Diag</A
+> <A HREF="Data-Category-Void.html#t%3AVoid"
+>Void</A
+> ~&gt;) a b</TD
+></TR
+><TR
+><TD CLASS="decl"
+>(<A HREF="Data-Category.html#t%3ACategoryO"
+>CategoryO</A
+> ~&gt; a, <A HREF="Data-Category.html#t%3ACategoryO"
+>CategoryO</A
+> ~&gt; b) =&gt; <A HREF="Data-Category.html#t%3AFunctorA"
+>FunctorA</A
+> (<A HREF="Data-Category-Functor.html#t%3ADiag"
+>Diag</A
+> <A HREF="Data-Category-Pair.html#t%3APair"
+>Pair</A
+> ~&gt;) a b</TD
+></TR
+></TABLE
+></DIV
+></TD
+></TR
+></TABLE
+></TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><SPAN CLASS="keyword"
+>type</SPAN
+> <A NAME="t:InitMorF"
+><A NAME="t%3AInitMorF"
+></A
+></A
+><B
+>InitMorF</B
+> x u = (x <A HREF="Data-Category.html#t%3A%3A%2A-%3A"
+>:*-:</A
+> <A HREF="Data-Category.html#t%3ACod"
+>Cod</A
+> u) <A HREF="Data-Category.html#t%3A%3A.%3A"
+>:.:</A
+> u</TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><SPAN CLASS="keyword"
+>type</SPAN
+> <A NAME="t:TermMorF"
+><A NAME="t%3ATermMorF"
+></A
+></A
+><B
+>TermMorF</B
+> x u = (<A HREF="Data-Category.html#t%3ACod"
+>Cod</A
+> u <A HREF="Data-Category.html#t%3A%3A-%2A%3A"
+>:-*:</A
+> x) <A HREF="Data-Category.html#t%3A%3A.%3A"
+>:.:</A
+> u</TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><SPAN CLASS="keyword"
+>data</SPAN
+>  <A NAME="t:InitialUniversal"
+><A NAME="t%3AInitialUniversal"
+></A
+></A
+><B
+>InitialUniversal</B
+> x u a </TD
+></TR
+><TR
+><TD CLASS="body"
+><TABLE CLASS="vanilla" CELLSPACING="0" CELLPADDING="0"
+><TR
+><TD CLASS="section4"
+>Constructors</TD
+></TR
+><TR
+><TD CLASS="body"
+><TABLE CLASS="vanilla" CELLSPACING="1" CELLPADDING="0"
+><TR
+><TD CLASS="arg"
+><A NAME="v:InitialUniversal"
+><A NAME="v%3AInitialUniversal"
+></A
+></A
+><B
+>InitialUniversal</B
+> (<A HREF="Data-Category.html#t%3AF"
+>F</A
+> (<A HREF="Data-Category-Functor.html#t%3AInitMorF"
+>InitMorF</A
+> x u) a) (<A HREF="Data-Category-Functor.html#t%3AInitMorF"
+>InitMorF</A
+> x u <A HREF="Data-Category-Functor.html#t%3A%3A~%3E"
+>:~&gt;</A
+> (a <A HREF="Data-Category.html#t%3A%3A%2A-%3A"
+>:*-:</A
+> <A HREF="Data-Category.html#t%3ADom"
+>Dom</A
+> u))</TD
+><TD CLASS="rdoc"
+></TD
+></TR
+></TABLE
+></TD
+></TR
+></TABLE
+></TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><SPAN CLASS="keyword"
+>data</SPAN
+>  <A NAME="t:TerminalUniversal"
+><A NAME="t%3ATerminalUniversal"
+></A
+></A
+><B
+>TerminalUniversal</B
+> x u a </TD
+></TR
+><TR
+><TD CLASS="body"
+><TABLE CLASS="vanilla" CELLSPACING="0" CELLPADDING="0"
+><TR
+><TD CLASS="section4"
+>Constructors</TD
+></TR
+><TR
+><TD CLASS="body"
+><TABLE CLASS="vanilla" CELLSPACING="1" CELLPADDING="0"
+><TR
+><TD CLASS="arg"
+><A NAME="v:TerminalUniversal"
+><A NAME="v%3ATerminalUniversal"
+></A
+></A
+><B
+>TerminalUniversal</B
+> (<A HREF="Data-Category.html#t%3AF"
+>F</A
+> (<A HREF="Data-Category-Functor.html#t%3ATermMorF"
+>TermMorF</A
+> x u) a) (<A HREF="Data-Category-Functor.html#t%3ATermMorF"
+>TermMorF</A
+> x u <A HREF="Data-Category-Functor.html#t%3A%3A~%3E"
+>:~&gt;</A
+> (<A HREF="Data-Category.html#t%3ADom"
+>Dom</A
+> u <A HREF="Data-Category.html#t%3A%3A-%2A%3A"
+>:-*:</A
+> a))</TD
+><TD CLASS="rdoc"
+></TD
+></TR
+></TABLE
+></TD
+></TR
+></TABLE
+></TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><SPAN CLASS="keyword"
+>type</SPAN
+> <A NAME="t:Cone"
+><A NAME="t%3ACone"
+></A
+></A
+><B
+>Cone</B
+> f n = <A HREF="Data-Category.html#t%3AConst"
+>Const</A
+> (<A HREF="Data-Category.html#t%3ADom"
+>Dom</A
+> f) (<A HREF="Data-Category.html#t%3ACod"
+>Cod</A
+> f) n <A HREF="Data-Category-Functor.html#t%3A%3A~%3E"
+>:~&gt;</A
+> f</TD
+></TR
+><TR
+><TD CLASS="doc"
+>A cone from N to F is a natural transformation from the constant functor to N to F.
+</TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><SPAN CLASS="keyword"
+>type</SPAN
+> <A NAME="t:Cocone"
+><A NAME="t%3ACocone"
+></A
+></A
+><B
+>Cocone</B
+> f n = f <A HREF="Data-Category-Functor.html#t%3A%3A~%3E"
+>:~&gt;</A
+> <A HREF="Data-Category.html#t%3AConst"
+>Const</A
+> (<A HREF="Data-Category.html#t%3ADom"
+>Dom</A
+> f) (<A HREF="Data-Category.html#t%3ACod"
+>Cod</A
+> f) n</TD
+></TR
+><TR
+><TD CLASS="doc"
+>A co-cone from F to N is a natural transformation from F to the constant functor to N.
+</TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><SPAN CLASS="keyword"
+>type</SPAN
+> <A NAME="t:Limit"
+><A NAME="t%3ALimit"
+></A
+></A
+><B
+>Limit</B
+> f l = <A HREF="Data-Category-Functor.html#t%3ATerminalUniversal"
+>TerminalUniversal</A
+> (<A HREF="Data-Category-Functor.html#t%3AFunctO"
+>FunctO</A
+> (<A HREF="Data-Category.html#t%3ADom"
+>Dom</A
+> f) (<A HREF="Data-Category.html#t%3ACod"
+>Cod</A
+> f) f) (<A HREF="Data-Category-Functor.html#t%3ADiag"
+>Diag</A
+> (<A HREF="Data-Category.html#t%3ADom"
+>Dom</A
+> f) (<A HREF="Data-Category.html#t%3ACod"
+>Cod</A
+> f)) l</TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><SPAN CLASS="keyword"
+>type</SPAN
+> <A NAME="t:Colimit"
+><A NAME="t%3AColimit"
+></A
+></A
+><B
+>Colimit</B
+> f l = <A HREF="Data-Category-Functor.html#t%3AInitialUniversal"
+>InitialUniversal</A
+> (<A HREF="Data-Category-Functor.html#t%3AFunctO"
+>FunctO</A
+> (<A HREF="Data-Category.html#t%3ADom"
+>Dom</A
+> f) (<A HREF="Data-Category.html#t%3ACod"
+>Cod</A
+> f) f) (<A HREF="Data-Category-Functor.html#t%3ADiag"
+>Diag</A
+> (<A HREF="Data-Category.html#t%3ADom"
+>Dom</A
+> f) (<A HREF="Data-Category.html#t%3ACod"
+>Cod</A
+> f)) l</TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><SPAN CLASS="keyword"
+>data</SPAN
+>  <A NAME="t:Adjunction"
+><A NAME="t%3AAdjunction"
+></A
+></A
+><B
+>Adjunction</B
+> f g </TD
+></TR
+><TR
+><TD CLASS="body"
+><TABLE CLASS="vanilla" CELLSPACING="0" CELLPADDING="0"
+><TR
+><TD CLASS="section4"
+>Constructors</TD
+></TR
+><TR
+><TD CLASS="body"
+><TABLE CLASS="vanilla" CELLSPACING="5" CELLPADDING="0"
+><TR
+><TD CLASS="arg"
+><A NAME="v:Adjunction"
+><A NAME="v%3AAdjunction"
+></A
+></A
+><B
+>Adjunction</B
+></TD
+><TD CLASS="rdoc"
+></TD
+></TR
+><TR
+><TD CLASS="body" COLSPAN="2"
+><TABLE CLASS="vanilla" CELLSPACING="1" CELLPADDING="0"
+><TR
+><TD CLASS="arg"
+><A NAME="v:unit"
+><A NAME="v%3Aunit"
+></A
+></A
+><B
+>unit</B
+> :: <A HREF="Data-Category.html#t%3AId"
+>Id</A
+> (<A HREF="Data-Category.html#t%3ADom"
+>Dom</A
+> f) <A HREF="Data-Category-Functor.html#t%3A%3A~%3E"
+>:~&gt;</A
+> (g <A HREF="Data-Category.html#t%3A%3A.%3A"
+>:.:</A
+> f)</TD
+><TD CLASS="rdoc"
+></TD
+></TR
+><TR
+><TD CLASS="arg"
+><A NAME="v:counit"
+><A NAME="v%3Acounit"
+></A
+></A
+><B
+>counit</B
+> :: (f <A HREF="Data-Category.html#t%3A%3A.%3A"
+>:.:</A
+> g) <A HREF="Data-Category-Functor.html#t%3A%3A~%3E"
+>:~&gt;</A
+> <A HREF="Data-Category.html#t%3AId"
+>Id</A
+> (<A HREF="Data-Category.html#t%3ADom"
+>Dom</A
+> g)</TD
+><TD CLASS="rdoc"
+></TD
+></TR
+></TABLE
+></TD
+></TR
+></TABLE
+></TD
+></TR
+></TABLE
+></TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="botbar"
+>Produced by <A HREF="http://www.haskell.org/haddock/"
+>Haddock</A
+> version 2.4.2</TD
+></TR
+></TABLE
+></BODY
+></HTML
+>
