@@ -21,7 +21,7 @@
 ><IMG SRC="haskell_icon.gif" WIDTH="16" HEIGHT="16" ALT=" "
 ></TD
 ><TD CLASS="title"
->data-category-0.0.1: Restricted categories</TD
+>data-category-0.0.3: Restricted categories</TD
 ><TD CLASS="topbut"
 ><A HREF="index.html"
 >Contents</A
@@ -328,6 +328,20 @@
 >Z</A
 ></TD
 ></TR
+><TR
+><TD CLASS="decl"
+><A HREF="Data-Category.html#t%3ACategoryO"
+>CategoryO</A
+> ~&gt; z =&gt; <A HREF="Data-Category.html#t%3AFunctorA"
+>FunctorA</A
+> (<A HREF="Data-Category-Omega.html#t%3AOmegaF"
+>OmegaF</A
+> ~&gt; z f) <A HREF="Data-Category-Omega.html#t%3AZ"
+>Z</A
+> <A HREF="Data-Category-Omega.html#t%3AZ"
+>Z</A
+></TD
+></TR
 ></TABLE
 ></DIV
 ></TD
@@ -625,6 +639,241 @@
 ></TR
 ></TABLE
 ></DIV
+></TD
+></TR
+></TABLE
+></TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><SPAN CLASS="keyword"
+>data</SPAN
+>  <A NAME="t:OmegaF"
+><A NAME="t%3AOmegaF"
+></A
+></A
+><B
+>OmegaF</B
+> (~&gt;) z f </TD
+></TR
+><TR
+><TD CLASS="body"
+><TABLE CLASS="vanilla" CELLSPACING="0" CELLPADDING="0"
+><TR
+><TD CLASS="section4"
+>Constructors</TD
+></TR
+><TR
+><TD CLASS="body"
+><TABLE CLASS="vanilla" CELLSPACING="1" CELLPADDING="0"
+><TR
+><TD CLASS="arg"
+><A NAME="v:OmegaF"
+><A NAME="v%3AOmegaF"
+></A
+></A
+><B
+>OmegaF</B
+></TD
+><TD CLASS="rdoc"
+></TD
+></TR
+></TABLE
+></TD
+></TR
+><TR
+><TD CLASS="section4"
+><IMG SRC="minus.gif" CLASS="coll" ONCLICK="toggle(this,'i:OmegaF')" ALT="show/hide"
+> Instances</TD
+></TR
+><TR
+><TD CLASS="body"
+><DIV ID="i:OmegaF" STYLE="display:block;"
+><TABLE CLASS="vanilla" CELLSPACING="1" CELLPADDING="0"
+><TR
+><TD CLASS="decl"
+><A HREF="Data-Category.html#t%3ACategoryO"
+>CategoryO</A
+> ~&gt; z =&gt; <A HREF="Data-Category.html#t%3AFunctorA"
+>FunctorA</A
+> (<A HREF="Data-Category-Omega.html#t%3AOmegaF"
+>OmegaF</A
+> ~&gt; z f) <A HREF="Data-Category-Omega.html#t%3AZ"
+>Z</A
+> <A HREF="Data-Category-Omega.html#t%3AZ"
+>Z</A
+></TD
+></TR
+></TABLE
+></DIV
+></TD
+></TR
+></TABLE
+></TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><SPAN CLASS="keyword"
+>class</SPAN
+> <A HREF="Data-Category.html#t%3ACategoryO"
+>CategoryO</A
+> ~&gt; z =&gt; <A NAME="t:OmegaLimit"
+><A NAME="t%3AOmegaLimit"
+></A
+></A
+><B
+>OmegaLimit</B
+> (~&gt;) z f  <SPAN CLASS="keyword"
+>where</SPAN
+></TD
+></TR
+><TR
+><TD CLASS="body"
+><TABLE CLASS="vanilla" CELLSPACING="0" CELLPADDING="0"
+><TR
+><TD CLASS="s8"
+></TD
+></TR
+><TR
+><TD CLASS="section4"
+>Associated Types</TD
+></TR
+><TR
+><TD CLASS="body"
+><TABLE CLASS="vanilla" CELLSPACING="0" CELLPADDING="0"
+><TR
+><TD CLASS="decl"
+><SPAN CLASS="keyword"
+>type</SPAN
+> <A NAME="t:OmegaL"
+><A NAME="t%3AOmegaL"
+></A
+></A
+><B
+>OmegaL</B
+> (~&gt;) z f :: *</TD
+></TR
+></TABLE
+></TD
+></TR
+><TR
+><TD CLASS="s8"
+></TD
+></TR
+><TR
+><TD CLASS="section4"
+>Methods</TD
+></TR
+><TR
+><TD CLASS="body"
+><TABLE CLASS="vanilla" CELLSPACING="0" CELLPADDING="0"
+><TR
+><TD CLASS="decl"
+><A NAME="v:omegaLimit"
+><A NAME="v%3AomegaLimit"
+></A
+></A
+><B
+>omegaLimit</B
+> :: <A HREF="Data-Category-Functor.html#t%3ALimit"
+>Limit</A
+> (<A HREF="Data-Category-Omega.html#t%3AOmegaF"
+>OmegaF</A
+> ~&gt; z f) (<A HREF="Data-Category-Omega.html#t%3AOmegaL"
+>OmegaL</A
+> ~&gt; z f)</TD
+></TR
+></TABLE
+></TD
+></TR
+></TABLE
+></TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><SPAN CLASS="keyword"
+>class</SPAN
+> <A HREF="Data-Category.html#t%3ACategoryO"
+>CategoryO</A
+> ~&gt; z =&gt; <A NAME="t:OmegaColimit"
+><A NAME="t%3AOmegaColimit"
+></A
+></A
+><B
+>OmegaColimit</B
+> (~&gt;) z f  <SPAN CLASS="keyword"
+>where</SPAN
+></TD
+></TR
+><TR
+><TD CLASS="body"
+><TABLE CLASS="vanilla" CELLSPACING="0" CELLPADDING="0"
+><TR
+><TD CLASS="s8"
+></TD
+></TR
+><TR
+><TD CLASS="section4"
+>Associated Types</TD
+></TR
+><TR
+><TD CLASS="body"
+><TABLE CLASS="vanilla" CELLSPACING="0" CELLPADDING="0"
+><TR
+><TD CLASS="decl"
+><SPAN CLASS="keyword"
+>type</SPAN
+> <A NAME="t:OmegaC"
+><A NAME="t%3AOmegaC"
+></A
+></A
+><B
+>OmegaC</B
+> (~&gt;) z f :: *</TD
+></TR
+></TABLE
+></TD
+></TR
+><TR
+><TD CLASS="s8"
+></TD
+></TR
+><TR
+><TD CLASS="section4"
+>Methods</TD
+></TR
+><TR
+><TD CLASS="body"
+><TABLE CLASS="vanilla" CELLSPACING="0" CELLPADDING="0"
+><TR
+><TD CLASS="decl"
+><A NAME="v:omegaColimit"
+><A NAME="v%3AomegaColimit"
+></A
+></A
+><B
+>omegaColimit</B
+> :: <A HREF="Data-Category-Functor.html#t%3AColimit"
+>Colimit</A
+> (<A HREF="Data-Category-Omega.html#t%3AOmegaF"
+>OmegaF</A
+> ~&gt; z f) (<A HREF="Data-Category-Omega.html#t%3AOmegaC"
+>OmegaC</A
+> ~&gt; z f)</TD
+></TR
+></TABLE
 ></TD
 ></TR
 ></TABLE

@@ -21,7 +21,7 @@
 ><IMG SRC="haskell_icon.gif" WIDTH="16" HEIGHT="16" ALT=" "
 ></TD
 ><TD CLASS="title"
->data-category-0.0.1: Restricted categories</TD
+>data-category-0.0.3: Restricted categories</TD
 ><TD CLASS="topbut"
 ><A HREF="index.html"
 >Contents</A
@@ -41,6 +41,47 @@
 ><TD
 ><FONT SIZE="6"
 >Data.Category</FONT
+></TD
+></TR
+></TABLE
+></TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD
+><TABLE CLASS="vanilla" CELLSPACING="0" CELLPADDING="0"
+><TR
+><TD CLASS="section4"
+><B
+>Contents</B
+></TD
+></TR
+><TR
+><TD
+><DL
+><DT
+><A HREF="#1"
+>Categories
+</A
+></DT
+><DT
+><A HREF="#2"
+>Functors
+</A
+></DT
+><DD
+><DL
+><DT
+><A HREF="#3"
+>Functor instances
+</A
+></DT
+></DL
+></DD
+></DL
 ></TD
 ></TR
 ></TABLE
@@ -347,8 +388,17 @@
 ></TD
 ></TR
 ><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
 ><TD CLASS="section1"
->Documentation</TD
+><A NAME="1"
+><A NAME="1"
+>Categories
+</A
+></A
+></TD
 ></TR
 ><TR
 ><TD CLASS="s15"
@@ -371,6 +421,11 @@
 ><TR
 ><TD CLASS="body"
 ><TABLE CLASS="vanilla" CELLSPACING="0" CELLPADDING="0"
+><TR
+><TD CLASS="ndoc"
+>An instance CategoryO (~&gt;) a declares a as an object of the category (~&gt;).
+</TD
+></TR
 ><TR
 ><TD CLASS="s8"
 ></TD
@@ -564,6 +619,16 @@
 ></TR
 ><TR
 ><TD CLASS="decl"
+><A HREF="/Library/Frameworks/GHC.framework/Versions/610/usr/share/doc/ghc/libraries/base/Data-Monoid.html#t%3AMonoid"
+>Monoid</A
+> m =&gt; <A HREF="Data-Category.html#t%3ACategoryO"
+>CategoryO</A
+> (<A HREF="Data-Category-Monoid.html#t%3AMonoidCat"
+>MonoidCat</A
+> m) m</TD
+></TR
+><TR
+><TD CLASS="decl"
 >(<A HREF="Data-Category.html#t%3ADom"
 >Dom</A
 > m ~ (-&gt;), <A HREF="Data-Category.html#t%3ACod"
@@ -575,34 +640,6 @@
 > (<A HREF="Data-Category-Kleisli.html#t%3AKleisli"
 >Kleisli</A
 > (-&gt;) m) o</TD
-></TR
-><TR
-><TD CLASS="decl"
->(<A HREF="Data-Category.html#t%3ADom"
->Dom</A
-> f ~ (-&gt;), <A HREF="Data-Category.html#t%3ACod"
->Cod</A
-> f ~ d) =&gt; <A HREF="Data-Category.html#t%3ACategoryO"
->CategoryO</A
-> (<A HREF="Data-Category-Functor.html#t%3AFunct"
->Funct</A
-> (-&gt;) d) (<A HREF="Data-Category-Functor.html#t%3AFunctO"
->FunctO</A
-> (-&gt;) d f)</TD
-></TR
-><TR
-><TD CLASS="decl"
->(<A HREF="Data-Category.html#t%3ADom"
->Dom</A
-> f ~ (-&gt;), <A HREF="Data-Category.html#t%3ACod"
->Cod</A
-> f ~ d) =&gt; <A HREF="Data-Category.html#t%3ACategoryO"
->CategoryO</A
-> (<A HREF="Data-Category-Functor.html#t%3AFunct"
->Funct</A
-> (-&gt;) d) (<A HREF="Data-Category-Functor.html#t%3AFunctO"
->FunctO</A
-> (-&gt;) d f)</TD
 ></TR
 ><TR
 ><TD CLASS="decl"
@@ -842,6 +879,11 @@
 ><TR
 ><TD CLASS="body"
 ><TABLE CLASS="vanilla" CELLSPACING="0" CELLPADDING="0"
+><TR
+><TD CLASS="ndoc"
+>An instance CategoryA (~&gt;) a b c defines composition of the arrows a ~&gt; b and b ~&gt; c.
+</TD
+></TR
 ><TR
 ><TD CLASS="s8"
 ></TD
@@ -1239,6 +1281,16 @@
 ></TR
 ><TR
 ><TD CLASS="decl"
+><A HREF="/Library/Frameworks/GHC.framework/Versions/610/usr/share/doc/ghc/libraries/base/Data-Monoid.html#t%3AMonoid"
+>Monoid</A
+> m =&gt; <A HREF="Data-Category.html#t%3ACategoryA"
+>CategoryA</A
+> (<A HREF="Data-Category-Monoid.html#t%3AMonoidCat"
+>MonoidCat</A
+> m) m m m</TD
+></TR
+><TR
+><TD CLASS="decl"
 >(<A HREF="Data-Category.html#t%3ADom"
 >Dom</A
 > m ~ (-&gt;), <A HREF="Data-Category.html#t%3ACod"
@@ -1596,11 +1648,34 @@
 >S</A
 > b)</TD
 ></TR
+><TR
+><TD CLASS="decl"
+><A HREF="/Library/Frameworks/GHC.framework/Versions/610/usr/share/doc/ghc/libraries/base/Data-Monoid.html#t%3AMonoid"
+>Monoid</A
+> m =&gt; <A HREF="Data-Category.html#t%3AApply"
+>Apply</A
+> (<A HREF="Data-Category-Monoid.html#t%3AMonoidCat"
+>MonoidCat</A
+> m) m m</TD
+></TR
 ></TABLE
 ></DIV
 ></TD
 ></TR
 ></TABLE
+></TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="section1"
+><A NAME="2"
+><A NAME="2"
+>Functors
+</A
+></A
 ></TD
 ></TR
 ><TR
@@ -1620,6 +1695,21 @@
 > ftag a :: *</TD
 ></TR
 ><TR
+><TD CLASS="body"
+><TABLE CLASS="vanilla" CELLSPACING="0" CELLPADDING="0"
+><TR
+><TD CLASS="ndoc"
+>Functors are represented by a type tag. The type family <TT
+><A HREF="Data-Category.html#t%3AF"
+>F</A
+></TT
+> turns the tag into the actual functor.
+</TD
+></TR
+></TABLE
+></TD
+></TR
+><TR
 ><TD CLASS="s15"
 ></TD
 ></TR
@@ -1636,6 +1726,17 @@
 > ftag :: * -&gt; * -&gt; *</TD
 ></TR
 ><TR
+><TD CLASS="body"
+><TABLE CLASS="vanilla" CELLSPACING="0" CELLPADDING="0"
+><TR
+><TD CLASS="ndoc"
+>The domain, or source category, of the functor.
+</TD
+></TR
+></TABLE
+></TD
+></TR
+><TR
 ><TD CLASS="s15"
 ></TD
 ></TR
@@ -1650,6 +1751,17 @@
 ><B
 >Cod</B
 > ftag :: * -&gt; * -&gt; *</TD
+></TR
+><TR
+><TD CLASS="body"
+><TABLE CLASS="vanilla" CELLSPACING="0" CELLPADDING="0"
+><TR
+><TD CLASS="ndoc"
+>The codomain, or target category, of the funcor.
+</TD
+></TR
+></TABLE
+></TD
 ></TR
 ><TR
 ><TD CLASS="s15"
@@ -1680,6 +1792,12 @@
 ><TR
 ><TD CLASS="body"
 ><TABLE CLASS="vanilla" CELLSPACING="0" CELLPADDING="0"
+><TR
+><TD CLASS="ndoc"
+>The mapping of arrows by covariant functors.
+ To make this type check, we need to pass the type tag along.
+</TD
+></TR
 ><TR
 ><TD CLASS="s8"
 ></TD
@@ -2025,6 +2143,34 @@
 >Fst</A
 ></TD
 ></TR
+><TR
+><TD CLASS="decl"
+><A HREF="Data-Category.html#t%3ACategoryO"
+>CategoryO</A
+> ~&gt; z =&gt; <A HREF="Data-Category.html#t%3AFunctorA"
+>FunctorA</A
+> (<A HREF="Data-Category-Omega.html#t%3AOmegaF"
+>OmegaF</A
+> ~&gt; z f) <A HREF="Data-Category-Omega.html#t%3AZ"
+>Z</A
+> <A HREF="Data-Category-Omega.html#t%3AZ"
+>Z</A
+></TD
+></TR
+><TR
+><TD CLASS="decl"
+><A HREF="Data-Category.html#t%3ACategoryO"
+>CategoryO</A
+> ~&gt; z =&gt; <A HREF="Data-Category.html#t%3AFunctorA"
+>FunctorA</A
+> (<A HREF="Data-Category-Omega.html#t%3AOmegaF"
+>OmegaF</A
+> ~&gt; z f) <A HREF="Data-Category-Omega.html#t%3AZ"
+>Z</A
+> <A HREF="Data-Category-Omega.html#t%3AZ"
+>Z</A
+></TD
+></TR
 ></TABLE
 ></DIV
 ></TD
@@ -2061,6 +2207,11 @@
 ><TR
 ><TD CLASS="body"
 ><TABLE CLASS="vanilla" CELLSPACING="0" CELLPADDING="0"
+><TR
+><TD CLASS="ndoc"
+>The mapping of arrows by contravariant functors.
+</TD
+></TR
 ><TR
 ><TD CLASS="s8"
 ></TD
@@ -2125,6 +2276,19 @@
 ></TD
 ></TR
 ></TABLE
+></TD
+></TR
+><TR
+><TD CLASS="s15"
+></TD
+></TR
+><TR
+><TD CLASS="section2"
+><A NAME="3"
+><A NAME="3"
+>Functor instances
+</A
+></A
 ></TD
 ></TR
 ><TR

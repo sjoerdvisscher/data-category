@@ -46,6 +46,22 @@ data instance Funct Omega d (FunctO Omega d f) (FunctO Omega d g) =
 instance (Dom f ~ Omega, Cod f ~ d, CategoryO (Cod f) (F f Z)) => CategoryO (Funct Omega d) (FunctO Omega d f) where
   id = OmegaNat id (const id)
 
+data OmegaF ((~>) :: * -> * -> *) z f = OmegaF
+type instance Dom (OmegaF (~>) z f) = Omega
+type instance Cod (OmegaF (~>) z f) = (~>)
+type instance F (OmegaF (~>) z f) Z = z
+type instance F (OmegaF (~>) z f) (S n) = F f (F (OmegaF (~>) z f) n)
+instance CategoryO (~>) z => FunctorA (OmegaF (~>) z f) Z Z where
+  OmegaF % IdZ = id
+
+class CategoryO (~>) z => OmegaLimit (~>) z f where
+  type OmegaL (~>) z f :: *
+  omegaLimit :: Limit (OmegaF (~>) z f) (OmegaL (~>) z f)
+class CategoryO (~>) z => OmegaColimit (~>) z f where
+  type OmegaC (~>) z f :: *
+  omegaColimit :: Colimit (OmegaF (~>) z f) (OmegaC (~>) z f)
+  
+
 instance VoidColimit Omega where
   type InitialObject Omega = Z
   voidColimit = InitialUniversal VoidNat (OmegaNat (\VoidNat -> IdZ) (\cpt VoidNat -> GTZ (cpt VoidNat)))
