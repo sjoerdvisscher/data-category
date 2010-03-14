@@ -36,17 +36,24 @@ data Zero
 magic :: Zero -> a
 magic x = x `seq` error "we never get this far"
 
-initObjInHask :: Colimit (VoidF (->)) Zero
-initObjInHask = InitialUniversal VoidNat $ HaskNat (\VoidNat -> magic)
+instance VoidColimit (->) where
+  type InitialObject (->) = Zero
+  voidColimit = InitialUniversal VoidNat (HaskNat $ \VoidNat -> magic)
+instance VoidLimit (->) where
+  type TerminalObject (->) = ()
+  voidLimit = TerminalUniversal VoidNat (HaskNat $ \VoidNat -> const ())
 
-termObjInHask :: Limit (VoidF (->)) ()
-termObjInHask = TerminalUniversal VoidNat $ HaskNat (\VoidNat -> const ())
+initObjInHask :: Limit (Id (->)) Zero
+initObjInHask = TerminalUniversal (HaskNat $ magic) (HaskNat unHaskNat)
+termObjInHask :: Colimit (Id (->)) ()
+termObjInHask = InitialUniversal (HaskNat $ const ()) (HaskNat unHaskNat)
 
-prodColimitInHask :: Colimit (PairF (->) x y) (Either x y)
-prodColimitInHask = InitialUniversal (Left :***: Right) $ HaskNat (\(l :***: r) -> either l r)
-
-prodLimitInHask :: Limit (PairF (->) x y) (x, y)
-prodLimitInHask = TerminalUniversal (fst :***: snd) $ HaskNat (\(f :***: s) -> f &&& s)
+instance PairColimit (->) x y where
+  type Coproduct x y = Either x y
+  pairColimit = InitialUniversal (Left :***: Right) (HaskNat $ \(l :***: r) -> either l r)
+instance PairLimit (->) x y where
+  type Product x y = (x, y)
+  pairLimit = TerminalUniversal (fst :***: snd) (HaskNat $ \(f :***: s) -> f &&& s)
 
 
 data ProdInHask = ProdInHask

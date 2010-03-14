@@ -47,28 +47,35 @@ data instance Funct Boolean d (FunctO Boolean d f) (FunctO Boolean d g) =
 instance (CategoryO (Cod f) (F f Fls), CategoryO (Cod f) (F f Tru)) => CategoryO (Funct Boolean d) (FunctO Boolean d f) where
   id = BooleanNat id id
 
-initObjInBoolean :: Colimit (VoidF Boolean) Fls
-initObjInBoolean = InitialUniversal VoidNat $ BooleanNat (\VoidNat -> IdFls) (\VoidNat -> FlsTru)
-initObjInBoolean' :: Limit (Id Boolean) Fls
-initObjInBoolean' = TerminalUniversal (BooleanNat IdFls FlsTru) $ BooleanNat flsComp flsComp
+instance VoidColimit Boolean where
+  type InitialObject Boolean = Fls
+  voidColimit = InitialUniversal VoidNat (BooleanNat (\VoidNat -> IdFls) (\VoidNat -> FlsTru))
+instance VoidLimit Boolean where
+  type TerminalObject Boolean = Tru
+  voidLimit = TerminalUniversal VoidNat (BooleanNat (\VoidNat -> FlsTru) (\VoidNat -> IdTru))
 
-termObjInBoolean :: Limit (VoidF Boolean) Tru
-termObjInBoolean = TerminalUniversal VoidNat $ BooleanNat (\VoidNat -> FlsTru) (\VoidNat -> IdTru)
-termObjInBoolean' :: Colimit (Id Boolean) Tru
-termObjInBoolean' = InitialUniversal (BooleanNat FlsTru IdTru) $ BooleanNat truComp truComp
+instance PairLimit Boolean Fls Fls where 
+  type Product Fls Fls = Fls
+  pairLimit = TerminalUniversal (IdFls :***: IdFls) (BooleanNat fstComp sndComp)
+instance PairLimit Boolean Fls Tru where 
+  type Product Fls Tru = Fls
+  pairLimit = TerminalUniversal (IdFls :***: FlsTru) (BooleanNat fstComp fstComp)
+instance PairLimit Boolean Tru Fls where 
+  type Product Tru Fls = Fls
+  pairLimit = TerminalUniversal (FlsTru :***: IdFls) (BooleanNat sndComp sndComp)
+instance PairLimit Boolean Tru Tru where 
+  type Product Tru Tru = Tru
+  pairLimit = TerminalUniversal (IdTru :***: IdTru) (BooleanNat fstComp sndComp)
 
-
-type family And x y :: *
-type instance And Fls Fls = Fls
-type instance And Fls Tru = Fls
-type instance And Tru Fls = Fls
-type instance And Tru Tru = Tru
-
-prodLimitInBooleanFF :: Limit (PairF Boolean Fls Fls) (And Fls Fls)
-prodLimitInBooleanFF = TerminalUniversal (IdFls :***: IdFls) $ BooleanNat (\(f :***: s) -> f) (\(f :***: s) -> s)
-prodLimitInBooleanFT :: Limit (PairF Boolean Fls Tru) (And Fls Tru)
-prodLimitInBooleanFT = TerminalUniversal (IdFls :***: FlsTru) $ BooleanNat (\(f :***: s) -> f) (\(f :***: s) -> f)
-prodLimitInBooleanTF :: Limit (PairF Boolean Tru Fls) (And Tru Fls)
-prodLimitInBooleanTF = TerminalUniversal (FlsTru :***: IdFls) $ BooleanNat (\(f :***: s) -> s) (\(f :***: s) -> s)
-prodLimitInBooleanTT :: Limit (PairF Boolean Tru Tru) (And Tru Tru)
-prodLimitInBooleanTT = TerminalUniversal (IdTru :***: IdTru) $ BooleanNat (\(f :***: s) -> f) (\(f :***: s) -> s)
+instance PairColimit Boolean Fls Fls where 
+  type Coproduct Fls Fls = Fls
+  pairColimit = InitialUniversal (IdFls :***: IdFls) (BooleanNat fstComp sndComp)
+instance PairColimit Boolean Fls Tru where 
+  type Coproduct Fls Tru = Tru
+  pairColimit = InitialUniversal (FlsTru :***: IdTru) (BooleanNat sndComp sndComp)
+instance PairColimit Boolean Tru Fls where 
+  type Coproduct Tru Fls = Tru
+  pairColimit = InitialUniversal (IdTru :***: FlsTru) (BooleanNat fstComp fstComp)
+instance PairColimit Boolean Tru Tru where 
+  type Coproduct Tru Tru = Tru
+  pairColimit = InitialUniversal (IdTru :***: IdTru) (BooleanNat fstComp sndComp)

@@ -14,6 +14,13 @@ instance CategoryO (Funct Void d) (FunctO Void d f) where
 instance (CategoryO (~>) a, CategoryO (~>) b) => FunctorA (Diag Void (~>)) a b where
   Diag % f = VoidNat
 
-data VoidF ((~>) :: * -> * -> *) = Prod
+data VoidF ((~>) :: * -> * -> *) = VoidF
 type instance Dom (VoidF (~>)) = Void
 type instance Cod (VoidF (~>)) = (~>)
+
+class VoidColimit (~>) where
+  type InitialObject (~>) :: *
+  voidColimit :: Colimit (VoidF (~>)) (InitialObject (~>))
+class VoidLimit (~>) where
+  type TerminalObject (~>) :: *
+  voidLimit :: Limit (VoidF (~>)) (TerminalObject (~>))
