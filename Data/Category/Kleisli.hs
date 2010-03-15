@@ -36,7 +36,7 @@ instance (Monad m, Dom m ~ (->), Cod m ~ (->)) => CategoryO (Kleisli (->) m) o w
 instance (Monad m, Dom m ~ (->), Cod m ~ (->), FunctorA m b (F m c)) => CategoryA (Kleisli (->) m) a b c where
   (Kleisli f) . (Kleisli g) = Kleisli $ \m -> unsafeCoerce (unHaskNat (join m)) . (m % f m) . g m
 newtype instance Funct (Kleisli (->) m) d (FunctO (Kleisli (->) m) d f) (FunctO (Kleisli (->) m) d g) = 
-  KleisliNat { unKleisliNat :: (forall a. CategoryO d (F f a) => Component f g a) }
+  KleisliNat (forall a. CategoryO d (F f a) => Component f g a)
 
 data KleisliAdjF ((~>) :: * -> * -> *) m = KleisliAdjF m
 type instance Dom (KleisliAdjF (~>) m) = (~>)
