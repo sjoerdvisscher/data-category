@@ -15,6 +15,7 @@ module Data.Category (
     CategoryO(..)
   , CategoryA(..)
   , Apply(..)
+  , Obj, obj
   
   -- * Functors
   , F
@@ -47,7 +48,18 @@ class (CategoryO (~>) a, CategoryO (~>) b) => Apply (~>) a b where
   -- Would have liked to use ($) here, but that causes GHC to crash.
   -- http://hackage.haskell.org/trac/ghc/ticket/3297
   ($$) :: a ~> b -> a -> b
-  
+
+-- | The type synonym @Obj a@, when used as the type of a function argument,
+-- is a promise that the value of the argument is not used, and only the type.
+-- This is used to pass objects (which are types) to functions.
+type Obj a = a
+-- | 'obj' is a synonym for 'undefined'. When you need to pass an object to
+-- a function, you can use @(obj :: type)@.
+obj :: Obj a
+obj = undefined
+
+
+
 -- | Functors are represented by a type tag. The type family 'F' turns the tag into the actual functor.
 type family F ftag a :: *
 -- | The domain, or source category, of the functor.

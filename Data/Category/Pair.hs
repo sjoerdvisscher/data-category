@@ -46,9 +46,14 @@ instance Apply Pair Snd Snd where
   IdSnd $$ Snd = Snd
 
   
-data instance Funct Pair d (FunctO Pair d f) (FunctO Pair d g) = 
-  (:***:) { fstComp :: Component f g Fst, sndComp :: Component f g Snd }
-instance (CategoryO (Cod f) (F f Fst), CategoryO (Cod f) (F f Snd)) => CategoryO (Funct Pair d) (FunctO Pair d f) where
+data instance Funct Pair d (FunctO f) (FunctO g) = 
+  (:***:) (Component f g Fst) (Component f g Snd)
+instance (Dom f ~ Pair, Dom g ~ Pair, Cod f ~ d, Cod g ~ d, CategoryO d (F f Fst)) => GetComponent Pair d f g Fst where
+  (f :***: s) ! Fst = f
+instance (Dom f ~ Pair, Dom g ~ Pair, Cod f ~ d, Cod g ~ d, CategoryO d (F f Snd)) => GetComponent Pair d f g Snd where
+  (f :***: s) ! Snd = s
+
+instance (Dom f ~ Pair, Cod f ~ d, CategoryO d (F f Fst), CategoryO d (F f Snd)) => CategoryO (Funct Pair d) (FunctO f) where
   id = id :***: id
 instance (CategoryO (~>) a, CategoryO (~>) b) => FunctorA (Diag Pair (~>)) a b where
   Diag % f = f :***: f

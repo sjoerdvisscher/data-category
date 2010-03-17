@@ -21,9 +21,9 @@ import Data.Category.Functor
 -- | The (empty) data type of the arrows in /0/. 
 data Void a b
 
-data instance Funct Void d (FunctO Void d f) (FunctO Void d g) = 
+data instance Funct Void d (FunctO f) (FunctO g) = 
   VoidNat
-instance CategoryO (Funct Void d) (FunctO Void d f) where
+instance CategoryO (Funct Void d) (FunctO f) where
   id = VoidNat
 instance (CategoryO (~>) a, CategoryO (~>) b) => FunctorA (Diag Void (~>)) a b where
   Diag % f = VoidNat

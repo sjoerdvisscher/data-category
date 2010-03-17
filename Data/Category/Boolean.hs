@@ -52,9 +52,15 @@ instance CategoryA Boolean Tru Tru Tru where
   
 
   
-data instance Funct Boolean d (FunctO Boolean d f) (FunctO Boolean d g) = 
-  BooleanNat { flsComp :: Component f g Fls, truComp :: Component f g Tru }
-instance (CategoryO (Cod f) (F f Fls), CategoryO (Cod f) (F f Tru)) => CategoryO (Funct Boolean d) (FunctO Boolean d f) where
+data instance Funct Boolean d (FunctO f) (FunctO g) = 
+  BooleanNat (Component f g Fls) (Component f g Tru)
+instance (Dom f ~ Boolean, Dom g ~ Boolean, Cod f ~ d, Cod g ~ d, CategoryO d (F f Fls)) => GetComponent Boolean d f g Fls where
+  (BooleanNat f t) ! Fls = f
+instance (Dom f ~ Boolean, Dom g ~ Boolean, Cod f ~ d, Cod g ~ d, CategoryO d (F f Tru)) => GetComponent Boolean d f g Tru where
+  (BooleanNat f t) ! Tru = t
+
+instance (Dom f ~ Boolean, Cod f ~ d, CategoryO d (F f Fls), CategoryO d (F f Tru)) 
+  => CategoryO (Funct Boolean d) (FunctO f) where
   id = BooleanNat id id
 
 instance VoidColimit Boolean where
@@ -66,26 +72,26 @@ instance VoidLimit Boolean where
 
 instance PairLimit Boolean Fls Fls where 
   type Product Fls Fls = Fls
-  pairLimit = TerminalUniversal (IdFls :***: IdFls) (BooleanNat fstComp sndComp)
+  pairLimit = TerminalUniversal (IdFls :***: IdFls) (BooleanNat (! Fst) (! Snd))
 instance PairLimit Boolean Fls Tru where 
   type Product Fls Tru = Fls
-  pairLimit = TerminalUniversal (IdFls :***: FlsTru) (BooleanNat fstComp fstComp)
+  pairLimit = TerminalUniversal (IdFls :***: FlsTru) (BooleanNat (! Fst) (! Fst))
 instance PairLimit Boolean Tru Fls where 
   type Product Tru Fls = Fls
-  pairLimit = TerminalUniversal (FlsTru :***: IdFls) (BooleanNat sndComp sndComp)
+  pairLimit = TerminalUniversal (FlsTru :***: IdFls) (BooleanNat (! Snd) (! Snd))
 instance PairLimit Boolean Tru Tru where 
   type Product Tru Tru = Tru
-  pairLimit = TerminalUniversal (IdTru :***: IdTru) (BooleanNat fstComp sndComp)
+  pairLimit = TerminalUniversal (IdTru :***: IdTru) (BooleanNat (! Fst) (! Snd))
 
 instance PairColimit Boolean Fls Fls where 
   type Coproduct Fls Fls = Fls
-  pairColimit = InitialUniversal (IdFls :***: IdFls) (BooleanNat fstComp sndComp)
+  pairColimit = InitialUniversal (IdFls :***: IdFls) (BooleanNat (! Fst) (! Snd))
 instance PairColimit Boolean Fls Tru where 
   type Coproduct Fls Tru = Tru
-  pairColimit = InitialUniversal (FlsTru :***: IdTru) (BooleanNat sndComp sndComp)
+  pairColimit = InitialUniversal (FlsTru :***: IdTru) (BooleanNat (! Snd) (! Snd))
 instance PairColimit Boolean Tru Fls where 
   type Coproduct Tru Fls = Tru
-  pairColimit = InitialUniversal (IdTru :***: FlsTru) (BooleanNat fstComp fstComp)
+  pairColimit = InitialUniversal (IdTru :***: FlsTru) (BooleanNat (! Fst) (! Fst))
 instance PairColimit Boolean Tru Tru where 
   type Coproduct Tru Tru = Tru
-  pairColimit = InitialUniversal (IdTru :***: IdTru) (BooleanNat fstComp sndComp)
+  pairColimit = InitialUniversal (IdTru :***: IdTru) (BooleanNat (! Fst) (! Snd))

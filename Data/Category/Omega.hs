@@ -53,9 +53,9 @@ instance Apply Omega a b => Apply Omega (S a) (S b) where
   StepS d $$ S a = S (d $$ a)
 
 
-data instance Funct Omega d (FunctO Omega d f) (FunctO Omega d g) = 
-  OmegaNat (Component f g Z) (forall n. CategoryO d (F f (S n)) => Component f g n -> Component f g (S n))
-instance (Dom f ~ Omega, Cod f ~ d, CategoryO (Cod f) (F f Z)) => CategoryO (Funct Omega d) (FunctO Omega d f) where
+data instance Funct Omega d (FunctO f) (FunctO g) = 
+  OmegaNat (Component f g Z) (forall n. (CategoryO Omega n, CategoryO d (F f (S n))) => Component f g n -> Component f g (S n))
+instance (Dom f ~ Omega, Cod f ~ d, CategoryO d (F f Z)) => CategoryO (Funct Omega d) (FunctO f) where
   id = OmegaNat id (const id)
 
 data OmegaF ((~>) :: * -> * -> *) z f = OmegaF
@@ -81,14 +81,14 @@ instance VoidColimit Omega where
 -- The product in omega is the minimum.
 instance PairLimit Omega Z Z where 
   type Product Z Z = Z
-  pairLimit = TerminalUniversal (IdZ :***: IdZ) (OmegaNat fstComp (\cpt -> sndComp))
+  pairLimit = TerminalUniversal (IdZ :***: IdZ) (OmegaNat (! Fst) (\cpt -> (! Snd)))
 instance (PairLimit Omega Z n, Product Z n ~ Z) => PairLimit Omega Z (S n) where 
   type Product Z (S n) = Z
-  pairLimit = TerminalUniversal (IdZ :***: GTZ p) (OmegaNat fstComp (\cpt -> fstComp)) where
+  pairLimit = TerminalUniversal (IdZ :***: GTZ p) (OmegaNat (! Fst) (\cpt -> (! Fst))) where
     TerminalUniversal (_ :***: p) _ = pairLimit :: Limit (PairF Omega Z n) (Product Z n)
 instance (PairLimit Omega n Z, Product n Z ~ Z) => PairLimit Omega (S n) Z where 
   type Product (S n) Z = Z
-  pairLimit = TerminalUniversal (GTZ p :***: IdZ) (OmegaNat sndComp (\cpt -> sndComp)) where
+  pairLimit = TerminalUniversal (GTZ p :***: IdZ) (OmegaNat (! Snd) (\cpt -> (! Snd))) where
     TerminalUniversal (p :***: _) _ = pairLimit :: Limit (PairF Omega n Z) (Product n Z)
 instance (PairLimit Omega a b) => PairLimit Omega (S a) (S b) where 
   type Product (S a) (S b) = S (Product a b)
@@ -98,14 +98,14 @@ instance (PairLimit Omega a b) => PairLimit Omega (S a) (S b) where
 -- The coproduct in omega is the maximum.
 instance PairColimit Omega Z Z where 
   type Coproduct Z Z = Z
-  pairColimit = InitialUniversal (IdZ :***: IdZ) (OmegaNat fstComp (\cpt -> sndComp))
+  pairColimit = InitialUniversal (IdZ :***: IdZ) (OmegaNat (! Fst) (\cpt -> (! Snd)))
 instance (PairColimit Omega Z n, Coproduct Z n ~ n) => PairColimit Omega Z (S n) where 
   type Coproduct Z (S n) = S n
-  pairColimit = InitialUniversal (GTZ p1 :***: StepS p2) (OmegaNat sndComp (\cpt -> sndComp)) where
+  pairColimit = InitialUniversal (GTZ p1 :***: StepS p2) (OmegaNat (! Snd) (\cpt -> (! Snd))) where
     InitialUniversal (p1 :***: p2) _ = pairColimit :: Colimit (PairF Omega Z n) (Coproduct Z n)
 instance (PairColimit Omega n Z, Coproduct n Z ~ n) => PairColimit Omega (S n) Z where 
   type Coproduct (S n) Z = S n
-  pairColimit = InitialUniversal (StepS p1 :***: GTZ p2) (OmegaNat fstComp (\cpt -> fstComp)) where
+  pairColimit = InitialUniversal (StepS p1 :***: GTZ p2) (OmegaNat (! Fst) (\cpt -> (! Fst))) where
     InitialUniversal (p1 :***: p2) _ = pairColimit :: Colimit (PairF Omega n Z) (Coproduct n Z)
 instance (PairColimit Omega a b) => PairColimit Omega (S a) (S b) where 
   type Coproduct (S a) (S b) = S (Coproduct a b)
