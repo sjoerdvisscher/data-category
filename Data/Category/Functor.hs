@@ -17,27 +17,32 @@ import Data.Category
 
 
 -- | Functor category Funct(C, D), or D^C.
+-- Objects of Funct(C, D) are functors from C to D.
 -- Arrows of Funct(C, D) are natural transformations.
 -- Each category C needs its own data instance.
-data family Funct (c :: * -> * -> *) (d :: * -> * -> *) (a :: *) (b :: *) :: *
+data family Funct (c :: * -> * -> *) (d :: * -> * -> *) (f :: *) (g :: *) :: *
 
--- | Objects of Funct(C, D) are functors from C to D.
--- Instances of 'CategoryO' need to be written for every category C.
-data FunctO f = FunctO f
+-- | @f :~> g@ is a natural transformation from functor f to functor g.
+type f :~> g = (c ~ Dom f, c ~ Dom g, d ~ Cod f, d ~ Cod g) => Funct c d f g
 
+-- | Natural transformations are built up of components, 
+-- one for each object @z@ in the domain category of @f@ and @g@.
+-- This type synonym can be used when creating data instances of @Funct@.
 type Component f g z = Cod f (F f z) (F g z)
-type f :~> g = (c ~ Dom f, c ~ Dom g, d ~ Cod f, d ~ Cod g) => Funct c d (FunctO f) (FunctO g)
 
+-- | 'GetComponent' is a typeclass to retrieve a component from a natural transformation for a specific object.
 class GetComponent c d f g z where
-  (!) :: Funct c d (FunctO f) (FunctO g) -> Obj z -> Component f g z
+  (!) :: Funct c d f g -> Obj z -> Component f g z
 
 
 -- | Arrows of the category Funct(Funct(C, D), E)
 -- I.e. natural transformations between functors of type D^C -> E
-data instance Funct (Funct c d) e (FunctO f) (FunctO g) = 
-  (Dom f ~ Funct c d, Cod f ~ e, Dom g ~ Funct c d, Cod g ~ e) =>
-    FunctNat { unFunctNat :: forall h. (Dom h ~ c, Cod h ~ d) => Obj h -> Component f g (FunctO h) }
+data instance Funct (Funct c d) e f g = 
+  FunctNat { unFunctNat :: forall h. (Dom h ~ c, Cod h ~ d) => Obj h -> Component f g h }
 
+instance (Dom f ~ Funct c d, Dom g ~ Funct c d, Cod f ~ e, Cod g ~ e, Dom z ~ c, Cod z ~ d, CategoryO e (F f z)) 
+  => GetComponent (Funct c d) e f g z where
+    (!) = unFunctNat
 
 
 
@@ -45,7 +50,7 @@ data instance Funct (Funct c d) e (FunctO f) (FunctO g) =
 data Diag (j :: * -> * -> *) ((~>) :: * -> * -> *) = Diag
 type instance Dom (Diag j (~>)) = (~>)
 type instance Cod (Diag j (~>)) = Funct j (~>)
-type instance F (Diag j (~>)) a = FunctO (Const j (~>) a)
+type instance F (Diag j (~>)) a = Const j (~>) a
 
 
 type InitMorF x u = (x :*-: Cod u) :.: u
@@ -58,8 +63,8 @@ type Cone   f n = Const (Dom f) (Cod f) n :~> f
 -- |A co-cone from F to N is a natural transformation from F to the constant functor to N.
 type Cocone f n = f :~> Const (Dom f) (Cod f) n
 
-type Limit   f l = TerminalUniversal (FunctO f) (Diag (Dom f) (Cod f)) l
-type Colimit f l = InitialUniversal  (FunctO f) (Diag (Dom f) (Cod f)) l
+type Limit   f l = TerminalUniversal f (Diag (Dom f) (Cod f)) l
+type Colimit f l = InitialUniversal  f (Diag (Dom f) (Cod f)) l
 
 data Adjunction f g = Adjunction 
   { unit :: Id (Dom f) :~> (g :.: f)

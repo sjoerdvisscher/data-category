@@ -11,7 +11,6 @@
 --
 -- This is an attempt at the Kleisli category, and the construction 
 -- of an adjunction for each monad.
--- But the typing issues with natural transformations in Hask make this problematic.
 -----------------------------------------------------------------------------
 module Data.Category.Kleisli where
   
@@ -33,7 +32,7 @@ instance (Monad m, Dom m ~ (->), Cod m ~ (->)) => CategoryO (Kleisli (->) m) o w
   id = Kleisli $ \m -> point m ! (obj :: o)
 instance (Monad m, Dom m ~ (->), Cod m ~ (->), FunctorA m b (F m c)) => CategoryA (Kleisli (->) m) a b c where
   (Kleisli f) . (Kleisli g) = Kleisli $ \m -> join m ! (obj :: c) . (m % f m) . g m
-newtype instance Funct (Kleisli (->) m) d (FunctO f) (FunctO g) = 
+newtype instance Funct (Kleisli (->) m) d f g = 
   KleisliNat { unKleisliNat :: forall a. CategoryO d (F f a) => Obj a -> Component f g a }
 
 data KleisliAdjF ((~>) :: * -> * -> *) m = KleisliAdjF m

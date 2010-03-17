@@ -31,12 +31,12 @@ instance CategoryO (->) a where
 instance CategoryA (->) a b c where
   (.) = (Prelude..)
 
-newtype instance Funct (->) d (FunctO f) (FunctO g) = 
+newtype instance Funct (->) d f g = 
   HaskNat { unHaskNat :: forall a. (CategoryO d (F f a)) => Obj a -> Component f g a }
 instance (Dom f ~ (->), Dom g ~ (->), Cod f ~ d, Cod g ~ d, CategoryO d (F f z)) => GetComponent (->) d f g z where
   (!) = unHaskNat
   
-instance (Dom f ~ (->), Cod f ~ d) => CategoryO (Funct (->) d) (FunctO f) where
+instance (Dom f ~ (->), Cod f ~ d) => CategoryO (Funct (->) d) f where
   id = HaskNat $ const id
 instance (CategoryO (~>) a, CategoryO (~>) b) => FunctorA (Diag (->) (~>)) a b where
   Diag % f = HaskNat $ const f
@@ -72,8 +72,8 @@ instance PairLimit (->) x y where
 data ProdInHask = ProdInHask
 type instance Dom ProdInHask = Funct Pair (->)
 type instance Cod ProdInHask = (->)
-type instance F ProdInHask (FunctO f) = (F f Fst, F f Snd)
-instance (Dom f ~ Pair, Cod f ~ (->), Dom g ~ Pair, Cod g ~ (->)) => FunctorA ProdInHask (FunctO f) (FunctO g) where
+type instance F ProdInHask f = (F f Fst, F f Snd)
+instance (Dom f ~ Pair, Cod f ~ (->), Dom g ~ Pair, Cod g ~ (->)) => FunctorA ProdInHask f g where
   ProdInHask % (f :***: g) = f *** g
 
 -- | The product functor is right adjoint to the diagonal functor.
@@ -84,8 +84,8 @@ prodInHaskAdj = Adjunction { unit = HaskNat $ const (id &&& id), counit = FunctN
 data CoprodInHask = CoprodInHask
 type instance Dom CoprodInHask = Funct Pair (->)
 type instance Cod CoprodInHask = (->)
-type instance F CoprodInHask (FunctO f) = Either (F f Fst) (F f Snd)
-instance (Dom f ~ Pair, Cod f ~ (->), Dom g ~ Pair, Cod g ~ (->)) => FunctorA CoprodInHask (FunctO f) (FunctO g) where
+type instance F CoprodInHask f = Either (F f Fst) (F f Snd)
+instance (Dom f ~ Pair, Cod f ~ (->), Dom g ~ Pair, Cod g ~ (->)) => FunctorA CoprodInHask f g where
   CoprodInHask % (f :***: g) = f +++ g
 
 -- | The coproduct functor is left adjoint to the diagonal functor.
