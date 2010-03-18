@@ -54,10 +54,10 @@ instance CategoryA Boolean Tru Tru Tru where
   
 data instance Funct Boolean d f g = 
   BooleanNat (Component f g Fls) (Component f g Tru)
-instance (Dom f ~ Boolean, Dom g ~ Boolean, Cod f ~ d, Cod g ~ d, CategoryO d (F f Fls)) => GetComponent Boolean d f g Fls where
-  (BooleanNat f t) ! Fls = f
-instance (Dom f ~ Boolean, Dom g ~ Boolean, Cod f ~ d, Cod g ~ d, CategoryO d (F f Tru)) => GetComponent Boolean d f g Tru where
-  (BooleanNat f t) ! Tru = t
+instance GetComponent Boolean d Fls where
+  (BooleanNat f _) ! Fls = f
+instance GetComponent Boolean d Tru where
+  (BooleanNat _ t) ! Tru = t
 
 instance (Dom f ~ Boolean, Cod f ~ d, CategoryO d (F f Fls), CategoryO d (F f Tru)) 
   => CategoryO (Funct Boolean d) f where

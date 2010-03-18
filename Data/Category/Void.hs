@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeFamilies, FlexibleInstances, MultiParamTypeClasses, EmptyDataDecls #-}
+{-# LANGUAGE TypeOperators, TypeFamilies, FlexibleInstances, FlexibleContexts, MultiParamTypeClasses, EmptyDataDecls, ScopedTypeVariables #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category.Void
@@ -26,7 +26,7 @@ data instance Funct Void d f g =
 instance CategoryO (Funct Void d) f where
   id = VoidNat
 instance (CategoryO (~>) a, CategoryO (~>) b) => FunctorA (Diag Void (~>)) a b where
-  Diag % f = VoidNat
+  Diag % _ = VoidNat
 
 -- | The functor from /0/ to (~>), the empty diagram in (~>).
 data VoidF ((~>) :: * -> * -> *) = VoidF
@@ -37,7 +37,14 @@ type instance Cod (VoidF (~>)) = (~>)
 class VoidColimit (~>) where
   type InitialObject (~>) :: *
   voidColimit :: Colimit (VoidF (~>)) (InitialObject (~>))
+  initialize :: GetComponent (~>) (->) a => InitialObject (~>) ~> a
+  initialize = (n ! (obj :: a)) VoidNat where 
+    InitialUniversal VoidNat n = voidColimit
+  
 -- | A terminal object is the limit of the functor from /0/ to (~>).
 class VoidLimit (~>) where
   type TerminalObject (~>) :: *
   voidLimit :: Limit (VoidF (~>)) (TerminalObject (~>))
+  terminate :: GetComponent (~>) (->) a => a ~> TerminalObject (~>)
+  terminate = (n ! (obj :: a)) VoidNat where
+    TerminalUniversal VoidNat n = voidLimit

@@ -55,4 +55,4 @@ instance (Pointed m, Dom m ~ (->), Cod m ~ (->)) => Pointed (KleisliAdjG (->) m 
 kleisliAdj :: (Monad m, Dom m ~ (->), Cod m ~ (->)) => m -> Adjunction (KleisliAdjF (->) m) (KleisliAdjG (->) m)
 kleisliAdj m = Adjunction 
   { unit = point (KleisliAdjG m :.: KleisliAdjF m)
-  , counit = KleisliNat (\obja -> Kleisli $ \m -> undefined) }
+  , counit = KleisliNat (\obja -> Kleisli $ \_ -> undefined) }

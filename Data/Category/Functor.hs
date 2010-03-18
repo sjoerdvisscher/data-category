@@ -11,8 +11,6 @@
 -----------------------------------------------------------------------------
 module Data.Category.Functor where
   
-import Prelude hiding ((.), id)
-
 import Data.Category
 
 
@@ -31,7 +29,7 @@ type f :~> g = (c ~ Dom f, c ~ Dom g, d ~ Cod f, d ~ Cod g) => Funct c d f g
 type Component f g z = Cod f (F f z) (F g z)
 
 -- | 'GetComponent' is a typeclass to retrieve a component from a natural transformation for a specific object.
-class GetComponent c d f g z where
+class GetComponent c d z where
   (!) :: Funct c d f g -> Obj z -> Component f g z
 
 
@@ -40,8 +38,7 @@ class GetComponent c d f g z where
 data instance Funct (Funct c d) e f g = 
   FunctNat { unFunctNat :: forall h. (Dom h ~ c, Cod h ~ d) => Obj h -> Component f g h }
 
-instance (Dom f ~ Funct c d, Dom g ~ Funct c d, Cod f ~ e, Cod g ~ e, Dom z ~ c, Cod z ~ d, CategoryO e (F f z)) 
-  => GetComponent (Funct c d) e f g z where
+instance (Dom z ~ c, Cod z ~ d) => GetComponent (Funct c d) e z where
     (!) = unFunctNat
 
 

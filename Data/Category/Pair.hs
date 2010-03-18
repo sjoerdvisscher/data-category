@@ -48,10 +48,10 @@ instance Apply Pair Snd Snd where
   
 data instance Funct Pair d f g = 
   (:***:) (Component f g Fst) (Component f g Snd)
-instance (Dom f ~ Pair, Dom g ~ Pair, Cod f ~ d, Cod g ~ d, CategoryO d (F f Fst)) => GetComponent Pair d f g Fst where
-  (f :***: s) ! Fst = f
-instance (Dom f ~ Pair, Dom g ~ Pair, Cod f ~ d, Cod g ~ d, CategoryO d (F f Snd)) => GetComponent Pair d f g Snd where
-  (f :***: s) ! Snd = s
+instance GetComponent Pair d Fst where
+  (f :***: _) ! Fst = f
+instance GetComponent Pair d Snd where
+  (_ :***: s) ! Snd = s
 
 instance (Dom f ~ Pair, Cod f ~ d, CategoryO d (F f Fst), CategoryO d (F f Snd)) => CategoryO (Funct Pair d) f where
   id = id :***: id

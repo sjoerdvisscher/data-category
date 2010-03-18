@@ -32,12 +32,10 @@ instance CategoryA (->) a b c where
   (.) = (Prelude..)
 
 newtype instance Funct (->) d f g = 
-  HaskNat { unHaskNat :: forall a. (CategoryO d (F f a)) => Obj a -> Component f g a }
-instance (Dom f ~ (->), Dom g ~ (->), Cod f ~ d, Cod g ~ d, CategoryO d (F f z)) => GetComponent (->) d f g z where
+  HaskNat { unHaskNat :: forall a. Obj a -> Component f g a }
+instance GetComponent (->) d z where
   (!) = unHaskNat
   
-instance (Dom f ~ (->), Cod f ~ d) => CategoryO (Funct (->) d) f where
-  id = HaskNat $ const id
 instance (CategoryO (~>) a, CategoryO (~>) b) => FunctorA (Diag (->) (~>)) a b where
   Diag % f = HaskNat $ const f
 

@@ -54,17 +54,12 @@ instance Apply Omega a b => Apply Omega (S a) (S b) where
 
 
 data instance Funct Omega d f g = 
-  OmegaNat (Component f g Z) (forall n. CategoryO d (F f (S n)) => Obj n -> Component f g n -> Component f g (S n))
-instance (Dom f ~ Omega, Dom g ~ Omega, Cod f ~ d, Cod g ~ d) 
-  => GetComponent Omega d f g Z where
-  (OmegaNat z s) ! Z = z
-instance (Dom f ~ Omega, Dom g ~ Omega, Cod f ~ d, Cod g ~ d, GetComponent Omega d f g n, CategoryO d (F f (S n))) 
-  => GetComponent Omega d f g (S n) where
-  on@(OmegaNat z s) ! (S n) = s n (on ! n)
+  OmegaNat (Component f g Z) (forall n. Obj n -> Component f g n -> Component f g (S n))
+instance GetComponent Omega d Z where
+  (OmegaNat z _) ! Z = z
+instance GetComponent Omega d n => GetComponent Omega d (S n) where
+  on@(OmegaNat _ s) ! (S n) = s n (on ! n)
 
-
-instance (Dom f ~ Omega, Cod f ~ d, CategoryO d (F f Z)) => CategoryO (Funct Omega d) f where
-  id = OmegaNat id (\_ _ -> id)
 
 data OmegaF ((~>) :: * -> * -> *) z f = OmegaF
 type instance Dom (OmegaF (~>) z f) = Omega

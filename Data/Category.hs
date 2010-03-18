@@ -101,7 +101,7 @@ type instance F (Const c1 c2 x) a = x
 type instance Dom (Const c1 c2 x) = c1
 type instance Cod (Const c1 c2 x) = c2
 instance (CategoryO c1 a, CategoryO c1 b, CategoryO c2 x) => FunctorA (Const c1 c2 x) a b where
-  Const % f = id
+  Const % _ = id
   
 -- | The covariant functor Hom(X,--)
 data (x :*-: ((~>) :: * -> * -> *)) = HomX_
