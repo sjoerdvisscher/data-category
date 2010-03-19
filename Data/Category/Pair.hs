@@ -27,8 +27,10 @@ data Snd = Snd deriving Show
 
 instance CategoryO Pair Fst where
   id = IdFst
+  (f :***: _) ! Fst = f  
 instance CategoryO Pair Snd where
   id = IdSnd
+  (_ :***: s) ! Snd = s  
 
 -- | The arrows of Pair.
 data family Pair a b :: *
@@ -46,15 +48,10 @@ instance Apply Pair Snd Snd where
   IdSnd $$ Snd = Snd
 
   
-data instance Funct Pair d f g = 
-  (:***:) (Component f g Fst) (Component f g Snd)
-instance GetComponent Pair d Fst where
-  (f :***: _) ! Fst = f
-instance GetComponent Pair d Snd where
-  (_ :***: s) ! Snd = s
-
-instance (Dom f ~ Pair, Cod f ~ d, CategoryO d (F f Fst), CategoryO d (F f Snd)) => CategoryO (Funct Pair d) f where
+data instance Nat Pair d f g = Component f g Fst :***: Component f g Snd
+instance (Dom f ~ Pair, Cod f ~ (~>), CategoryO (~>) (F f Fst), CategoryO (~>) (F f Snd)) => CategoryO (Nat Pair (~>)) f where
   id = id :***: id
+  FunctNat n ! f = n f
 instance (CategoryO (~>) a, CategoryO (~>) b) => FunctorA (Diag Pair (~>)) a b where
   Diag % f = f :***: f
 

@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeOperators, TypeFamilies, MultiParamTypeClasses, FlexibleInstances, FlexibleContexts, UndecidableInstances, RankNTypes #-}
+{-# LANGUAGE TypeOperators, TypeFamilies, MultiParamTypeClasses, FlexibleInstances, FlexibleContexts, UndecidableInstances, RankNTypes, ScopedTypeVariables #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category
@@ -31,6 +31,18 @@ module Data.Category (
   , (:*-:)(..)
   , (:-*:)(..)
   
+  -- * Natural transformations
+  , Nat
+  , (:~>)
+  , Component(..)
+  
+  -- * Universal arrows
+  , InitialUniversal(..)
+  , TerminalUniversal(..)
+  
+  -- * Adjunctions
+  , Adjunction(..)
+  
   ) where
 
 import Prelude hiding ((.), id, ($))
@@ -38,7 +50,8 @@ import Prelude hiding ((.), id, ($))
 
 -- | An instance CategoryO (~>) a declares a as an object of the category (~>).
 class CategoryO (~>) a where
-  id :: a ~> a
+  id  :: a ~> a
+  (!) :: Nat (~>) d f g -> Obj a -> Component f g a
 
 -- | An instance CategoryA (~>) a b c defines composition of the arrows a ~> b and b ~> c.
 class (CategoryO (~>) a, CategoryO (~>) b, CategoryO (~>) c) => CategoryA (~>) a b c where
@@ -71,12 +84,12 @@ type family Cod ftag :: * -> * -> *
 -- To make this type check, we need to pass the type tag along.
 class (CategoryO (Dom ftag) a, CategoryO (Dom ftag) b) 
   => FunctorA ftag a b where
-  (%) :: ftag -> Dom ftag a b -> Cod ftag (F ftag a) (F ftag b)
+  (%) :: Obj ftag -> Dom ftag a b -> Cod ftag (F ftag a) (F ftag b)
 
 -- | The mapping of arrows by contravariant functors.
 class (CategoryO (Dom ftag) a, CategoryO (Dom ftag) b) 
   => ContraFunctorA ftag a b where
-  (-%) :: ftag -> Dom ftag a b -> Cod ftag (F ftag b) (F ftag a)
+  (-%) :: Obj ftag -> Dom ftag a b -> Cod ftag (F ftag b) (F ftag a)
 
 
 -- | The identity functor on (~>)
@@ -85,7 +98,7 @@ type instance F (Id (~>)) a = a
 type instance Dom (Id (~>)) = (~>)
 type instance Cod (Id (~>)) = (~>)
 instance (CategoryO (~>) a, CategoryO (~>) b) => FunctorA (Id (~>)) a b where
-  Id % f = f
+  _ % f = f
 
 -- | The composition of two functors.
 data (g :.: h) = g :.: h
@@ -93,7 +106,7 @@ type instance F (g :.: h) a = F g (F h a)
 type instance Dom (g :.: h) = Dom h
 type instance Cod (g :.: h) = Cod g
 instance (FunctorA g (F h a) (F h b), FunctorA h a b, Cod h ~ Dom g) => FunctorA (g :.: h) a b where
-   (g :.: h) % f = g % (h % f)
+   _ % f = (obj :: g) % ((obj :: h) % f)
 
 -- | The constant functor.
 data Const (c1 :: * -> * -> *) (c2 :: * -> * -> *) x = Const
@@ -101,7 +114,7 @@ type instance F (Const c1 c2 x) a = x
 type instance Dom (Const c1 c2 x) = c1
 type instance Cod (Const c1 c2 x) = c2
 instance (CategoryO c1 a, CategoryO c1 b, CategoryO c2 x) => FunctorA (Const c1 c2 x) a b where
-  Const % _ = id
+  _ % _ = id
   
 -- | The covariant functor Hom(X,--)
 data (x :*-: ((~>) :: * -> * -> *)) = HomX_
@@ -109,7 +122,7 @@ type instance F (x :*-: (~>)) a = x ~> a
 type instance Dom (x :*-: (~>)) = (~>)
 type instance Cod (x :*-: (~>)) = (->)
 instance (CategoryO (~>) a, CategoryO (~>) b, CategoryA (~>) x a b) => FunctorA (x :*-: (~>)) a b where
-  HomX_ % f = (f .)
+  _ % f = (f .)
 
 -- | The contravariant functor Hom(--,X)
 data (((~>) :: * -> * -> *) :-*: x) = Hom_X
@@ -117,4 +130,30 @@ type instance F ((~>) :-*: x) a = a ~> x
 type instance Dom ((~>) :-*: x) = (~>)
 type instance Cod ((~>) :-*: x) = (->)
 instance (CategoryO (~>) a, CategoryO (~>) b, CategoryA (~>) a b x) => ContraFunctorA ((~>) :-*: x) a b where
-  Hom_X -% f = (. f)
+  _ -% f = (. f)
+  
+  
+data family Nat (c :: * -> * -> *) (d :: * -> * -> *) (f :: *) (g :: *) :: *
+
+-- | @f :~> g@ is a natural transformation from functor f to functor g.
+type f :~> g = (c ~ Dom f, c ~ Dom g, d ~ Cod f, d ~ Cod g) => Nat c d f g
+
+-- | Natural transformations are built up of components, 
+-- one for each object @z@ in the domain category of @f@ and @g@.
+-- This type synonym can be used when creating data instances of @Nat@.
+type Component f g z = Cod f (F f z) (F g z)
+  
+type InitMorF x u = (x :*-: Cod u) :.: u
+type TermMorF x u = (Cod u :-*: x) :.: u
+data InitialUniversal  x u a = InitialUniversal  (F (InitMorF x u) a) (InitMorF x u :~> (a :*-: Dom u))
+data TerminalUniversal x u a = TerminalUniversal (F (TermMorF x u) a) (TermMorF x u :~> (Dom u :-*: a))
+
+-- |A cone from N to F is a natural transformation from the constant functor to N to F.
+type Cone   f n = Const (Dom f) (Cod f) n :~> f
+-- |A co-cone from F to N is a natural transformation from F to the constant functor to N.
+type Cocone f n = f :~> Const (Dom f) (Cod f) n
+
+data Adjunction f g = Adjunction 
+  { unit :: Id (Dom f) :~> (g :.: f)
+  , counit :: (f :.: g) :~> Id (Dom g)
+  }

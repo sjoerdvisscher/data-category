@@ -27,14 +27,14 @@ instance Apply (->) a b where
 
 instance CategoryO (->) a where
   id = Prelude.id
+  (!) = unHaskNat
   
 instance CategoryA (->) a b c where
   (.) = (Prelude..)
 
-newtype instance Funct (->) d f g = 
+newtype instance Nat (->) d f g = 
   HaskNat { unHaskNat :: forall a. Obj a -> Component f g a }
-instance GetComponent (->) d z where
-  (!) = unHaskNat
+  
   
 instance (CategoryO (~>) a, CategoryO (~>) b) => FunctorA (Diag (->) (~>)) a b where
   Diag % f = HaskNat $ const f
@@ -68,7 +68,7 @@ instance PairLimit (->) x y where
 
 -- | The product functor, Hask^2 -> Hask
 data ProdInHask = ProdInHask
-type instance Dom ProdInHask = Funct Pair (->)
+type instance Dom ProdInHask = Nat Pair (->)
 type instance Cod ProdInHask = (->)
 type instance F ProdInHask f = (F f Fst, F f Snd)
 instance (Dom f ~ Pair, Cod f ~ (->), Dom g ~ Pair, Cod g ~ (->)) => FunctorA ProdInHask f g where
@@ -80,7 +80,7 @@ prodInHaskAdj = Adjunction { unit = HaskNat $ const (id &&& id), counit = FunctN
 
 -- | The coproduct functor, Hask^2 -> Hask
 data CoprodInHask = CoprodInHask
-type instance Dom CoprodInHask = Funct Pair (->)
+type instance Dom CoprodInHask = Nat Pair (->)
 type instance Cod CoprodInHask = (->)
 type instance F CoprodInHask f = Either (F f Fst) (F f Snd)
 instance (Dom f ~ Pair, Cod f ~ (->), Dom g ~ Pair, Cod g ~ (->)) => FunctorA CoprodInHask f g where

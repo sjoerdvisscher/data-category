@@ -21,10 +21,8 @@ import Data.Category.Functor
 -- | The (empty) data type of the arrows in /0/. 
 data Void a b
 
-data instance Funct Void d f g = 
+data instance Nat Void d f g = 
   VoidNat
-instance CategoryO (Funct Void d) f where
-  id = VoidNat
 instance (CategoryO (~>) a, CategoryO (~>) b) => FunctorA (Diag Void (~>)) a b where
   Diag % _ = VoidNat
 
@@ -37,7 +35,7 @@ type instance Cod (VoidF (~>)) = (~>)
 class VoidColimit (~>) where
   type InitialObject (~>) :: *
   voidColimit :: Colimit (VoidF (~>)) (InitialObject (~>))
-  initialize :: GetComponent (~>) (->) a => InitialObject (~>) ~> a
+  initialize :: CategoryO (~>) a => InitialObject (~>) ~> a
   initialize = (n ! (obj :: a)) VoidNat where 
     InitialUniversal VoidNat n = voidColimit
   
@@ -45,6 +43,6 @@ class VoidColimit (~>) where
 class VoidLimit (~>) where
   type TerminalObject (~>) :: *
   voidLimit :: Limit (VoidF (~>)) (TerminalObject (~>))
-  terminate :: GetComponent (~>) (->) a => a ~> TerminalObject (~>)
+  terminate :: CategoryO (~>) a => a ~> TerminalObject (~>)
   terminate = (n ! (obj :: a)) VoidNat where
     TerminalUniversal VoidNat n = voidLimit

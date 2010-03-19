@@ -8,38 +8,39 @@
 -- Maintainer  :  sjoerd@w3future.com
 -- Stability   :  experimental
 -- Portability :  non-portable
+--
+-- /2/, or the Boolean category. 
+-- It contains 2 objects, one for true and one for false.
+-- It contains 3 arrows, 2 identity arrows and one from false to true.
 -----------------------------------------------------------------------------
 module Data.Category.Boolean where
 
 import Prelude hiding ((.), id)
 
 import Data.Category
-import Data.Category.Functor
 import Data.Category.Void
 import Data.Category.Pair
 
-
--- | /2/, or the Boolean category
-data family Boolean a b :: *
-
+-- | 'Fls', the object representing false.
 data Fls = Fls deriving Show
+-- | 'Tru', the object representing true.
 data Tru = Tru deriving Show
 
+-- | The arrows of the boolean category.
+data family Boolean a b :: *
 data instance Boolean Fls Fls = IdFls
 data instance Boolean Tru Tru = IdTru
 data instance Boolean Fls Tru = FlsTru
 
-instance Apply Boolean Fls Fls where
-  IdFls $$ Fls = Fls
-instance Apply Boolean Fls Tru where
-  FlsTru $$ Fls = Tru
-instance Apply Boolean Tru Tru where
-  IdTru $$ Tru = Tru
-  
+data instance Nat Boolean d f g = 
+  BooleanNat (Component f g Fls) (Component f g Tru)
+
 instance CategoryO Boolean Fls where
   id = IdFls
+  BooleanNat f _ ! Fls = f
 instance CategoryO Boolean Tru where
   id = IdTru
+  BooleanNat _ t ! Tru = t
 
 instance CategoryA Boolean Fls Fls Fls where
   IdFls . IdFls = IdFls
@@ -49,19 +50,15 @@ instance CategoryA Boolean Fls Tru Tru where
   IdTru . FlsTru = FlsTru  
 instance CategoryA Boolean Tru Tru Tru where
   IdTru . IdTru = IdTru
+    
+instance Apply Boolean Fls Fls where
+  IdFls $$ Fls = Fls
+instance Apply Boolean Fls Tru where
+  FlsTru $$ Fls = Tru
+instance Apply Boolean Tru Tru where
+  IdTru $$ Tru = Tru
   
 
-  
-data instance Funct Boolean d f g = 
-  BooleanNat (Component f g Fls) (Component f g Tru)
-instance GetComponent Boolean d Fls where
-  (BooleanNat f _) ! Fls = f
-instance GetComponent Boolean d Tru where
-  (BooleanNat _ t) ! Tru = t
-
-instance (Dom f ~ Boolean, Cod f ~ d, CategoryO d (F f Fls), CategoryO d (F f Tru)) 
-  => CategoryO (Funct Boolean d) f where
-  id = BooleanNat id id
 
 instance VoidColimit Boolean where
   type InitialObject Boolean = Fls

@@ -1,4 +1,4 @@
-{-# LANGUAGE MultiParamTypeClasses, FlexibleInstances #-}
+{-# LANGUAGE TypeFamilies, MultiParamTypeClasses, FlexibleInstances #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category.Monoid
@@ -21,11 +21,13 @@ import Data.Category
 -- | The arrows are the values of the monoid.
 newtype MonoidA m a b = MonoidA m
 
+newtype instance Nat (MonoidA m) d f g =
+  MonoidNat (Component f g m)
+
 instance Monoid m => CategoryO (MonoidA m) m where
   id = MonoidA mempty
-  
+  MonoidNat c ! _ = c  
 instance Monoid m => CategoryA (MonoidA m) m m m where
   MonoidA a . MonoidA b = MonoidA $ a `mappend` b
-  
 instance Monoid m => Apply (MonoidA m) m m where
   MonoidA a $$ b = a `mappend` b

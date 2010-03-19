@@ -17,7 +17,6 @@ module Data.Category.Kleisli where
 import Prelude hiding ((.), id, Monad(..))
 
 import Data.Category
-import Data.Category.Functor
 import Data.Category.Hask
 
 class Pointed m where
@@ -28,12 +27,16 @@ class Pointed m => Monad m where
   
 data Kleisli ((~>) :: * -> * -> *) m a b = Kleisli (m -> a ~> F m b)
 
+newtype instance Nat (Kleisli (->) m) d f g = 
+  KleisliNat { unKleisliNat :: forall a. Obj a -> Component f g a }
+
 instance (Monad m, Dom m ~ (->), Cod m ~ (->)) => CategoryO (Kleisli (->) m) o where
   id = Kleisli $ \m -> point m ! (obj :: o)
+  (!) = unKleisliNat
 instance (Monad m, Dom m ~ (->), Cod m ~ (->), FunctorA m b (F m c)) => CategoryA (Kleisli (->) m) a b c where
   (Kleisli f) . (Kleisli g) = Kleisli $ \m -> join m ! (obj :: c) . (m % f m) . g m
-newtype instance Funct (Kleisli (->) m) d f g = 
-  KleisliNat { unKleisliNat :: forall a. CategoryO d (F f a) => Obj a -> Component f g a }
+
+
 
 data KleisliAdjF ((~>) :: * -> * -> *) m = KleisliAdjF m
 type instance Dom (KleisliAdjF (~>) m) = (~>)

@@ -29,8 +29,10 @@ newtype S n = S { unS :: n } deriving Show
 
 instance CategoryO Omega Z where
   id = IdZ
+  OmegaNat z _ ! Z = z  
 instance (CategoryO Omega n) => CategoryO Omega (S n) where
   id = StepS id
+  on@(OmegaNat _ s) ! (S n) = s n (on ! n)
 
 -- | The arrows of omega, there's an arrow from a to b iff a <= b.
 data family Omega a b :: * 
@@ -52,13 +54,8 @@ instance Apply Omega Z n => Apply Omega Z (S n) where
 instance Apply Omega a b => Apply Omega (S a) (S b) where
   StepS d $$ S a = S (d $$ a)
 
-
-data instance Funct Omega d f g = 
+data instance Nat Omega d f g = 
   OmegaNat (Component f g Z) (forall n. Obj n -> Component f g n -> Component f g (S n))
-instance GetComponent Omega d Z where
-  (OmegaNat z _) ! Z = z
-instance GetComponent Omega d n => GetComponent Omega d (S n) where
-  on@(OmegaNat _ s) ! (S n) = s n (on ! n)
 
 
 data OmegaF ((~>) :: * -> * -> *) z f = OmegaF

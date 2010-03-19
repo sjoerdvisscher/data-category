@@ -22,10 +22,13 @@ data UnitO = UnitO
 data family Unit a b :: *
 data instance Unit UnitO UnitO = UnitId
 
-instance Apply Unit UnitO UnitO where
-  UnitId $$ UnitO = UnitO
+newtype instance Nat Unit d f g =
+  UnitNat (Component f g UnitO)
   
 instance CategoryO Unit UnitO where
   id = UnitId
+  UnitNat c ! UnitO = c
 instance CategoryA Unit UnitO UnitO UnitO where
   UnitId . UnitId = UnitId
+instance Apply Unit UnitO UnitO where
+  UnitId $$ UnitO = UnitO
