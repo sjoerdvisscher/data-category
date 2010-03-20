@@ -34,7 +34,7 @@ module Data.Category (
   -- * Natural transformations
   , Nat
   , (:~>)
-  , Component(..)
+  , Component
   
   -- * Universal arrows
   , InitialUniversal(..)
@@ -147,11 +147,6 @@ type InitMorF x u = (x :*-: Cod u) :.: u
 type TermMorF x u = (Cod u :-*: x) :.: u
 data InitialUniversal  x u a = InitialUniversal  (F (InitMorF x u) a) (InitMorF x u :~> (a :*-: Dom u))
 data TerminalUniversal x u a = TerminalUniversal (F (TermMorF x u) a) (TermMorF x u :~> (Dom u :-*: a))
-
--- |A cone from N to F is a natural transformation from the constant functor to N to F.
-type Cone   f n = Const (Dom f) (Cod f) n :~> f
--- |A co-cone from F to N is a natural transformation from F to the constant functor to N.
-type Cocone f n = f :~> Const (Dom f) (Cod f) n
 
 data Adjunction f g = Adjunction 
   { unit :: Id (Dom f) :~> (g :.: f)

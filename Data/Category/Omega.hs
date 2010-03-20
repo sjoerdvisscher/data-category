@@ -25,7 +25,7 @@ import Data.Category.Pair
 -- | The object Z represents zero.
 data Z = Z deriving Show
 -- | The object S n represents the successor of n.
-newtype S n = S { unS :: n } deriving Show
+newtype S n = S n deriving Show
 
 instance CategoryO Omega Z where
   id = IdZ
@@ -35,10 +35,10 @@ instance (CategoryO Omega n) => CategoryO Omega (S n) where
   on@(OmegaNat _ s) ! (S n) = s n (on ! n)
 
 -- | The arrows of omega, there's an arrow from a to b iff a <= b.
-data family Omega a b :: * 
+data family Omega a b :: *
 data instance Omega Z Z = IdZ
-newtype instance Omega Z (S n) = GTZ { unGTZ :: Omega Z n }
-newtype instance Omega (S a) (S b) = StepS { unStepS :: Omega a b }
+newtype instance Omega Z (S n) = GTZ (Omega Z n)
+newtype instance Omega (S a) (S b) = StepS (Omega a b)
 
 instance (CategoryO Omega n) => CategoryA Omega Z Z n where
   a . IdZ = a

@@ -34,5 +34,10 @@ type instance Dom (Diag j (~>)) = (~>)
 type instance Cod (Diag j (~>)) = Nat j (~>)
 type instance F (Diag j (~>)) a = Const j (~>) a
 
+-- | A cone from N to F is a natural transformation from the constant functor to N to F.
+type Cone   f n = Const (Dom f) (Cod f) n :~> f
+-- | A co-cone from F to N is a natural transformation from F to the constant functor to N.
+type Cocone f n = f :~> Const (Dom f) (Cod f) n
+
 type Limit   f l = TerminalUniversal f (Diag (Dom f) (Cod f)) l
 type Colimit f l = InitialUniversal  f (Diag (Dom f) (Cod f)) l
