@@ -35,7 +35,14 @@ instance CategoryA (->) a b c where
 newtype instance Nat (->) d f g = 
   HaskNat { unHaskNat :: forall a. Obj a -> Component f g a }
   
-  
+-- | 'EndoHask' is a wrapper to turn instances of the 'Functor' class into categorical functors.
+data EndoHask (f :: * -> *) = EndoHask
+type instance Dom (EndoHask f) = (->)
+type instance Cod (EndoHask f) = (->)
+type instance F (EndoHask f) r = f r
+instance Functor f => FunctorA (EndoHask f) a b where
+  _ % f = fmap f
+
 instance (CategoryO (~>) a, CategoryO (~>) b) => FunctorA (Diag (->) (~>)) a b where
   Diag % f = HaskNat $ const f
 
