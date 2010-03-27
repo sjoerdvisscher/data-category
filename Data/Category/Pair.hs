@@ -72,14 +72,19 @@ class (CategoryO (~>) x, CategoryO (~>) y) => PairLimit (~>) x y where
   pairLimit :: Limit (PairF (~>) x y) (Product x y)
   proj1 :: Product x y ~> x
   proj2 :: Product x y ~> y
+  (&&&) :: CategoryO (~>) a => (a ~> x) -> (a ~> y) -> (a ~> Product x y)
   proj1 = p where TerminalUniversal (p :***: _) _ = pairLimit :: Limit (PairF (~>) x y) (Product x y)
   proj2 = p where TerminalUniversal (_ :***: p) _ = pairLimit :: Limit (PairF (~>) x y) (Product x y)
+  l &&& r = (n ! (obj :: a)) (l :***: r) where
+    TerminalUniversal _ n = pairLimit :: Limit (PairF (~>) x y) (Product x y)
 -- | The coproduct of 2 objects is the colimit of the functor from Pair to (~>).
 class (CategoryO (~>) x, CategoryO (~>) y) => PairColimit (~>) x y where
   type Coproduct x y :: *
   pairColimit :: Colimit (PairF (~>) x y) (Coproduct x y)
   inj1 :: x ~> Coproduct x y
   inj2 :: y ~> Coproduct x y
+  (|||) :: CategoryO (~>) a => (x ~> a) -> (y ~> a) -> (Coproduct x y ~> a)
   inj1 = i where InitialUniversal (i :***: _) _ = pairColimit :: Colimit (PairF (~>) x y) (Coproduct x y)
   inj2 = i where InitialUniversal (_ :***: i) _ = pairColimit :: Colimit (PairF (~>) x y) (Coproduct x y)
-  
+  l ||| r = (n ! (obj :: a)) (l :***: r) where
+    InitialUniversal _ n = pairColimit :: Colimit (PairF (~>) x y) (Coproduct x y)

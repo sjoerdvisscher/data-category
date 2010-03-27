@@ -13,7 +13,7 @@ module Data.Category.Hask where
 
 import Prelude hiding ((.), id)
 import qualified Prelude
-import Control.Arrow ((&&&), (***), (+++))
+import qualified Control.Arrow as A ((***), (&&&), (+++), (|||))
 
 import Data.Category
 import Data.Category.Functor
@@ -68,10 +68,10 @@ termObjInHask = InitialUniversal (HaskNat $ \_ _ -> ()) (HaskNat $ const (! ()))
 
 instance PairColimit (->) x y where
   type Coproduct x y = Either x y
-  pairColimit = InitialUniversal (Left :***: Right) (HaskNat $ \_ (l :***: r) -> either l r)
+  pairColimit = InitialUniversal (Left :***: Right) (HaskNat $ \_ (l :***: r) -> l A.||| r)
 instance PairLimit (->) x y where
   type Product x y = (x, y)
-  pairLimit = TerminalUniversal (fst :***: snd) (HaskNat $ \_ (f :***: s) -> f &&& s)
+  pairLimit = TerminalUniversal (fst :***: snd) (HaskNat $ \_ (f :***: s) -> f A.&&& s)
 
 -- | The product functor, Hask^2 -> Hask
 data ProdInHask = ProdInHask
@@ -79,7 +79,7 @@ type instance Dom ProdInHask = Nat Pair (->)
 type instance Cod ProdInHask = (->)
 type instance F ProdInHask f = (F f Fst, F f Snd)
 instance (Dom f ~ Pair, Cod f ~ (->), Dom g ~ Pair, Cod g ~ (->)) => FunctorA ProdInHask f g where
-  ProdInHask % (f :***: g) = f *** g
+  ProdInHask % (f :***: g) = f A.*** g
 
 -- | The product functor is right adjoint to the diagonal functor.
 prodInHaskAdj :: Adjunction (Diag Pair (->)) ProdInHask
@@ -91,7 +91,7 @@ type instance Dom CoprodInHask = Nat Pair (->)
 type instance Cod CoprodInHask = (->)
 type instance F CoprodInHask f = Either (F f Fst) (F f Snd)
 instance (Dom f ~ Pair, Cod f ~ (->), Dom g ~ Pair, Cod g ~ (->)) => FunctorA CoprodInHask f g where
-  CoprodInHask % (f :***: g) = f +++ g
+  CoprodInHask % (f :***: g) = f A.+++ g
 
 -- | The coproduct functor is left adjoint to the diagonal functor.
 coprodInHaskAdj :: Adjunction CoprodInHask (Diag Pair (->))
