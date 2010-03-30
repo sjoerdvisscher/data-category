@@ -96,3 +96,18 @@ instance (Dom f ~ Pair, Cod f ~ (->), Dom g ~ Pair, Cod g ~ (->)) => FunctorA Co
 -- | The coproduct functor is left adjoint to the diagonal functor.
 coprodInHaskAdj :: Adjunction CoprodInHask (Diag Pair (->))
 coprodInHaskAdj = Adjunction { unit = FunctNat $ const (Left :***: Right), counit = HaskNat $ const (either id id) }
+
+curryAdj :: Adjunction (EndoHask ((,) e)) (EndoHask ((->) e))
+curryAdj = Adjunction 
+  { unit = HaskNat $ const (\a e -> (e, a))
+  , counit = HaskNat $ const (\(x, f) -> f x) }
+  
+curryAdjInitUniv :: InitialUniversal x (EndoHask ((->) e)) (e, x) -- InitialUniversal x g (F f x)
+curryAdjInitUniv = InitialUniversal 
+  (unit curryAdj ! (obj :: x))
+  (HaskNat $ const (\f -> (\(x, f) -> f x) . fmap f)) -- \h -> (counit curryAdj ! (obj :: x)) . ((obj :: g) % h) 
+
+curryAdjTermUniv :: TerminalUniversal y (EndoHask ((,) e)) (e -> y) -- TerminalUniversal y f (F g y)
+curryAdjTermUniv = TerminalUniversal 
+  (counit curryAdj ! (obj :: y))
+  (HaskNat $ const (\f -> fmap f . (\a e -> (e, a)))) -- \h -> ((obj :: f) % h) . (unit curryAdj ! (obj :: y))
