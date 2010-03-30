@@ -19,6 +19,7 @@ import Data.Category
 import Data.Category.Functor
 import Data.Category.Void
 import Data.Category.Pair
+import Data.Category.Dialg
 
 type Hask = (->)
 
@@ -111,3 +112,23 @@ curryAdjTermUniv :: TerminalUniversal y (EndoHask ((,) e)) (e -> y) -- TerminalU
 curryAdjTermUniv = TerminalUniversal 
   (counit curryAdj ! (obj :: y))
   (HaskNat $ const (\f -> fmap f . (\a e -> (e, a)))) -- \h -> ((obj :: f) % h) . (unit curryAdj ! (obj :: y))
+  
+
+-- | FixF provides the initial F-algebra for endofunctors in Hask.
+newtype FixF f = InF { outF :: f (FixF f) }
+
+-- | Catamorphisms for endofunctors in Hask.
+cataHask :: Functor f => Cata (EndoHask f) a
+cataHask (Dialgebra f) = DialgA $ cata f where cata f = f . fmap (cata f) . outF 
+
+-- | Anamorphisms for endofunctors in Hask.
+anaHask :: Functor f => Ana (EndoHask f) a
+anaHask (Dialgebra f) = DialgA $ ana f where ana f = InF . fmap (ana f) . f 
+
+instance Functor f => VoidColimit (Dialg (EndoHask f) (Id (->))) where
+  type InitialObject (Dialg (EndoHask f) (Id (->))) = Algebra (EndoHask f) (FixF f)
+  voidColimit = InitialUniversal VoidNat (DialgNat $ \f VoidNat -> cataHask f)
+  
+instance Functor f => VoidLimit (Dialg (Id (->)) (EndoHask f)) where
+  type TerminalObject (Dialg (Id (->)) (EndoHask f)) = Coalgebra (EndoHask f) (FixF f)
+  voidLimit = TerminalUniversal VoidNat (DialgNat $ \f VoidNat -> anaHask f)
