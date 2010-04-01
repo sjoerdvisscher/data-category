@@ -137,3 +137,17 @@ instance Functor f => VoidColimit (Dialg (EndoHask f) (Id (->))) where
 instance Functor f => VoidLimit (Dialg (Id (->)) (EndoHask f)) where
   type TerminalObject (Dialg (Id (->)) (EndoHask f)) = Coalgebra (EndoHask f) (FixF f)
   voidLimit = TerminalUniversal VoidNat (DialgNat $ \f VoidNat -> anaHask f)
+
+
+data NatNum = Z | S NatNum
+
+instance VoidColimit (Peano (->)) where
+  type InitialObject (Peano (->)) = PeanoO (->) NatNum
+  voidColimit = InitialUniversal VoidNat
+    (PeanoNat $ \(PeanoO z s) VoidNat -> let { f Z = z (); f (S n) = s (f n) } in PeanoA f)
+
+instance VoidColimit (Dialg (NatF (->)) (DiagProd (->))) where
+  type InitialObject (Dialg (NatF (->)) (DiagProd (->))) = Dialgebra (NatF (->)) (DiagProd (->)) NatNum
+  voidColimit = InitialUniversal VoidNat 
+    (DialgNat $ \(Dialgebra (z :**: s)) VoidNat -> let { f Z = z (); f (S n) = s (f n) } in DialgA f)
+

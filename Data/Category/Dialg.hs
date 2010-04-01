@@ -60,3 +60,15 @@ type Cata f a = Algebra f a -> Alg f (InitialFAlgebra f) (Algebra f a)
 
 -- | A anamorphism of an F-coalgebra is the arrow from it to the terminal F-coalgebra.
 type Ana f a = Coalgebra f a -> Coalg f (Coalgebra f a) (TerminalFAlgebra f)
+
+
+instance PairLimit (~>) x y => VoidLimit (Dialg (DiagProd (~>)) (Const (~>) ((~>) :*: (~>)) (x, y))) where
+  type TerminalObject (Dialg (DiagProd (~>)) (Const (~>) ((~>) :*: (~>)) (x, y))) = 
+    Dialgebra (DiagProd (~>)) (Const (~>) ((~>) :*: (~>)) (x, y)) (Product x y)
+  voidLimit = TerminalUniversal VoidNat 
+    (DialgNat $ \(Dialgebra (f :**: s)) VoidNat -> DialgA (f &&& s))
+
+data NatF ((~>) :: * -> * -> *) = NatF
+type instance Dom (NatF (~>)) = (~>)
+type instance Cod (NatF (~>)) = (~>) :*: (~>)
+type instance F (NatF (~>)) a = (TerminalObject (~>),  a)
