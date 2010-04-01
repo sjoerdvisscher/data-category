@@ -27,11 +27,12 @@ class Pointed m => Monad m where
   
 data Kleisli ((~>) :: * -> * -> *) m a b = Kleisli (m -> a ~> F m b)
 
-newtype instance Nat (Kleisli (->) m) d f g = 
-  KleisliNat { unKleisliNat :: forall a. Obj a -> Component f g a }
+newtype instance Nat (Kleisli (~>) m) d f g = 
+  KleisliNat { unKleisliNat :: forall a. CategoryO (~>) a => Obj a -> Component f g a }
 
-instance (Monad m, Dom m ~ (->), Cod m ~ (->)) => CategoryO (Kleisli (->) m) o where
-  id = Kleisli $ \m -> point m ! (obj :: o)
+instance (Monad m, Dom m ~ (~>), Cod m ~ (~>)) => Category (Kleisli (~>) m) where
+  idNat = KleisliNat $ \o -> Kleisli $ \m -> point m ! o
+instance (Monad m, Dom m ~ (~>), Cod m ~ (~>), CategoryO (~>) o) => CategoryO (Kleisli (~>) m) o where
   (!) = unKleisliNat
 instance (Monad m, Dom m ~ (->), Cod m ~ (->), FunctorA m b (F m c)) => CategoryA (Kleisli (->) m) a b c where
   (Kleisli f) . (Kleisli g) = Kleisli $ \m -> join m ! (obj :: c) . (m % f m) . g m

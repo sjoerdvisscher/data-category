@@ -24,8 +24,9 @@ newtype MonoidA m a b = MonoidA m
 newtype instance Nat (MonoidA m) d f g =
   MonoidNat (Component f g m)
 
+instance Monoid m => Category (MonoidA m) where
+  idNat = MonoidNat (MonoidA mempty)
 instance Monoid m => CategoryO (MonoidA m) m where
-  id = MonoidA mempty
   MonoidNat c ! _ = c  
 instance Monoid m => CategoryA (MonoidA m) m m m where
   MonoidA a . MonoidA b = MonoidA $ a `mappend` b

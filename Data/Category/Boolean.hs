@@ -35,11 +35,11 @@ data instance Boolean Fls Tru = FlsTru
 data instance Nat Boolean d f g = 
   BooleanNat (Component f g Fls) (Component f g Tru)
 
+instance Category Boolean where
+  idNat = BooleanNat IdFls IdTru
 instance CategoryO Boolean Fls where
-  id = IdFls
   BooleanNat f _ ! Fls = f
 instance CategoryO Boolean Tru where
-  id = IdTru
   BooleanNat _ t ! Tru = t
 
 instance CategoryA Boolean Fls Fls Fls where

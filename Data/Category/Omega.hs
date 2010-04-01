@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeFamilies, MultiParamTypeClasses, FlexibleInstances, FlexibleContexts, UndecidableInstances, RankNTypes, ScopedTypeVariables #-}
+{-# LANGUAGE TypeOperators, TypeFamilies, MultiParamTypeClasses, FlexibleInstances, FlexibleContexts, UndecidableInstances, RankNTypes, ScopedTypeVariables #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category.Omega
@@ -27,18 +27,18 @@ data Z = Z deriving Show
 -- | The object S n represents the successor of n.
 newtype S n = S n deriving Show
 
-instance CategoryO Omega Z where
-  id = IdZ
-  OmegaNat z _ ! Z = z  
-instance (CategoryO Omega n) => CategoryO Omega (S n) where
-  id = StepS id
-  on@(OmegaNat _ s) ! (S n) = s n (on ! n)
-
 -- | The arrows of omega, there's an arrow from a to b iff a <= b.
 data family Omega a b :: *
 data instance Omega Z Z = IdZ
 newtype instance Omega Z (S n) = GTZ (Omega Z n)
 newtype instance Omega (S a) (S b) = StepS (Omega a b)
+
+instance Category Omega where
+  idNat = OmegaNat IdZ (const StepS)
+instance CategoryO Omega Z where
+  OmegaNat z _ ! Z = z  
+instance (CategoryO Omega n) => CategoryO Omega (S n) where
+  on@(OmegaNat _ s) ! (S n) = s n (on ! n)
 
 instance (CategoryO Omega n) => CategoryA Omega Z Z n where
   a . IdZ = a

@@ -25,8 +25,9 @@ data instance Unit UnitO UnitO = UnitId
 newtype instance Nat Unit d f g =
   UnitNat (Component f g UnitO)
   
+instance Category Unit where
+  idNat = UnitNat UnitId
 instance CategoryO Unit UnitO where
-  id = UnitId
   UnitNat c ! UnitO = c
 instance CategoryA Unit UnitO UnitO UnitO where
   UnitId . UnitId = UnitId

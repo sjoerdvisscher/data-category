@@ -12,7 +12,8 @@
 module Data.Category (
   
   -- * Categories
-    CategoryO(..)
+    Category(..)
+  , CategoryO(..)
   , CategoryA(..)
   , Apply(..)
   , Obj, obj
@@ -48,10 +49,14 @@ module Data.Category (
 import Prelude hiding ((.), id, ($))
 
 
+class Category (~>) where
+  idNat :: Id (~>) :~> Id (~>)
+
 -- | An instance CategoryO (~>) a declares a as an object of the category (~>).
-class CategoryO (~>) a where
-  id  :: a ~> a
+class Category (~>) => CategoryO (~>) a where
   (!) :: Nat (~>) d f g -> Obj a -> Component f g a
+  id :: a ~> a
+  id = idNat ! (obj :: a)
 
 -- | An instance CategoryA (~>) a b c defines composition of the arrows a ~> b and b ~> c.
 class (CategoryO (~>) a, CategoryO (~>) b, CategoryO (~>) c) => CategoryA (~>) a b c where

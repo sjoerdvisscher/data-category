@@ -23,6 +23,10 @@ data Void a b
 
 data instance Nat Void d f g = 
   VoidNat
+
+instance Category Void where
+  idNat = VoidNat
+
 instance (CategoryO (~>) a, CategoryO (~>) b) => FunctorA (Diag Void (~>)) a b where
   Diag % _ = VoidNat
 

@@ -19,13 +19,18 @@ import Data.Category
 import Data.Category.Functor
 import Data.Category.Void
 import Data.Category.Pair
+import Data.Category.Product
+import Data.Category.Peano
 import Data.Category.Dialg
 
 type Hask = (->)
 
-instance Apply (->) a b where
-  ($$) = ($)
-
+newtype instance Nat (->) d f g = 
+  HaskNat { unHaskNat :: forall a. Obj a -> Component f g a }
+  
+instance Category (->) where
+  idNat = HaskNat $ const Prelude.id
+  
 instance CategoryO (->) a where
   id = Prelude.id
   (!) = unHaskNat
@@ -33,9 +38,9 @@ instance CategoryO (->) a where
 instance CategoryA (->) a b c where
   (.) = (Prelude..)
 
-newtype instance Nat (->) d f g = 
-  HaskNat { unHaskNat :: forall a. Obj a -> Component f g a }
-  
+instance Apply (->) a b where
+  ($$) = ($)
+
 -- | 'EndoHask' is a wrapper to turn instances of the 'Functor' class into categorical functors.
 data EndoHask (f :: * -> *) = EndoHask
 type instance Dom (EndoHask f) = (->)
@@ -84,7 +89,7 @@ instance (Dom f ~ Pair, Cod f ~ (->), Dom g ~ Pair, Cod g ~ (->)) => FunctorA Pr
 
 -- | The product functor is right adjoint to the diagonal functor.
 prodInHaskAdj :: Adjunction (Diag Pair (->)) ProdInHask
-prodInHaskAdj = Adjunction { unit = HaskNat $ const (id &&& id), counit = FunctNat $ const (fst :***: snd) }
+prodInHaskAdj = Adjunction { unit = HaskNat $ const (id A.&&& id), counit = FunctNat $ const (fst :***: snd) }
 
 -- | The coproduct functor, Hask^2 -> Hask
 data CoprodInHask = CoprodInHask
@@ -96,7 +101,7 @@ instance (Dom f ~ Pair, Cod f ~ (->), Dom g ~ Pair, Cod g ~ (->)) => FunctorA Co
 
 -- | The coproduct functor is left adjoint to the diagonal functor.
 coprodInHaskAdj :: Adjunction CoprodInHask (Diag Pair (->))
-coprodInHaskAdj = Adjunction { unit = FunctNat $ const (Left :***: Right), counit = HaskNat $ const (either id id) }
+coprodInHaskAdj = Adjunction { unit = FunctNat $ const (Left :***: Right), counit = HaskNat $ const (id A.||| id) }
 
 curryAdj :: Adjunction (EndoHask ((,) e)) (EndoHask ((->) e))
 curryAdj = Adjunction 

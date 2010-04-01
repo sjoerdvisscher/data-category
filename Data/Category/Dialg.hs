@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeOperators, TypeFamilies, MultiParamTypeClasses, UndecidableInstances, RankNTypes #-}
+{-# LANGUAGE TypeOperators, TypeFamilies, MultiParamTypeClasses, FlexibleInstances, FlexibleContexts, UndecidableInstances, RankNTypes, ScopedTypeVariables #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category.Dialg
@@ -16,24 +16,32 @@ module Data.Category.Dialg where
 import Prelude hiding ((.), id)
 
 import Data.Category
+import Data.Category.Functor
 import Data.Category.Void
+import Data.Category.Pair
+import Data.Category.Product
+import Data.Category.Peano
 
 -- | Objects of Dialg(F,G) are (F,G)-dialgebras.
-newtype Dialgebra f g a = Dialgebra (Dom f (F f a) (F g a))
+newtype Dialgebra f g a = Dialgebra (Cod f (F f a) (F g a))
 
 -- | Arrows of Dialg(F,G) are (F,G)-homomorphisms.
 data family Dialg f g a b :: *
 data instance Dialg f g (Dialgebra f g a) (Dialgebra f g b) = DialgA (Dom f a b)
 
 newtype instance Nat (Dialg f g) d s t = 
-  DialgNat { unDialgNat :: forall a. Obj (Dialgebra f g a) -> Component s t (Dialgebra f g a) }
+  DialgNat { unDialgNat :: forall a. CategoryO (Dom f) a => Obj (Dialgebra f g a) -> Component s t (Dialgebra f g a) }
 
-instance (Dom f ~ (~>), Cod f ~ (~>), Dom g ~ (~>), Cod g ~ (~>), CategoryO (~>) a) 
+getCarrier :: Dialgebra f g a -> a
+getCarrier _ = obj :: a
+
+instance Category (Dom f) => Category (Dialg f g) where
+  idNat = DialgNat $ \dialg -> DialgA (idNat ! getCarrier dialg)
+instance (Dom f ~ c, Cod f ~ d, Dom g ~ c, Cod g ~ d, CategoryO c a) 
   => CategoryO (Dialg f g) (Dialgebra f g a) where
-  id = DialgA id
   (!) = unDialgNat
-instance (Dom f ~ (~>), Cod f ~ (~>), Dom g ~ (~>), Cod g ~ (~>), CategoryA (~>) a b c) 
-  => CategoryA (Dialg f g) (Dialgebra f g a) (Dialgebra f g b) (Dialgebra f g c) where
+instance (Dom f ~ c, Cod f ~ d, Dom g ~ c, Cod g ~ d, CategoryA c x y z) 
+  => CategoryA (Dialg f g) (Dialgebra f g x) (Dialgebra f g y) (Dialgebra f g z) where
   DialgA f . DialgA g = DialgA (f . g)
 
 type Alg f = Dialg f (Id (Dom f))
