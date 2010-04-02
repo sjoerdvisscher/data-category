@@ -26,6 +26,7 @@ Library
     Data.Category.Omega,
     Data.Category.Hask,
     Data.Category.Kleisli,
-    Data.Category.Dialg
+    Data.Category.Dialg,
+    Data.Category.Peano
     
   build-depends:       base >= 3 && < 5

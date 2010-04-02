@@ -25,17 +25,20 @@ data Fst = Fst deriving Show
 -- | The other object of Pair
 data Snd = Snd deriving Show
 
-instance Category Pair where
-  idNat = IdFst :***: IdSnd
-instance CategoryO Pair Fst where
-  (f :***: _) ! Fst = f  
-instance CategoryO Pair Snd where
-  (_ :***: s) ! Snd = s  
-
 -- | The arrows of Pair.
 data family Pair a b :: *
 data instance Pair Fst Fst = IdFst
 data instance Pair Snd Snd = IdSnd
+
+data instance Nat Pair d f g = Component f g Fst :***: Component f g Snd
+
+instance Category Pair where
+  idNat = IdFst :***: IdSnd
+  natMap f (nf :***: ns) = f (const nf) Fst :***: f (const ns) Snd
+instance CategoryO Pair Fst where
+  (f :***: _) ! Fst = f  
+instance CategoryO Pair Snd where
+  (_ :***: s) ! Snd = s  
 
 instance CategoryA Pair Fst Fst Fst where
   IdFst . IdFst = IdFst
@@ -48,14 +51,10 @@ instance Apply Pair Snd Snd where
   IdSnd $$ Snd = Snd
 
   
-data instance Nat Pair d f g = Component f g Fst :***: Component f g Snd
-instance Category (Nat Pair (~>)) where
-  idNat = undefined
+instance Category (Nat Pair (~>)) where { idNat = undefined; natMap = undefined }
 instance (Dom f ~ Pair, Cod f ~ (~>), CategoryO (~>) (F f Fst), CategoryO (~>) (F f Snd)) => CategoryO (Nat Pair (~>)) f where
   id = id :***: id
   FunctNat n ! f = n f
-instance (CategoryO (~>) a, CategoryO (~>) b) => FunctorA (Diag Pair (~>)) a b where
-  Diag % f = f :***: f
 
 -- | The functor from Pair to (~>), a diagram of 2 objects in (~>).
 data PairF ((~>) :: * -> * -> *) x y = PairF

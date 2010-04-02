@@ -16,11 +16,9 @@ module Data.Category.Dialg where
 import Prelude hiding ((.), id)
 
 import Data.Category
-import Data.Category.Functor
 import Data.Category.Void
 import Data.Category.Pair
 import Data.Category.Product
-import Data.Category.Peano
 
 -- | Objects of Dialg(F,G) are (F,G)-dialgebras.
 newtype Dialgebra f g a = Dialgebra (Cod f (F f a) (F g a))
@@ -32,11 +30,12 @@ data instance Dialg f g (Dialgebra f g a) (Dialgebra f g b) = DialgA (Dom f a b)
 newtype instance Nat (Dialg f g) d s t = 
   DialgNat { unDialgNat :: forall a. CategoryO (Dom f) a => Obj (Dialgebra f g a) -> Component s t (Dialgebra f g a) }
 
-getCarrier :: Dialgebra f g a -> a
+getCarrier :: Dialgebra f g a -> Obj a
 getCarrier _ = obj :: a
 
 instance Category (Dom f) => Category (Dialg f g) where
   idNat = DialgNat $ \dialg -> DialgA (idNat ! getCarrier dialg)
+  natMap f (DialgNat n) = DialgNat $ f n
 instance (Dom f ~ c, Cod f ~ d, Dom g ~ c, Cod g ~ d, CategoryO c a) 
   => CategoryO (Dialg f g) (Dialgebra f g a) where
   (!) = unDialgNat
@@ -68,6 +67,8 @@ instance PairLimit (~>) x y => VoidLimit (Dialg (DiagProd (~>)) (Const (~>) ((~>
   voidLimit = TerminalUniversal VoidNat 
     (DialgNat $ \(Dialgebra (f :**: s)) VoidNat -> DialgA (f &&& s))
 
+-- | The category for defining the natural numbers and primitive recursion can be described as
+-- @Dialg(F,G)@, with @F(A)=\<1,A>@ and @G(A)=\<A,A>@.
 data NatF ((~>) :: * -> * -> *) = NatF
 type instance Dom (NatF (~>)) = (~>)
 type instance Cod (NatF (~>)) = (~>) :*: (~>)

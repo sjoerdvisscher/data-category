@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeFamilies, MultiParamTypeClasses, FlexibleInstances #-}
+{-# LANGUAGE TypeFamilies, MultiParamTypeClasses, FlexibleInstances, ScopedTypeVariables #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category.Monoid
@@ -26,6 +26,7 @@ newtype instance Nat (MonoidA m) d f g =
 
 instance Monoid m => Category (MonoidA m) where
   idNat = MonoidNat (MonoidA mempty)
+  natMap f (MonoidNat n) = MonoidNat (f (const n) (obj :: m))
 instance Monoid m => CategoryO (MonoidA m) m where
   MonoidNat c ! _ = c  
 instance Monoid m => CategoryA (MonoidA m) m m m where

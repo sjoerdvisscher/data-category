@@ -26,9 +26,7 @@ data instance Nat Void d f g =
 
 instance Category Void where
   idNat = VoidNat
-
-instance (CategoryO (~>) a, CategoryO (~>) b) => FunctorA (Diag Void (~>)) a b where
-  Diag % _ = VoidNat
+  natMap _ VoidNat = VoidNat
 
 -- | The functor from /0/ to (~>), the empty diagram in (~>).
 data VoidF ((~>) :: * -> * -> *) = VoidF

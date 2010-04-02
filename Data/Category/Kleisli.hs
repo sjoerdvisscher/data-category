@@ -32,6 +32,7 @@ newtype instance Nat (Kleisli (~>) m) d f g =
 
 instance (Monad m, Dom m ~ (~>), Cod m ~ (~>)) => Category (Kleisli (~>) m) where
   idNat = KleisliNat $ \o -> Kleisli $ \m -> point m ! o
+  natMap f (KleisliNat n) = KleisliNat $ f n
 instance (Monad m, Dom m ~ (~>), Cod m ~ (~>), CategoryO (~>) o) => CategoryO (Kleisli (~>) m) o where
   (!) = unKleisliNat
 instance (Monad m, Dom m ~ (->), Cod m ~ (->), FunctorA m b (F m c)) => CategoryA (Kleisli (->) m) a b c where

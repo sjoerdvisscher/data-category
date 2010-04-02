@@ -33,8 +33,12 @@ data instance Omega Z Z = IdZ
 newtype instance Omega Z (S n) = GTZ (Omega Z n)
 newtype instance Omega (S a) (S b) = StepS (Omega a b)
 
+data instance Nat Omega d f g = 
+  OmegaNat (Component f g Z) (forall n. (CategoryO Omega n) => Obj n -> Component f g n -> Component f g (S n))
+
 instance Category Omega where
   idNat = OmegaNat IdZ (const StepS)
+  natMap f on@(OmegaNat z s) = OmegaNat (f (const z) Z) (\n _ -> f (const (s n (on ! n))) (S n))
 instance CategoryO Omega Z where
   OmegaNat z _ ! Z = z  
 instance (CategoryO Omega n) => CategoryO Omega (S n) where
@@ -54,8 +58,6 @@ instance Apply Omega Z n => Apply Omega Z (S n) where
 instance Apply Omega a b => Apply Omega (S a) (S b) where
   StepS d $$ S a = S (d $$ a)
 
-data instance Nat Omega d f g = 
-  OmegaNat (Component f g Z) (forall n. Obj n -> Component f g n -> Component f g (S n))
 
 
 data OmegaF ((~>) :: * -> * -> *) z f = OmegaF

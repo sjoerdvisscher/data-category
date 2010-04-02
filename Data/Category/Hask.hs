@@ -30,6 +30,7 @@ newtype instance Nat (->) d f g =
   
 instance Category (->) where
   idNat = HaskNat $ const Prelude.id
+  natMap f (HaskNat n) = HaskNat (f n) 
   
 instance CategoryO (->) a where
   id = Prelude.id
@@ -48,9 +49,6 @@ type instance Cod (EndoHask f) = (->)
 type instance F (EndoHask f) r = f r
 instance Functor f => FunctorA (EndoHask f) a b where
   _ % f = fmap f
-
-instance (CategoryO (~>) a, CategoryO (~>) b) => FunctorA (Diag (->) (~>)) a b where
-  Diag % f = HaskNat $ const f
 
 -- | Any empty data type is an initial object in Hask.
 data Zero
@@ -119,7 +117,7 @@ curryAdjTermUniv = TerminalUniversal
   (HaskNat $ const (\f -> fmap f . (\a e -> (e, a)))) -- \h -> ((obj :: f) % h) . (unit curryAdj ! (obj :: y))
   
 
--- | FixF provides the initial F-algebra for endofunctors in Hask.
+-- | 'FixF' provides the initial F-algebra for endofunctors in Hask.
 newtype FixF f = InF { outF :: f (FixF f) }
 
 -- | Catamorphisms for endofunctors in Hask.
@@ -139,15 +137,20 @@ instance Functor f => VoidLimit (Dialg (Id (->)) (EndoHask f)) where
   voidLimit = TerminalUniversal VoidNat (DialgNat $ \f VoidNat -> anaHask f)
 
 
+-- | The natural numbers are the initial object for the 'Peano' category, or the equivalent (F,G)-'Dialgebra'.
 data NatNum = Z | S NatNum
 
+-- | Primitive recursion is the factorizer from the natural numbers.
+primRec :: t -> (t -> t) -> NatNum -> t
+primRec z s Z     = z
+primRec z s (S n) = s (primRec z s n)
+  
 instance VoidColimit (Peano (->)) where
   type InitialObject (Peano (->)) = PeanoO (->) NatNum
   voidColimit = InitialUniversal VoidNat
-    (PeanoNat $ \(PeanoO z s) VoidNat -> let { f Z = z (); f (S n) = s (f n) } in PeanoA f)
+    (PeanoNat $ \(PeanoO z s) VoidNat -> PeanoA $ primRec z s)
 
 instance VoidColimit (Dialg (NatF (->)) (DiagProd (->))) where
   type InitialObject (Dialg (NatF (->)) (DiagProd (->))) = Dialgebra (NatF (->)) (DiagProd (->)) NatNum
-  voidColimit = InitialUniversal VoidNat 
-    (DialgNat $ \(Dialgebra (z :**: s)) VoidNat -> let { f Z = z (); f (S n) = s (f n) } in DialgA f)
+  voidColimit = InitialUniversal VoidNat (DialgNat $ \(Dialgebra (z :**: s)) VoidNat -> DialgA $ primRec (z ()) s)
 

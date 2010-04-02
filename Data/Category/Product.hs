@@ -23,15 +23,34 @@ data instance Nat (c1 :*: c2) d f g =
 
 instance (Category c1, Category c2) => Category (c1 :*: c2) where
   idNat = ProductNat $ \(a1, a2) -> (idNat ! a1) :**: (idNat ! a2)
+  natMap f (ProductNat n) = ProductNat $ f n
 instance (CategoryO c1 a1, CategoryO c2 a2) => CategoryO (c1 :*: c2) (a1, a2) where
   (!) = unProductNat
-  
+
+data Proj1 (c1 :: * -> * -> *) (c2 :: * -> * -> *) = Proj1
+type instance Dom (Proj1 c1 c2) = c1 :*: c2
+type instance Cod (Proj1 c1 c2) = c1
+type instance F (Proj1 c1 c2) (a1, a2) = a1
+instance FunctorA (Proj1 c1 c2) (a1, a2) (b1, b2) where
+  _ % (f1 :**: f2) = f1
+
+data Proj2 (c1 :: * -> * -> *) (c2 :: * -> * -> *) = Proj2
+type instance Dom (Proj2 c1 c2) = c1 :*: c2
+type instance Cod (Proj2 c1 c2) = c2
+type instance F (Proj2 c1 c2) (a1, a2) = a2
+instance FunctorA (Proj2 c1 c2) (a1, a2) (b1, b2) where
+  _ % (f1 :**: f2) = f2
+
 data ProdF f1 f2 = ProdF
 type instance Dom (ProdF f1 f2) = Dom f1 :*: Dom f2
 type instance Cod (ProdF f1 f2) = Cod f1 :*: Cod f2
 type instance F (ProdF f1 f2) (a1, a2) = (F f1 a1, F f2 a2)
+instance (FunctorA g1 a1 b1, FunctorA g2 a2 b2) => FunctorA (ProdF g1 g2) (a1, a2) (b1, b2) where
+  _ % (f1 :**: f2) = ((obj :: g1) % f1) :**: ((obj :: g2) % f2)
 
 data DiagProd ((~>) :: * -> * -> *) = DiagProd
 type instance Dom (DiagProd (~>)) = (~>)
 type instance Cod (DiagProd (~>)) = (~>) :*: (~>)
 type instance F (DiagProd (~>)) a = (a, a)
+instance FunctorA (DiagProd (~>)) (a1, a2) (b1, b2) where
+  _ % f = f :**: f

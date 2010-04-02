@@ -27,6 +27,7 @@ newtype instance Nat Unit d f g =
   
 instance Category Unit where
   idNat = UnitNat UnitId
+  natMap f (UnitNat n) = UnitNat $ f (const n) UnitO
 instance CategoryO Unit UnitO where
   UnitNat c ! UnitO = c
 instance CategoryA Unit UnitO UnitO UnitO where

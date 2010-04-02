@@ -51,6 +51,7 @@ import Prelude hiding ((.), id, ($))
 
 class Category (~>) where
   idNat :: Id (~>) :~> Id (~>)
+  natMap :: (forall a. (Obj a -> Component f g a) -> (Obj a -> Component f' g' a)) -> Nat (~>) d f g -> Nat (~>) d' f' g'
 
 -- | An instance CategoryO (~>) a declares a as an object of the category (~>).
 class Category (~>) => CategoryO (~>) a where
@@ -87,13 +88,11 @@ type family Cod ftag :: * -> * -> *
 
 -- | The mapping of arrows by covariant functors.
 -- To make this type check, we need to pass the type tag along.
-class (CategoryO (Dom ftag) a, CategoryO (Dom ftag) b) 
-  => FunctorA ftag a b where
+class FunctorA ftag a b where
   (%) :: Obj ftag -> Dom ftag a b -> Cod ftag (F ftag a) (F ftag b)
 
 -- | The mapping of arrows by contravariant functors.
-class (CategoryO (Dom ftag) a, CategoryO (Dom ftag) b) 
-  => ContraFunctorA ftag a b where
+class ContraFunctorA ftag a b where
   (-%) :: Obj ftag -> Dom ftag a b -> Cod ftag (F ftag b) (F ftag a)
 
 
@@ -150,8 +149,13 @@ type Component f g z = Cod f (F f z) (F g z)
   
 type InitMorF x u = (x :*-: Cod u) :.: u
 type TermMorF x u = (Cod u :-*: x) :.: u
-data InitialUniversal  x u a = InitialUniversal  (F (InitMorF x u) a) (InitMorF x u :~> (a :*-: Dom u))
-data TerminalUniversal x u a = TerminalUniversal (F (TermMorF x u) a) (TermMorF x u :~> (Dom u :-*: a))
+data InitialUniversal  x u a = InitialUniversal
+  { initialMorphism :: F (InitMorF x u) a
+  , initialFactorizer :: InitMorF x u :~> (a :*-: Dom u) }
+data TerminalUniversal x u a = TerminalUniversal 
+  { terminalMorphism :: F (TermMorF x u) a
+  , terminalFactorizer :: TermMorF x u :~> (Dom u :-*: a) }
+
 
 data Adjunction f g = Adjunction 
   { unit :: Id (Dom f) :~> (g :.: f)

@@ -20,12 +20,10 @@ import Data.Category
 -- Each category C needs its own data instance.
 
 
-
 -- | Arrows of the category Funct(Funct(C, D), E)
 -- I.e. natural transformations between functors of type D^C -> E
 data instance Nat (Nat c d) e f g = 
   FunctNat { unFunctNat :: forall h. (Dom h ~ c, Cod h ~ d) => Obj h -> Component f g h }
-
 
 
 -- | The diagonal functor from (index-) category J to (~>).
@@ -33,6 +31,9 @@ data Diag (j :: * -> * -> *) ((~>) :: * -> * -> *) = Diag
 type instance Dom (Diag j (~>)) = (~>)
 type instance Cod (Diag j (~>)) = Nat j (~>)
 type instance F (Diag j (~>)) a = Const j (~>) a
+instance Category j => FunctorA (Diag j (~>)) a b where
+  Diag % f = natMap (const (const f)) idNat
+
 
 -- | A cone from N to F is a natural transformation from the constant functor to N to F.
 type Cone   f n = Const (Dom f) (Cod f) n :~> f
