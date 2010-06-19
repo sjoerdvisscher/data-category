@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeFamilies, TypeOperators, MultiParamTypeClasses, FlexibleInstances, FlexibleContexts, UndecidableInstances, RankNTypes, ScopedTypeVariables #-}
+{-# LANGUAGE TypeFamilies, TypeOperators, GADTs, FlexibleInstances, FlexibleContexts, RankNTypes, ScopedTypeVariables #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category.Kleisli
@@ -14,50 +14,57 @@
 -----------------------------------------------------------------------------
 module Data.Category.Kleisli where
   
-import Prelude hiding ((.), id, Monad(..))
+import Prelude hiding ((.), id, Functor(..), Monad(..))
 
 import Data.Category
-import Data.Category.Hask
+import Data.Category.Functor
+import Data.Category.NaturalTransformation
+import Data.Category.Adjunction
 
-class Pointed m where
-  point :: m -> Id (Cod m) :~> m
+
+class Functor m => Pointed m where
+  point :: m -> Id (Dom m) :~> m
   
 class Pointed m => Monad m where
   join :: m -> (m :.: m) :~> m
+
   
-data Kleisli ((~>) :: * -> * -> *) m a b = Kleisli (m -> a ~> F m b)
-
-newtype instance Nat (Kleisli (~>) m) d f g = 
-  KleisliNat { unKleisliNat :: forall a. CategoryO (~>) a => Obj a -> Component f g a }
-
-instance (Monad m, Dom m ~ (~>), Cod m ~ (~>)) => Category (Kleisli (~>) m) where
-  idNat = KleisliNat $ \o -> Kleisli $ \m -> point m ! o
-  natMap f (KleisliNat n) = KleisliNat $ f n
-instance (Monad m, Dom m ~ (~>), Cod m ~ (~>), CategoryO (~>) o) => CategoryO (Kleisli (~>) m) o where
-  (!) = unKleisliNat
-instance (Monad m, Dom m ~ (->), Cod m ~ (->), FunctorA m b (F m c)) => CategoryA (Kleisli (->) m) a b c where
-  (Kleisli f) . (Kleisli g) = Kleisli $ \m -> join m ! (obj :: c) . (m % f m) . g m
+data Kleisli ((~>) :: * -> * -> *) m a b where
+  Kleisli :: m -> Obj (~>) b -> a ~> F m b -> Kleisli (~>) m a b
 
 
+instance (Category (~>), Monad m, Dom m ~ (~>), Cod m ~ (~>)) => Category (Kleisli (~>) m) where
+  
+  data Obj (Kleisli (~>) m) a = KleisliO m (Obj (~>) a)
+  
+  src (Kleisli m _ f) = KleisliO m (src f)
+  tgt (Kleisli m b _) = KleisliO m b
+  
+  id (KleisliO m o)                 = Kleisli m o $ point m ! o
+  (Kleisli m c f) . (Kleisli _ _ g) = Kleisli m c $ (join m ! c) . (m % f) . g
 
-data KleisliAdjF ((~>) :: * -> * -> *) m = KleisliAdjF m
+
+
+data KleisliAdjF ((~>) :: * -> * -> *) m where
+  KleisliAdjF :: (Category (~>), Monad m, Dom m ~ (~>), Cod m ~ (~>)) => m -> KleisliAdjF (~>) m
 type instance Dom (KleisliAdjF (~>) m) = (~>)
 type instance Cod (KleisliAdjF (~>) m) = Kleisli (~>) m
 type instance F (KleisliAdjF (~>) m) a = a
-instance (Monad m, Dom m ~ (->), Cod m ~ (->)) => FunctorA (KleisliAdjF (->) m) a b where
-  KleisliAdjF _ % f = Kleisli $ \m -> point m ! (obj :: b) . f
-  
-data KleisliAdjG ((~>) :: * -> * -> *) m = KleisliAdjG m
+instance Functor (KleisliAdjF (~>) m) where
+  KleisliAdjF m %% x = KleisliO m x
+  KleisliAdjF m %  f = Kleisli m (tgt f) $ (point m ! tgt f) . f
+   
+data KleisliAdjG ((~>) :: * -> * -> *) m where
+  KleisliAdjG :: (Category (~>), Monad m, Dom m ~ (~>), Cod m ~ (~>)) => m -> KleisliAdjG (~>) m
 type instance Dom (KleisliAdjG (~>) m) = Kleisli (~>) m
 type instance Cod (KleisliAdjG (~>) m) = (~>)
 type instance F (KleisliAdjG (~>) m) a = F m a
-instance (Monad m, Dom m ~ (->), Cod m ~ (->), FunctorA m a (F m b)) => FunctorA (KleisliAdjG (->) m) a b where
-  KleisliAdjG m % Kleisli f = join m ! (obj :: b) . (m % f m)
+instance Functor (KleisliAdjG (~>) m) where
+  KleisliAdjG m %% KleisliO _ x = m %% x
+  KleisliAdjG m % Kleisli _ b f = (join m ! b) . (m % f)
 
-instance (Pointed m, Dom m ~ (->), Cod m ~ (->)) => Pointed (KleisliAdjG (->) m :.: KleisliAdjF (->) m) where
-  point (KleisliAdjG m :.: _) = HaskNat (point m !)
-   
-kleisliAdj :: (Monad m, Dom m ~ (->), Cod m ~ (->)) => m -> Adjunction (KleisliAdjF (->) m) (KleisliAdjG (->) m)
-kleisliAdj m = Adjunction 
-  { unit = point (KleisliAdjG m :.: KleisliAdjF m)
-  , counit = KleisliNat (\obja -> Kleisli $ \_ -> undefined) }
+kleisliAdj :: (Monad m, Dom m ~ (~>), Cod m ~ (~>), Category (~>)) 
+  => m -> Adjunction (Kleisli (~>) m) (~>) (KleisliAdjF (~>) m) (KleisliAdjG (~>) m)
+kleisliAdj m = Adjunction (KleisliAdjF m) (KleisliAdjG m)
+  (Nat Id (KleisliAdjG m :.: KleisliAdjF m) $ \x -> point m ! x)
+  (Nat (KleisliAdjF m :.: KleisliAdjG m) Id $ \(KleisliO _ x) -> Kleisli m x $ m % id x)

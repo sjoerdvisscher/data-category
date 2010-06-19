@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeOperators, TypeFamilies, MultiParamTypeClasses, FlexibleInstances, FlexibleContexts, UndecidableInstances, RankNTypes #-}
+{-# LANGUAGE TypeOperators, TypeFamilies, GADTs, FlexibleInstances #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category.Peano
@@ -14,28 +14,39 @@
 -----------------------------------------------------------------------------
 module Data.Category.Peano where
 
-import Prelude hiding ((.), id)
+import Prelude(($))
 
 import Data.Category
+import Data.Category.Void
 
-data PeanoO (~>) x = PeanoO x (x ~> x)
 
-data family Peano ((~>) :: * -> * -> *) a b :: *
-newtype instance Peano (~>) (PeanoO (~>) a) (PeanoO (~>) b) = PeanoA (a ~> b)
-
-newtype instance Nat (Peano (~>)) d f g =
-  PeanoNat { unPeanoNat :: forall x. CategoryO (~>) x => Obj (PeanoO (~>) x) -> Component f g (PeanoO (~>) x) }
+data Peano :: (* -> * -> *) -> * -> * -> * where
+  PeanoA :: Obj (Peano (~>)) a -> Obj (Peano (~>)) b -> (a ~> b) -> Peano (~>) a b
 
 instance Category (~>) => Category (Peano (~>)) where
-  idNat = PeanoNat $ \x -> PeanoA (idNat ! getPeanoCarrier x)
-  natMap f (PeanoNat n) = PeanoNat $ f n
-instance CategoryO (~>) x => CategoryO (Peano (~>)) (PeanoO (~>) x) where
-  (!) = unPeanoNat
-instance CategoryA (~>) a b c => CategoryA (Peano (~>)) (PeanoO (~>) a) (PeanoO (~>) b) (PeanoO (~>) c) where
-  (PeanoA f) . (PeanoA g) = PeanoA (f . g)
   
-type family PeanoCarrier p :: *
-type instance PeanoCarrier (PeanoO (~>) x) = x
+  data Obj (Peano (~>)) a where
+    PeanoO :: Obj (~>) x -> x -> (x ~> x) -> Obj (Peano (~>)) x
+    
+  src (PeanoA s _ _) = s
+  tgt (PeanoA _ t _) = t
+  
+  id p@(PeanoO x _ _)             = PeanoA p p $ id x
+  (PeanoA _ t f) . (PeanoA s _ g) = PeanoA s t $ f . g
+  
+  
+-- | The natural numbers are the initial object for the 'Peano' category.
+data NatNum = Z | S NatNum
 
-getPeanoCarrier :: PeanoO (~>) x -> x
-getPeanoCarrier _ = obj :: x
+-- | Primitive recursion is the factorizer from the natural numbers.
+primRec :: t -> (t -> t) -> NatNum -> t
+primRec z _ Z     = z
+primRec z s (S n) = s (primRec z s n)
+  
+instance VoidColimit (Peano (->)) where
+  
+  type InitialObject (Peano (->)) = NatNum
+  
+  initialObject = PeanoO HaskO Z S
+  
+  initialize o@(PeanoO HaskO z s) = PeanoA initialObject o $ primRec z s

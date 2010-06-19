@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeFamilies, TypeOperators, MultiParamTypeClasses, FlexibleInstances, FlexibleContexts, UndecidableInstances, RankNTypes, ScopedTypeVariables #-}
+{-# LANGUAGE TypeOperators, TypeFamilies, GADTs, EmptyDataDecls, ScopedTypeVariables, UndecidableInstances #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category.Pair
@@ -15,113 +15,185 @@
 -----------------------------------------------------------------------------
 module Data.Category.Pair where
 
-import Prelude hiding ((.), id)
+import Prelude hiding ((.), id, Functor, product)
+import qualified Control.Arrow as A ((&&&), (***), (|||), (+++))
 
 import Data.Category
 import Data.Category.Functor
+import Data.Category.NaturalTransformation
+import Data.Category.Adjunction
+import Data.Category.Product
 
--- | One object of Pair
-data Fst = Fst deriving Show
--- | The other object of Pair
-data Snd = Snd deriving Show
+
+data P1
+data P2
 
 -- | The arrows of Pair.
-data family Pair a b :: *
-data instance Pair Fst Fst = IdFst
-data instance Pair Snd Snd = IdSnd
-
-data instance Nat Pair d f g = Component f g Fst :***: Component f g Snd
+data Pair :: * -> * -> * where
+  IdFst :: Pair P1 P1
+  IdSnd :: Pair P2 P2
 
 instance Category Pair where
-  idNat = IdFst :***: IdSnd
-  natMap f (nf :***: ns) = f (const nf) Fst :***: f (const ns) Snd
-instance CategoryO Pair Fst where
-  (f :***: _) ! Fst = f  
-instance CategoryO Pair Snd where
-  (_ :***: s) ! Snd = s  
-
-instance CategoryA Pair Fst Fst Fst where
-  IdFst . IdFst = IdFst
-instance CategoryA Pair Snd Snd Snd where
-  IdSnd . IdSnd = IdSnd
-
-instance Apply Pair Fst Fst where
-  IdFst $$ Fst = Fst
-instance Apply Pair Snd Snd where
-  IdSnd $$ Snd = Snd
-
   
-instance Category (Nat Pair (~>)) where { idNat = undefined; natMap = undefined }
-instance (Dom f ~ Pair, Cod f ~ (~>), CategoryO (~>) (F f Fst), CategoryO (~>) (F f Snd)) => CategoryO (Nat Pair (~>)) f where
-  id = id :***: id
-  FunctNat n ! f = n f
+  data Obj Pair a where
+    Fst :: Obj Pair P1
+    Snd :: Obj Pair P2
+  
+  src IdFst = Fst
+  src IdSnd = Snd
+  
+  tgt IdFst = Fst
+  tgt IdSnd = Snd
+  
+  id  Fst       = IdFst
+  id  Snd       = IdSnd
+  
+  IdFst . IdFst = IdFst
+  IdSnd . IdSnd = IdSnd
+  _     . _     = undefined -- this can't happen
+
 
 -- | The functor from Pair to (~>), a diagram of 2 objects in (~>).
-data PairF ((~>) :: * -> * -> *) x y = PairF
+data PairF :: (* -> * -> *) -> * -> * -> * where
+  PairF :: Category (~>) => Obj (~>) x -> Obj (~>) y -> PairF (~>) x y
 type instance Dom (PairF (~>) x y) = Pair
 type instance Cod (PairF (~>) x y) = (~>)
-type instance F (PairF (~>) x y) Fst = x
-type instance F (PairF (~>) x y) Snd = y
-instance (CategoryO (~>) x) => FunctorA (PairF (~>) x y) Fst Fst where
-  PairF % IdFst = id
-instance (CategoryO (~>) y) => FunctorA (PairF (~>) x y) Snd Snd where
-  PairF % IdSnd = id
+type instance F (PairF (~>) x y) P1 = x
+type instance F (PairF (~>) x y) P2 = y
+instance Functor (PairF (~>) x y) where
+  PairF x _ %% Fst = x
+  PairF _ y %% Snd = y
+  PairF x _ % IdFst = id x
+  PairF _ y % IdSnd = id y
 
+
+pairNat :: (Functor f, Functor g, Dom f ~ Pair, Cod f ~ d, Dom g ~ Pair, Cod g ~ d) 
+  => f -> g -> Comp f g P1 -> Comp f g P2 -> Nat Pair d f g
+pairNat f g c1 c2 = Nat f g (\x -> unCom $ n c1 c2 x) where
+  n :: (Functor f, Functor g, Dom f ~ Pair, Cod f ~ d, Dom g ~ Pair, Cod g ~ d) 
+    => Comp f g P1 -> Comp f g P2 -> Obj Pair a -> Comp f g a
+  n c _ Fst = c
+  n _ c Snd = c
+  
 
 -- | The product of 2 objects is the limit of the functor from Pair to (~>).
-class (CategoryO (~>) x, CategoryO (~>) y) => PairLimit (~>) x y where
+type family Product ((~>) :: * -> * -> *) x y :: *
+class Category (~>) => PairLimit (~>) where
   
-  type Product x y :: *
-  pairLimit :: Limit (PairF (~>) x y) (Product x y)
+  pairLimit :: Obj (~>) x -> Obj (~>) y -> Limit (PairF (~>) x y) (Product (~>) x y)
+  pairLimit x y = TerminalUniversal
+    (product x y)
+    (pairNat (Const $ product x y) (PairF x y) (Com $ fst $ proj x y) (Com $ snd $ proj x y)) 
+    (\_ n -> (n ! Fst) &&& (n ! Snd))
+
+  product :: Obj (~>) x -> Obj (~>) y -> Obj (~>) (Product (~>) x y)
+  product x y = limitObject $ pairLimit x y
   
-  proj :: (Product x y ~> x, Product x y ~> y)
-  (&&&) :: CategoryO (~>) a => (a ~> x) -> (a ~> y) -> (a ~> Product x y)
-  
-  pairLimit = TerminalUniversal (p1 :***: p2) undefined where
-    (p1, p2) = proj :: (Product x y ~> x, Product x y ~> y)
-  proj = (n ! Fst, n ! Snd) where 
-    TerminalUniversal n _ = pairLimit :: Limit (PairF (~>) x y) (Product x y)
-  l &&& r = (n ! (obj :: a)) (l :***: r) where
-    TerminalUniversal _ n = pairLimit :: Limit (PairF (~>) x y) (Product x y)
-    
+  proj :: Obj (~>) x -> Obj (~>) y -> (Product (~>) x y ~> x, Product (~>) x y ~> y)
+  proj x y = (n ! Fst, n ! Snd) where 
+    n = terminalMorphism $ pairLimit x y
+
+  (&&&) :: (a ~> x) -> (a ~> y) -> (a ~> Product (~>) x y)
+  l &&& r = n (src l) (pairNat undefined undefined (Com l) (Com r)) where
+    n = terminalFactorizer $ pairLimit (tgt l) (tgt r)
+
+  (***) :: (a1 ~> b1) -> (a2 ~> b2) -> (Product (~>) a1 a2 ~> Product (~>) b1 b2)
+  l *** r = (l . proj1) &&& (r . proj2) where
+    (proj1, proj2) = proj (src l) (src r)
+
 
 -- | The coproduct of 2 objects is the colimit of the functor from Pair to (~>).
-class (CategoryO (~>) x, CategoryO (~>) y) => PairColimit (~>) x y where
-  
-  type Coproduct x y :: *
-  pairColimit :: Colimit (PairF (~>) x y) (Coproduct x y)
-  
-  inj :: (x ~> Coproduct x y, y ~> Coproduct x y)
-  (|||) :: CategoryO (~>) a => (x ~> a) -> (y ~> a) -> (Coproduct x y ~> a)
-  
-  pairColimit = InitialUniversal (i1 :***: i2) undefined where
-    (i1, i2) = inj :: (x ~> Coproduct x y, y ~> Coproduct x y)
-  inj = (n ! Fst, n ! Snd) where 
-    InitialUniversal n _ = pairColimit :: Colimit (PairF (~>) x y) (Coproduct x y)
-  l ||| r = (n ! (obj :: a)) (l :***: r) where
-    InitialUniversal _ n = pairColimit :: Colimit (PairF (~>) x y) (Coproduct x y)
+type family Coproduct ((~>) :: * -> * -> *) x y :: *
+class Category (~>) => PairColimit (~>) where
 
+  pairColimit :: Obj (~>) x -> Obj (~>) y -> Colimit (PairF (~>) x y) (Coproduct (~>) x y)
+  pairColimit x y = InitialUniversal 
+    (coproduct x y) 
+    (pairNat (PairF x y) (Const $ coproduct x y) (Com $ fst $ inj x y) (Com $ snd $ inj x y)) 
+    (\_ n -> (n ! Fst) ||| (n ! Snd))
+  
+  coproduct :: Obj (~>) x -> Obj (~>) y -> Obj (~>) (Coproduct (~>) x y)
+  coproduct x y = colimitObject $ pairColimit x y
+  
+  inj :: Obj (~>) x -> Obj (~>) y -> (x ~> Coproduct (~>) x y, y ~> Coproduct (~>) x y)
+  inj x y = (n ! Fst, n ! Snd) where 
+    n = initialMorphism $ pairColimit x y
+
+  (|||) :: (x ~> a) -> (y ~> a) -> (Coproduct (~>) x y ~> a)
+  l ||| r = n (tgt l) (pairNat undefined undefined (Com l) (Com r)) where
+    n = initialFactorizer $ pairColimit (src l) (src r)
     
--- t :: Nat Pair (~>) f g -> (Product x y ~> Product a b)
--- t (f :***: g) = (f . proj1) &&& (g . proj2)
+  (+++) :: (a1 ~> b1) -> (a2 ~> b2) -> (Coproduct (~>) a1 a2 ~> Coproduct (~>) b1 b2)
+  l +++ r = (inj1 . l) ||| (inj2 . r) where
+    (inj1, inj2) = inj (tgt l) (tgt r)
+    
+
+type instance Product (->) x y = (x, y)
+
+instance PairLimit (->) where
+  
+  product HaskO HaskO = HaskO
+  
+  proj _ _ = (fst, snd)
+  
+  (&&&) = (A.&&&)
+  (***) = (A.***)
+
+
+type instance Coproduct (->) x y = Either x y
+
+instance PairColimit (->) where
+  
+  coproduct HaskO HaskO = HaskO
+  
+  inj _ _ = (Left, Right)
+  
+  (|||) = (A.|||)
+  (+++) = (A.+++)
+  
+  
+type instance Product Cat (CatW c1) (CatW c2) = CatW (c1 :*: c2)
+
+instance PairLimit Cat where
+  
+  product CatO CatO = CatO
+  
+  proj CatO CatO = (CatA Proj1, CatA Proj2)
+  
+  CatA f1 &&& CatA f2 = CatA ((f1 :***: f2) :.: DiagProd)
+  CatA f1 *** CatA f2 = CatA (f1 :***: f2)
+
 
 -- | Functor product
--- data Prod ((~>) :: * -> * -> *) = Prod
--- type instance Dom (Prod (~>)) = Nat Pair (~>)
--- type instance Cod (Prod (~>)) = (~>)
--- type instance F (Prod (~>)) f = Product (F f Fst) (F f Snd)
--- instance (Dom f ~ Pair, Cod f ~ (~>), Dom g ~ Pair, Cod g ~ (~>), F f Fst ~ fx, F f Snd ~ fy, F g Fst ~ gx, F g Snd ~ gy,
---   CategoryO (~>) fx, CategoryO (~>) fy, CategoryO (~>) gx, CategoryO (~>) gy) 
---   => FunctorA (Prod (~>)) f g where
---   Prod % (f :***: g) = (f . proj1) &&& (g . proj2)
+data Prod ((~>) :: * -> * -> *) = Prod
 
--- data f :*: g = f :*: g
--- type instance Dom (f :*: g) = Dom f -- ~ Dom g
--- type instance Cod (f :*: g) = Cod f -- ~ Cod g
+type instance Dom (Prod (~>)) = Nat Pair (~>)
+type instance Cod (Prod (~>)) = (~>)
+type instance F (Prod (~>)) f = Product (~>) (F f P1) (F f P2)
+
+instance PairLimit (~>) => Functor (Prod (~>)) where
+  Prod %% NatO f   = (f %% Fst) `product` (f %% Snd)
+  Prod % Nat _ _ n = n Fst      ***       n Snd
+
+-- prodAdj :: PairLimit (~>) => Adjunction (Nat Pair (~>)) (~>) (Diag Pair (~>)) (Prod (~>))
+-- prodAdj = Adjunction Diag Prod
+--   (Nat Id (Prod :.: Diag) $ \x -> id x &&& id x)
+--   (Nat (Diag :.: Prod) Id $ h)
+--     where 
+--       h :: PairLimit (~>) => Obj (Nat Pair (~>)) a -> Nat Pair (~>) (Const Pair (~>) (Product (~>) (F a P1) (F a P2))) a
+--       h (NatO f) = terminalMorphism $ pairLimit (f %% Fst) (f %% Snd)
+        -- Nat (Const (Prod %% NatO f)) f (\n -> (terminalMorphism $ pairLimit (f %% Fst) (f %% Snd)) ! n)
+  
+-- { unit = Nat $ \_ -> id A.&&& id, counit = Nat $ \_ -> fromPairNat (fst :***: snd) }
+
+-- data (:*:) :: * -> * -> * where
+--   (:*:) :: (Dom f ~ Dom g, Cod f ~ Cod g) => f -> g -> f :*: g
+-- type instance Dom (f :*: g) = Dom f
+-- type instance Cod (f :*: g) = Cod f
 -- type instance F (f :*: g) x = Product (F f x) (F g x)
--- -- instance (FunctorA g a1 b1, FunctorA h a2 b2, a ~ Product a1 a2, b ~ Product b1 b2)
--- --   => FunctorA (g :*: h) a b where
--- --   _ % f = ((obj :: g) % f) &&& ((obj :: h) % f)
+-- instance ()
+--   => FunctorA (g :*: h) a b where
+--   _ % f = ((obj :: g) % f) &&& ((obj :: h) % f)
 -- 
 -- -- | Functor coproduct
 -- data f :+: g = f :+: g

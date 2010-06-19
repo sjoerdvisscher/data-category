@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeOperators, TypeFamilies, MultiParamTypeClasses, FlexibleInstances, FlexibleContexts, UndecidableInstances, RankNTypes, ScopedTypeVariables #-}
+{-# LANGUAGE TypeOperators, TypeFamilies, GADTs, EmptyDataDecls, UndecidableInstances #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category.Omega
@@ -14,102 +14,99 @@
 -----------------------------------------------------------------------------
 module Data.Category.Omega where
 
-import Prelude hiding ((.), id)
+import Prelude hiding ((.), id, Functor, product)
 
 import Data.Category
-import Data.Category.Functor
 import Data.Category.Void
 import Data.Category.Pair
 
 
--- | The object Z represents zero.
-data Z = Z deriving Show
--- | The object S n represents the successor of n.
-newtype S n = S n deriving Show
+data Z
+data S n
+
+data OmegaO :: * -> * where
 
 -- | The arrows of omega, there's an arrow from a to b iff a <= b.
-data family Omega a b :: *
-data instance Omega Z Z = IdZ
-newtype instance Omega Z (S n) = GTZ (Omega Z n)
-newtype instance Omega (S a) (S b) = StepS (Omega a b)
-
-data instance Nat Omega d f g = 
-  OmegaNat (Component f g Z) (forall n. (CategoryO Omega n) => Obj n -> Component f g n -> Component f g (S n))
-
-instance Category Omega where
-  idNat = OmegaNat IdZ (const StepS)
-  natMap f on@(OmegaNat z s) = OmegaNat (f (const z) Z) (\n _ -> f (const (s n (on ! n))) (S n))
-instance CategoryO Omega Z where
-  OmegaNat z _ ! Z = z  
-instance (CategoryO Omega n) => CategoryO Omega (S n) where
-  on@(OmegaNat _ s) ! (S n) = s n (on ! n)
-
-instance (CategoryO Omega n) => CategoryA Omega Z Z n where
-  a . IdZ = a
-instance (CategoryA Omega Z n p) => CategoryA Omega Z (S n) (S p) where
-  (StepS a) . (GTZ n) = GTZ (a . n)
-instance (CategoryA Omega n p q) => CategoryA Omega (S n) (S p) (S q) where
-  (StepS a) . (StepS b) = StepS (a . b)
-
-instance Apply Omega Z Z where
-  IdZ $$ Z = Z
-instance Apply Omega Z n => Apply Omega Z (S n) where
-  GTZ d $$ Z = S (d $$ Z)
-instance Apply Omega a b => Apply Omega (S a) (S b) where
-  StepS d $$ S a = S (d $$ a)
-
-
-
-data OmegaF ((~>) :: * -> * -> *) z f = OmegaF
-type instance Dom (OmegaF (~>) z f) = Omega
-type instance Cod (OmegaF (~>) z f) = (~>)
-type instance F (OmegaF (~>) z f) Z = z
-type instance F (OmegaF (~>) z f) (S n) = F f (F (OmegaF (~>) z f) n)
-instance CategoryO (~>) z => FunctorA (OmegaF (~>) z f) Z Z where
-  OmegaF % IdZ = id
-
-class CategoryO (~>) z => OmegaLimit (~>) z f where
-  type OmegaL (~>) z f :: *
-  omegaLimit :: Limit (OmegaF (~>) z f) (OmegaL (~>) z f)
-class CategoryO (~>) z => OmegaColimit (~>) z f where
-  type OmegaC (~>) z f :: *
-  omegaColimit :: Colimit (OmegaF (~>) z f) (OmegaC (~>) z f)
+data Omega :: * -> * -> * where
+  IdZ :: Omega Z Z
+  GTZ :: Omega Z n -> Omega Z (S n)
+  StS :: Omega a b -> Omega (S a) (S b)
   
+instance Category Omega where
+  
+  data Obj Omega a where
+    OZ :: Obj Omega Z
+    OS :: Obj Omega n -> Obj Omega (S n)
+  
+  src IdZ     = OZ
+  src (GTZ _) = OZ
+  src (StS a) = OS (src a)
+  
+  tgt IdZ     = OZ
+  tgt (GTZ a) = OS (tgt a)
+  tgt (StS a) = OS (tgt a)
+  
+  id OZ             = IdZ
+  id (OS n)         = StS (id n)
+  
+  a       . IdZ     = a
+  (StS a) . (GTZ n) = GTZ (a . n)
+  (StS a) . (StS b) = StS (a . b)
+  _       . _       = error "Other combinations should not type check"
+
 
 instance VoidColimit Omega where
+  
   type InitialObject Omega = Z
-  voidColimit = InitialUniversal VoidNat (OmegaNat (\VoidNat -> IdZ) (\_ cpt VoidNat -> GTZ (cpt VoidNat)))
+  
+  initialObject     = OZ
+  
+  initialize OZ     = IdZ
+  initialize (OS n) = GTZ $ initialize n
+
+
+type instance Product Omega Z     n = Z
+type instance Product Omega n     Z = Z
+type instance Product Omega (S a) (S b) = S (Product Omega a b)
 
 -- The product in omega is the minimum.
-instance PairLimit Omega Z Z where 
-  type Product Z Z = Z
-  pairLimit = TerminalUniversal (IdZ :***: IdZ) undefined
-instance (PairLimit Omega Z n, Product Z n ~ Z) => PairLimit Omega Z (S n) where 
-  type Product Z (S n) = Z
-  pairLimit = TerminalUniversal (IdZ :***: GTZ p) undefined where
-    TerminalUniversal (_ :***: p) _ = pairLimit :: Limit (PairF Omega Z n) (Product Z n)
-instance (PairLimit Omega n Z, Product n Z ~ Z) => PairLimit Omega (S n) Z where 
-  type Product (S n) Z = Z
-  pairLimit = TerminalUniversal (GTZ p :***: IdZ) undefined where
-    TerminalUniversal (p :***: _) _ = pairLimit :: Limit (PairF Omega n Z) (Product n Z)
-instance (PairLimit Omega a b) => PairLimit Omega (S a) (S b) where 
-  type Product (S a) (S b) = S (Product a b)
-  pairLimit = TerminalUniversal (StepS p1 :***: StepS p2) undefined where
-    TerminalUniversal (p1 :***: p2) _ = pairLimit :: Limit (PairF Omega a b) (Product a b)
+instance PairLimit Omega where 
 
--- The coproduct in omega is the maximum.
-instance PairColimit Omega Z Z where 
-  type Coproduct Z Z = Z
-  pairColimit = InitialUniversal (IdZ :***: IdZ) undefined
-instance (PairColimit Omega Z n, Coproduct Z n ~ n) => PairColimit Omega Z (S n) where 
-  type Coproduct Z (S n) = S n
-  pairColimit = InitialUniversal (GTZ p1 :***: StepS p2) undefined where
-    InitialUniversal (p1 :***: p2) _ = pairColimit :: Colimit (PairF Omega Z n) (Coproduct Z n)
-instance (PairColimit Omega n Z, Coproduct n Z ~ n) => PairColimit Omega (S n) Z where 
-  type Coproduct (S n) Z = S n
-  pairColimit = InitialUniversal (StepS p1 :***: GTZ p2) undefined where
-    InitialUniversal (p1 :***: p2) _ = pairColimit :: Colimit (PairF Omega n Z) (Coproduct n Z)
-instance (PairColimit Omega a b) => PairColimit Omega (S a) (S b) where 
-  type Coproduct (S a) (S b) = S (Coproduct a b)
-  pairColimit = InitialUniversal (StepS p1 :***: StepS p2) undefined where
-    InitialUniversal (p1 :***: p2) _ = pairColimit :: Colimit (PairF Omega a b) (Coproduct a b)
+  product OZ     _      = OZ
+  product _      OZ     = OZ
+  product (OS a) (OS b) = OS (product a b)
+  
+  proj OZ     OZ     = (IdZ, IdZ)
+  proj OZ     (OS n) = (IdZ, GTZ . snd $ proj OZ n)
+  proj (OS n) OZ     = (GTZ . fst $ proj n OZ, IdZ)
+  proj (OS a) (OS b) = (StS proj1, StS proj2) where (proj1, proj2) = proj a b
+  
+  IdZ   &&& _     = IdZ
+  _     &&& IdZ   = IdZ
+  GTZ a &&& GTZ b = GTZ (a &&& b)
+  StS a &&& StS b = StS (a &&& b)
+  _     &&& _      = error "Other combinations should not type check"
+
+
+type instance Coproduct Omega Z     n     = n
+type instance Coproduct Omega n     Z     = n
+type instance Coproduct Omega (S a) (S b) = S (Coproduct Omega a b)
+
+-- -- The coproduct in omega is the maximum.
+instance PairColimit Omega where 
+  
+  coproduct OZ     n      = n
+  coproduct n      OZ     = n
+  coproduct (OS a) (OS b) = OS (coproduct a b)
+  
+  inj OZ OZ = (IdZ, IdZ)
+  inj OZ (OS n) = (GTZ inj1, StS inj2) where (inj1, inj2) = inj OZ n
+  inj (OS n) OZ = (StS inj1, GTZ inj2) where (inj1, inj2) = inj n OZ
+  inj (OS a) (OS b) = (StS inj1, StS inj2) where (inj1, inj2) = inj a b
+  
+  IdZ   ||| IdZ   = IdZ
+  GTZ _ ||| a     = a
+  a     ||| GTZ _ = a
+  StS a ||| StS b = StS (a ||| b)
+  _     ||| _      = error "Other combinations should not type check"
+  

@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeOperators, TypeFamilies, FlexibleInstances, FlexibleContexts, MultiParamTypeClasses, EmptyDataDecls, ScopedTypeVariables #-}
+{-# LANGUAGE TypeOperators, TypeFamilies, FlexibleInstances, FlexibleContexts, GADTs, EmptyDataDecls, ScopedTypeVariables #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category.Void
@@ -15,36 +15,119 @@
 -----------------------------------------------------------------------------
 module Data.Category.Void where
 
+import Prelude hiding ((.), id, Functor)
 import Data.Category
 import Data.Category.Functor
+import Data.Category.NaturalTransformation
+import Data.Category.Unit
 
 -- | The (empty) data type of the arrows in /0/. 
 data Void a b
 
-data instance Nat Void d f g = 
-  VoidNat
+magicVoid :: Void a b -> x
+magicVoid x = x `seq` error "we never get this far"
+
+magicVoidO :: Obj Void a -> x
+magicVoidO x = x `seq` error "we never get this far"
+
 
 instance Category Void where
-  idNat = VoidNat
-  natMap _ VoidNat = VoidNat
+  
+  -- | The (empty) data type of the objects in /0/. 
+  data Obj Void a = VoidO
+  
+  src = magicVoid
+  tgt = magicVoid
+  
+  id    = magicVoidO
+  a . b = magicVoid (a `seq` b)
+
 
 -- | The functor from /0/ to (~>), the empty diagram in (~>).
 data VoidF ((~>) :: * -> * -> *) = VoidF
 type instance Dom (VoidF (~>)) = Void
 type instance Cod (VoidF (~>)) = (~>)
+instance Functor (VoidF (~>)) where 
+  VoidF %% x = magicVoidO x
+  VoidF %  f = magicVoid f
+
+
+voidNat :: (Functor f, Functor g, Dom f ~ Void, Dom g ~ Void, Cod f ~ d, Cod g ~ d)
+  => f -> g -> Nat Void d f g
+voidNat f g = Nat f g magicVoidO
+
+
 
 -- | An initial object is the colimit of the functor from /0/ to (~>).
-class VoidColimit (~>) where
-  type InitialObject (~>) :: *
-  voidColimit :: Colimit (VoidF (~>)) (InitialObject (~>))
-  initialize :: CategoryO (~>) a => InitialObject (~>) ~> a
-  initialize = (n ! (obj :: a)) VoidNat where 
-    InitialUniversal VoidNat n = voidColimit
+class Category (~>) => VoidColimit (~>) where
   
+  type InitialObject (~>) :: *
+  
+  voidColimit :: Colimit (VoidF (~>)) (InitialObject (~>))
+  voidColimit = InitialUniversal 
+    initialObject
+    (voidNat VoidF (Const initialObject)) 
+    (\_ n -> initialize (unNatOConst $ tgt n))
+
+  initialObject :: Obj (~>) (InitialObject (~>))
+  initialObject = colimitObject voidColimit
+
+  initialize :: Obj (~>) a -> InitialObject (~>) ~> a
+  initialize a = initialFactorizer voidColimit a (voidNat undefined (Const a))
+
+
 -- | A terminal object is the limit of the functor from /0/ to (~>).
-class VoidLimit (~>) where
+class Category (~>) => VoidLimit (~>) where
+  
   type TerminalObject (~>) :: *
+  
   voidLimit :: Limit (VoidF (~>)) (TerminalObject (~>))
-  terminate :: CategoryO (~>) a => a ~> TerminalObject (~>)
-  terminate = (n ! (obj :: a)) VoidNat where
-    TerminalUniversal VoidNat n = voidLimit
+  voidLimit = TerminalUniversal 
+    terminalObject
+    (voidNat (Const terminalObject) VoidF)
+    (\_ n -> terminate (unNatOConst $ src n))
+
+  terminalObject :: Obj (~>) (TerminalObject (~>))
+  terminalObject = limitObject voidLimit
+  
+  terminate :: Obj (~>) a -> a ~> TerminalObject (~>)
+  terminate a = terminalFactorizer voidLimit a (voidNat (Const a) undefined)
+
+
+
+-- | Any empty data type is an initial object in Hask.
+data Zero
+
+instance VoidColimit (->) where
+  
+  type InitialObject (->) = Zero
+  
+  initialObject = HaskO
+  
+  -- With thanks to Conor McBride
+  initialize HaskO x = x `seq` error "we never get this far"
+
+instance VoidLimit (->) where
+  
+  type TerminalObject (->) = ()
+  
+  terminalObject = HaskO
+  
+  terminate HaskO _ = ()
+
+
+instance VoidColimit Cat where
+  
+  type InitialObject Cat = CatW Void
+  
+  initialObject = CatO
+  
+  initialize CatO = CatA VoidF
+
+instance VoidLimit Cat where
+  
+  type TerminalObject Cat = CatW Unit
+  
+  terminalObject = CatO
+  
+  terminate CatO = CatA $ Const UnitO

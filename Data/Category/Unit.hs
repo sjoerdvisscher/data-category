@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeFamilies, MultiParamTypeClasses #-}
+{-# LANGUAGE TypeFamilies, GADTs, EmptyDataDecls #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category.Unit
@@ -15,22 +15,19 @@ module Data.Category.Unit where
 
 import Data.Category
 
--- | The one object of /1/.
-data UnitO = UnitO
+data UnitO
 
 -- | The arrows of Unit.
-data family Unit a b :: *
-data instance Unit UnitO UnitO = UnitId
+data Unit a b where
+  UnitId :: Unit UnitO UnitO
 
-newtype instance Nat Unit d f g =
-  UnitNat (Component f g UnitO)
-  
 instance Category Unit where
-  idNat = UnitNat UnitId
-  natMap f (UnitNat n) = UnitNat $ f (const n) UnitO
-instance CategoryO Unit UnitO where
-  UnitNat c ! UnitO = c
-instance CategoryA Unit UnitO UnitO UnitO where
+  
+  data Obj Unit a where
+    UnitO :: Obj Unit UnitO
+  
+  src UnitId = UnitO
+  tgt UnitId = UnitO
+  
+  id UnitO        = UnitId
   UnitId . UnitId = UnitId
-instance Apply Unit UnitO UnitO where
-  UnitId $$ UnitO = UnitO

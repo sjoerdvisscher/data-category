@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeFamilies, TypeOperators, MultiParamTypeClasses, FlexibleInstances, FlexibleContexts, UndecidableInstances, RankNTypes, ScopedTypeVariables #-}
+{-# LANGUAGE TypeFamilies, TypeOperators, GADTs, FlexibleContexts #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category.Product
@@ -11,46 +11,70 @@
 -----------------------------------------------------------------------------
 module Data.Category.Product where
 
-import Prelude hiding ((.), id)
+import Prelude hiding ((.), id, Functor)
 
 import Data.Category
+import Data.Category.Functor
 
-data family ((c1 :: * -> * -> *) :*: (c2 :: * -> * -> *)) a b :: *
-data instance (c1 :*: c2) (a1, a2) (b1, b2) = (c1 a1 b1) :**: (c2 a2 b2)
 
-data instance Nat (c1 :*: c2) d f g = 
-  ProductNat { unProductNat :: forall a1 a2. (CategoryO c1 a1, CategoryO c2 a2) => Obj (a1, a2) -> Component f g (a1, a2) }
+data (:*:) :: (* -> * -> *) -> (* -> * -> *) -> * -> * -> * where
+  (:**:) :: c1 a1 b1 -> c2 a2 b2 -> (:*:) c1 c2 (a1, a2) (b1, b2)
 
 instance (Category c1, Category c2) => Category (c1 :*: c2) where
-  idNat = ProductNat $ \(a1, a2) -> (idNat ! a1) :**: (idNat ! a2)
-  natMap f (ProductNat n) = ProductNat $ f n
-instance (CategoryO c1 a1, CategoryO c2 a2) => CategoryO (c1 :*: c2) (a1, a2) where
-  (!) = unProductNat
+  
+  data Obj (c1 :*: c2) a where
+    ProdO :: Obj c1 a1 -> Obj c2 a2 -> Obj (c1 :*: c2) (a1, a2)
+    
+  src (a1 :**: a2)            = ProdO (src a1) (src a2)
+  tgt (a1 :**: a2)            = ProdO (tgt a1) (tgt a2)
+  
+  id (ProdO x1 x2)            = id x1 :**: id x2
+  
+  (a1 :**: a2) . (b1 :**: b2) = (a1 . b1) :**: (a2 . b2)
 
+
+  
+  
+    
 data Proj1 (c1 :: * -> * -> *) (c2 :: * -> * -> *) = Proj1
 type instance Dom (Proj1 c1 c2) = c1 :*: c2
 type instance Cod (Proj1 c1 c2) = c1
 type instance F (Proj1 c1 c2) (a1, a2) = a1
-instance FunctorA (Proj1 c1 c2) (a1, a2) (b1, b2) where
-  _ % (f1 :**: f2) = f1
+instance Functor (Proj1 c1 c2) where 
+  Proj1 %% ProdO x1 _ = x1
+  Proj1 % (f1 :**: _) = f1
 
 data Proj2 (c1 :: * -> * -> *) (c2 :: * -> * -> *) = Proj2
 type instance Dom (Proj2 c1 c2) = c1 :*: c2
 type instance Cod (Proj2 c1 c2) = c2
 type instance F (Proj2 c1 c2) (a1, a2) = a2
-instance FunctorA (Proj2 c1 c2) (a1, a2) (b1, b2) where
-  _ % (f1 :**: f2) = f2
+instance Functor (Proj2 c1 c2) where 
+  Proj2 %% ProdO _ x2 = x2
+  Proj2 % (_ :**: f2) = f2
 
-data ProdF f1 f2 = ProdF
-type instance Dom (ProdF f1 f2) = Dom f1 :*: Dom f2
-type instance Cod (ProdF f1 f2) = Cod f1 :*: Cod f2
-type instance F (ProdF f1 f2) (a1, a2) = (F f1 a1, F f2 a2)
-instance (FunctorA g1 a1 b1, FunctorA g2 a2 b2) => FunctorA (ProdF g1 g2) (a1, a2) (b1, b2) where
-  _ % (f1 :**: f2) = ((obj :: g1) % f1) :**: ((obj :: g2) % f2)
-
-data DiagProd ((~>) :: * -> * -> *) = DiagProd
+data f1 :***: f2 where 
+  (:***:) :: (Functor f1, Functor f2, Category (Cod f1), Category (Cod f2)) => f1 -> f2 -> f1 :***: f2
+type instance Dom (f1 :***: f2) = Dom f1 :*: Dom f2
+type instance Cod (f1 :***: f2) = Cod f1 :*: Cod f2
+type instance F (f1 :***: f2) (a1, a2) = (F f1 a1, F f2 a2)
+instance Functor (f1 :***: f2) where 
+  (g1 :***: g2) %% ProdO x1 x2 = ProdO (g1 %% x1) (g2 %% x2)
+  (g1 :***: g2) % (f1 :**: f2) = (g1 % f1) :**: (g2 % f2)
+  
+data Hom (~>) where
+  Hom :: Category (~>) => Hom (~>)
+type instance Dom (Hom (~>)) = Op (~>) :*: (~>)
+type instance Cod (Hom (~>)) = (->)
+type instance F (Hom (~>)) (a, b) = a ~> b
+instance Functor (Hom (~>)) where 
+  (%%) = undefined
+  Hom % (Op g1 :**: g2) = \f -> g2 . f . g1
+  
+data DiagProd :: (* -> * -> *) -> * where 
+  DiagProd :: Category (~>) => DiagProd (~>)
 type instance Dom (DiagProd (~>)) = (~>)
 type instance Cod (DiagProd (~>)) = (~>) :*: (~>)
 type instance F (DiagProd (~>)) a = (a, a)
-instance FunctorA (DiagProd (~>)) (a1, a2) (b1, b2) where
-  _ % f = f :**: f
+instance Functor (DiagProd (~>)) where 
+  DiagProd %% x = ProdO x x
+  DiagProd % f = f :**: f

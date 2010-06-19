@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeOperators, TypeFamilies, MultiParamTypeClasses, FunctionalDependencies, FlexibleInstances, FlexibleContexts, UndecidableInstances, RankNTypes, GADTs #-}
+{-# LANGUAGE TypeOperators, TypeFamilies, EmptyDataDecls, FlexibleContexts, UndecidableInstances, GADTs, RankNTypes #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category.Functor
@@ -9,36 +9,158 @@
 -- Stability   :  experimental
 -- Portability :  non-portable
 -----------------------------------------------------------------------------
-module Data.Category.Functor where
+module Data.Category.Functor (
+
+  -- * Cat
+    Cat(..)
+  , Obj(..)
+  , CatW
+
+  -- * Functors
+  , F
+  , Dom
+  , Cod
+  , Functor(..)
+  
+  -- ** Functor instances
+  , Id(..)
+  , (:.:)(..)
+  , Const(..)
+  , (:*-:)(..)
+  , (:-*:)(..)
+  , EndoHask(..)
+  
+  -- * Universal properties
+  , InitialUniversal(..)
+  , TerminalUniversal(..)
+
+) where
+  
+import Prelude hiding (id, (.), Functor)
+import qualified Prelude
   
 import Data.Category
 
 
--- | Functor category Funct(C, D), or D^C.
--- Objects of Funct(C, D) are functors from C to D.
--- Arrows of Funct(C, D) are natural transformations.
--- Each category C needs its own data instance.
+-- | Functors are represented by a type tag. The type family 'F' turns the tag into the actual functor.
+type family F ftag a :: *
+-- | The domain, or source category, of the functor.
+type family Dom ftag :: * -> * -> *
+-- | The codomain, or target category, of the funcor.
+type family Cod ftag :: * -> * -> *
+
+-- | The mapping of arrows by covariant functors.
+-- To make this type check, we need to pass the type tag along.
+class Functor ftag where
+  (%%) :: ftag -> Obj (Dom ftag) a -> Obj (Cod ftag) (F ftag a)
+  (%)  :: ftag -> Dom ftag a b -> Cod ftag (F ftag a) (F ftag b)
 
 
--- | Arrows of the category Funct(Funct(C, D), E)
--- I.e. natural transformations between functors of type D^C -> E
-data instance Nat (Nat c d) e f g = 
-  FunctNat { unFunctNat :: forall h. (Dom h ~ c, Cod h ~ d) => Obj h -> Component f g h }
+-- | Functors are arrows in the category Cat.
+data Cat :: * -> * -> * where
+  CatA :: (Functor ftag, Category (Dom ftag), Category (Cod ftag)) => ftag -> Cat (CatW (Dom ftag)) (CatW (Cod ftag))
+
+-- | We need a wrapper here because objects need to be of kind *, and categories are of kind * -> * -> *.
+data CatW :: (* -> * -> *) -> *
 
 
--- | The diagonal functor from (index-) category J to (~>).
-data Diag (j :: * -> * -> *) ((~>) :: * -> * -> *) = Diag
-type instance Dom (Diag j (~>)) = (~>)
-type instance Cod (Diag j (~>)) = Nat j (~>)
-type instance F (Diag j (~>)) a = Const j (~>) a
-instance Category j => FunctorA (Diag j (~>)) a b where
-  Diag % f = natMap (const (const f)) idNat
+instance Category Cat where
+  
+  -- | The objects in the category Cat are the categories themselves.
+  data Obj Cat a where
+    CatO :: Category (~>) => Obj Cat (CatW (~>))
+    
+  src (CatA _) = CatO
+  tgt (CatA _) = CatO
+  
+  id CatO           = CatA Id
+  CatA f1 . CatA f2 = CatA (f1 :.: f2)
 
 
--- | A cone from N to F is a natural transformation from the constant functor to N to F.
-type Cone   f n = Const (Dom f) (Cod f) n :~> f
--- | A co-cone from F to N is a natural transformation from F to the constant functor to N.
-type Cocone f n = f :~> Const (Dom f) (Cod f) n
 
-type Limit   f l = TerminalUniversal f (Diag (Dom f) (Cod f)) l
-type Colimit f l = InitialUniversal  f (Diag (Dom f) (Cod f)) l
+-- | The identity functor on (~>)
+data Id ((~>) :: * -> * -> *) = Id
+
+type instance Dom (Id (~>)) = (~>)
+type instance Cod (Id (~>)) = (~>)
+type instance F (Id (~>)) a = a
+
+instance Functor (Id (~>)) where 
+  _ %% x = x
+  _ %  f = f
+
+
+-- | The composition of two functors.
+data (g :.: h) where
+  (:.:) :: (Functor g, Functor h, Cod h ~ Dom g) => g -> h -> g :.: h
+  
+type instance Dom (g :.: h) = Dom h
+type instance Cod (g :.: h) = Cod g
+type instance F (g :.: h) a = F g (F h a)
+
+instance Functor (g :.: h) where 
+  (g :.: h) %% x = g %% (h %% x)
+  (g :.: h) %  f = g %  (h %  f)
+
+
+-- | The constant functor.
+data Const (c1 :: * -> * -> *) (c2 :: * -> * -> *) x where
+  Const :: Category c2 => Obj c2 x -> Const c1 c2 x
+  
+type instance Dom (Const c1 c2 x) = c1
+type instance Cod (Const c1 c2 x) = c2
+type instance F (Const c1 c2 x) a = x
+
+instance Functor (Const c1 c2 x) where 
+  Const x %% _ = x
+  Const x %  _ = id x
+  
+  
+-- | The covariant functor Hom(X,--)
+data (:*-:) :: * -> (* -> * -> *) -> * where
+  HomX_ :: Category (~>) => Obj (~>) x -> x :*-: (~>)
+  
+type instance Dom (x :*-: (~>)) = (~>)
+type instance Cod (x :*-: (~>)) = (->)
+type instance F (x :*-: (~>)) a = x ~> a
+
+instance Functor (x :*-: (~>)) where 
+  (%%) = undefined
+  HomX_ _ % f = (f .)
+
+
+-- | The contravariant functor Hom(--,X)
+data (:-*:) :: (* -> * -> *) -> * -> * where
+  Hom_X :: Category (~>) => Obj (~>) x -> (~>) :-*: x
+
+type instance Dom ((~>) :-*: x) = Op (~>)
+type instance Cod ((~>) :-*: x) = (->)
+type instance F ((~>) :-*: x) a = a ~> x
+
+instance Functor ((~>) :-*: x) where 
+  (%%) = undefined
+  Hom_X _ % Op f = (. f)
+
+
+-- | 'EndoHask' is a wrapper to turn instances of the 'Functor' class into categorical functors.
+data EndoHask :: (* -> *) -> * where
+  EndoHask :: Prelude.Functor f => EndoHask f
+  
+type instance Dom (EndoHask f) = (->)
+type instance Cod (EndoHask f) = (->)
+type instance F (EndoHask f) r = f r
+
+instance Functor (EndoHask f) where
+  EndoHask %% HaskO = HaskO
+  EndoHask % f = fmap f
+
+
+data InitialUniversal  x u a = InitialUniversal
+  { iuObject :: Obj (Dom u) a
+  , initialMorphism :: Cod u x (F u a)
+  , initialFactorizer :: forall y. Obj (Dom u) y -> Cod u x (F u y) -> Dom u a y }
+  
+data TerminalUniversal x u a = TerminalUniversal 
+  { tuObject :: Obj (Dom u) a
+  , terminalMorphism :: Cod u (F u a) x
+  , terminalFactorizer :: forall y. Obj (Dom u) y -> Cod u (F u y) x -> Dom u y a }

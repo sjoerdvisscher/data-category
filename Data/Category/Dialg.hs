@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeOperators, TypeFamilies, MultiParamTypeClasses, FlexibleInstances, FlexibleContexts, UndecidableInstances, RankNTypes, ScopedTypeVariables #-}
+{-# LANGUAGE TypeOperators, TypeFamilies, GADTs, FlexibleInstances, FlexibleContexts #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category.Dialg
@@ -13,35 +13,37 @@
 -----------------------------------------------------------------------------
 module Data.Category.Dialg where
 
-import Prelude hiding ((.), id)
+import Prelude hiding ((.), id, Functor)
+import qualified Prelude
 
 import Data.Category
+import Data.Category.Functor
 import Data.Category.Void
-import Data.Category.Pair
 import Data.Category.Product
 
+
 -- | Objects of Dialg(F,G) are (F,G)-dialgebras.
-newtype Dialgebra f g a = Dialgebra (Cod f (F f a) (F g a))
+type Dialgebra f g a = Obj (Dialg f g) a
 
 -- | Arrows of Dialg(F,G) are (F,G)-homomorphisms.
-data family Dialg f g a b :: *
-data instance Dialg f g (Dialgebra f g a) (Dialgebra f g b) = DialgA (Dom f a b)
+data Dialg f g a b where
+  DialgA :: (Category c, Category d, Dom f ~ c, Dom g ~ c, Cod f ~ d, Cod g ~ d, Functor f, Functor g) 
+    => Dialgebra f g a -> Dialgebra f g b -> c a b -> Dialg f g a b
 
-newtype instance Nat (Dialg f g) d s t = 
-  DialgNat { unDialgNat :: forall a. CategoryO (Dom f) a => Obj (Dialgebra f g a) -> Component s t (Dialgebra f g a) }
 
-getCarrier :: Dialgebra f g a -> Obj a
-getCarrier _ = obj :: a
+instance Category (Dialg f g) where
+  
+  data Obj (Dialg f g) a where
+    Dialgebra :: (Category c, Category d, Dom f ~ c, Dom g ~ c, Cod f ~ d, Cod g ~ d, Functor f, Functor g) 
+      => Obj c a -> d (F f a) (F g a) -> Obj (Dialg f g) a
+      
+  src (DialgA s _ _) = s
+  tgt (DialgA _ t _) = t
+  
+  id x@(Dialgebra a _)        = DialgA x x $ id a
+  DialgA _ t f . DialgA s _ g = DialgA s t $ f . g
 
-instance Category (Dom f) => Category (Dialg f g) where
-  idNat = DialgNat $ \dialg -> DialgA (idNat ! getCarrier dialg)
-  natMap f (DialgNat n) = DialgNat $ f n
-instance (Dom f ~ c, Cod f ~ d, Dom g ~ c, Cod g ~ d, CategoryO c a) 
-  => CategoryO (Dialg f g) (Dialgebra f g a) where
-  (!) = unDialgNat
-instance (Dom f ~ c, Cod f ~ d, Dom g ~ c, Cod g ~ d, CategoryA c x y z) 
-  => CategoryA (Dialg f g) (Dialgebra f g x) (Dialgebra f g y) (Dialgebra f g z) where
-  DialgA f . DialgA g = DialgA (f . g)
+
 
 type Alg f = Dialg f (Id (Dom f))
 type Algebra f a = Dialgebra f (Id (Dom f)) a
@@ -55,21 +57,64 @@ type InitialFAlgebra f = InitialObject (Alg f)
 type TerminalFAlgebra f = TerminalObject (Coalg f)
 
 -- | A catamorphism of an F-algebra is the arrow to it from the initial F-algebra.
-type Cata f a = Algebra f a -> Alg f (InitialFAlgebra f) (Algebra f a)
+type Cata f a = Algebra f a -> Alg f (InitialFAlgebra f) a
 
 -- | A anamorphism of an F-coalgebra is the arrow from it to the terminal F-coalgebra.
-type Ana f a = Coalgebra f a -> Coalg f (Coalgebra f a) (TerminalFAlgebra f)
+type Ana f a = Coalgebra f a -> Coalg f a (TerminalFAlgebra f)
 
 
-instance PairLimit (~>) x y => VoidLimit (Dialg (DiagProd (~>)) (Const (~>) ((~>) :*: (~>)) (x, y))) where
-  type TerminalObject (Dialg (DiagProd (~>)) (Const (~>) ((~>) :*: (~>)) (x, y))) = 
-    Dialgebra (DiagProd (~>)) (Const (~>) ((~>) :*: (~>)) (x, y)) (Product x y)
-  voidLimit = TerminalUniversal VoidNat 
-    (DialgNat $ \(Dialgebra (f :**: s)) VoidNat -> DialgA (f &&& s))
+
+
+-- | 'FixF' provides the initial F-algebra for endofunctors in Hask.
+newtype FixF f = InF { outF :: f (FixF f) }
+
+-- | Catamorphisms for endofunctors in Hask.
+cataHask :: Prelude.Functor f => Cata (EndoHask f) a
+cataHask a@(Dialgebra HaskO f) = DialgA initialObject a $ cata f where cata f = f . fmap (cata f) . outF 
+
+-- -- | Anamorphisms for endofunctors in Hask.
+anaHask :: Prelude.Functor f => Ana (EndoHask f) a
+anaHask a@(Dialgebra HaskO f) = DialgA a terminalObject $ ana f where ana f = InF . fmap (ana f) . f 
+
+instance Prelude.Functor f => VoidColimit (Dialg (EndoHask f) (Id (->))) where
+  
+  type InitialObject (Dialg (EndoHask f) (Id (->))) = FixF f
+  
+  initialObject = Dialgebra HaskO InF
+  initialize = cataHask
+  
+instance  Prelude.Functor f => VoidLimit (Dialg (Id (->)) (EndoHask f)) where
+
+  type TerminalObject (Dialg (Id (->)) (EndoHask f)) = FixF f
+  
+  terminalObject = Dialgebra HaskO outF
+  terminate = anaHask
+  
+
 
 -- | The category for defining the natural numbers and primitive recursion can be described as
 -- @Dialg(F,G)@, with @F(A)=\<1,A>@ and @G(A)=\<A,A>@.
-data NatF ((~>) :: * -> * -> *) = NatF
+data NatF ((~>) :: * -> * -> *) where
+  NatF :: VoidLimit (~>) => NatF (~>)
 type instance Dom (NatF (~>)) = (~>)
 type instance Cod (NatF (~>)) = (~>) :*: (~>)
 type instance F (NatF (~>)) a = (TerminalObject (~>),  a)
+instance Functor (NatF (~>)) where
+  NatF %% x = ProdO terminalObject x
+  NatF %  f = id terminalObject :**: f
+
+data NatNum = Z | S NatNum
+primRec :: t -> (t -> t) -> NatNum -> t
+primRec z _ Z     = z
+primRec z s (S n) = s (primRec z s n)
+
+instance VoidColimit (Dialg (NatF (->)) (DiagProd (->))) where
+  
+  type InitialObject (Dialg (NatF (->)) (DiagProd (->))) = NatNum
+    
+  initialObject = Dialgebra HaskO (const Z :**: S)
+  
+  initialize o@(Dialgebra HaskO p) = DialgA initialObject o $ f p where
+    f :: ((->) :*: (->)) ((), t) (t, t) -> NatNum -> t
+    f (z :**: s) = primRec (z ()) s
+    

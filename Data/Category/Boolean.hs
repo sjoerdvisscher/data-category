@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeFamilies, MultiParamTypeClasses, FlexibleInstances, FlexibleContexts, UndecidableInstances #-}
+{-# LANGUAGE TypeFamilies, MultiParamTypeClasses, GADTs, EmptyDataDecls #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category.Boolean
@@ -15,80 +15,103 @@
 -----------------------------------------------------------------------------
 module Data.Category.Boolean where
 
-import Prelude hiding ((.), id)
+import Prelude hiding ((.), id, Functor)
 
 import Data.Category
 import Data.Category.Void
 import Data.Category.Pair
 
--- | 'Fls', the object representing false.
-data Fls = Fls deriving Show
--- | 'Tru', the object representing true.
-data Tru = Tru deriving Show
 
--- | The arrows of the boolean category.
-data family Boolean a b :: *
-data instance Boolean Fls Fls = IdFls
-data instance Boolean Tru Tru = IdTru
-data instance Boolean Fls Tru = FlsTru
-
-data instance Nat Boolean d f g = 
-  BooleanNat (Component f g Fls) (Component f g Tru)
+data BF
+data BT
+  
+data Boolean a b where
+  IdFls  :: Boolean BF BF
+  FlsTru :: Boolean BF BT
+  IdTru  :: Boolean BT BT
 
 instance Category Boolean where
-  idNat = BooleanNat IdFls IdTru
-instance CategoryO Boolean Fls where
-  BooleanNat f _ ! Fls = f
-instance CategoryO Boolean Tru where
-  BooleanNat _ t ! Tru = t
-
-instance CategoryA Boolean Fls Fls Fls where
-  IdFls . IdFls = IdFls
-instance CategoryA Boolean Fls Fls Tru where
-  FlsTru . IdFls = FlsTru  
-instance CategoryA Boolean Fls Tru Tru where
-  IdTru . FlsTru = FlsTru  
-instance CategoryA Boolean Tru Tru Tru where
-  IdTru . IdTru = IdTru
-    
-instance Apply Boolean Fls Fls where
-  IdFls $$ Fls = Fls
-instance Apply Boolean Fls Tru where
-  FlsTru $$ Fls = Tru
-instance Apply Boolean Tru Tru where
-  IdTru $$ Tru = Tru
+  data Obj Boolean a where
+    Fls :: Obj Boolean BF
+    Tru :: Obj Boolean BT
   
+  src IdFls  = Fls
+  src FlsTru = Fls
+  src IdTru  = Tru
+  
+  tgt IdFls  = Fls
+  tgt FlsTru = Tru
+  tgt IdTru  = Tru
+  
+  id Fls     = IdFls
+  id Tru     = IdTru
+  
+  IdFls  . IdFls  = IdFls
+  FlsTru . IdFls  = FlsTru
+  IdTru  . FlsTru = FlsTru
+  IdTru  . IdTru  = IdTru
+  _      . _      = error "Other combinations should not type check"
 
 
 instance VoidColimit Boolean where
-  type InitialObject Boolean = Fls
-  voidColimit = InitialUniversal VoidNat (BooleanNat (\VoidNat -> IdFls) (\VoidNat -> FlsTru))
+  type InitialObject Boolean = BF
+  initialObject = Fls
+  initialize Fls = IdFls
+  initialize Tru = FlsTru
+  
 instance VoidLimit Boolean where
-  type TerminalObject Boolean = Tru
-  voidLimit = TerminalUniversal VoidNat (BooleanNat (\VoidNat -> FlsTru) (\VoidNat -> IdTru))
+  type TerminalObject Boolean = BT
+  terminalObject = Tru
+  terminate Fls = FlsTru
+  terminate Tru = IdTru
 
-instance PairLimit Boolean Fls Fls where 
-  type Product Fls Fls = Fls
-  pairLimit = TerminalUniversal (IdFls :***: IdFls) (BooleanNat (! Fst) (! Snd))
-instance PairLimit Boolean Fls Tru where 
-  type Product Fls Tru = Fls
-  pairLimit = TerminalUniversal (IdFls :***: FlsTru) (BooleanNat (! Fst) (! Fst))
-instance PairLimit Boolean Tru Fls where 
-  type Product Tru Fls = Fls
-  pairLimit = TerminalUniversal (FlsTru :***: IdFls) (BooleanNat (! Snd) (! Snd))
-instance PairLimit Boolean Tru Tru where 
-  type Product Tru Tru = Tru
-  pairLimit = TerminalUniversal (IdTru :***: IdTru) (BooleanNat (! Fst) (! Snd))
 
-instance PairColimit Boolean Fls Fls where 
-  type Coproduct Fls Fls = Fls
-  pairColimit = InitialUniversal (IdFls :***: IdFls) (BooleanNat (! Fst) (! Snd))
-instance PairColimit Boolean Fls Tru where 
-  type Coproduct Fls Tru = Tru
-  pairColimit = InitialUniversal (FlsTru :***: IdTru) (BooleanNat (! Snd) (! Snd))
-instance PairColimit Boolean Tru Fls where 
-  type Coproduct Tru Fls = Tru
-  pairColimit = InitialUniversal (IdTru :***: FlsTru) (BooleanNat (! Fst) (! Fst))
-instance PairColimit Boolean Tru Tru where 
-  type Coproduct Tru Tru = Tru
-  pairColimit = InitialUniversal (IdTru :***: IdTru) (BooleanNat (! Fst) (! Snd))
+type instance Product Boolean BF BF = BF
+type instance Product Boolean BF BT = BF
+type instance Product Boolean BT BF = BF
+type instance Product Boolean BT BT = BT
+
+instance PairLimit Boolean where 
+  
+  product Fls Fls = Fls
+  product Fls Tru = Fls
+  product Tru Fls = Fls
+  product Tru Tru = Tru
+  
+  proj Fls Fls = (IdFls , IdFls)
+  proj Fls Tru = (IdFls , FlsTru)
+  proj Tru Fls = (FlsTru, IdFls)
+  proj Tru Tru = (IdTru , IdTru)
+  
+  IdFls  &&& IdFls  = IdFls
+  IdFls  &&& FlsTru = IdFls
+  FlsTru &&& IdFls  = IdFls
+  FlsTru &&& FlsTru = FlsTru
+  IdTru  &&& IdTru  = IdTru
+  _      &&& _      = error "Other combinations should not type check"
+
+
+type instance Coproduct Boolean BF BF = BF
+type instance Coproduct Boolean BF BT = BT
+type instance Coproduct Boolean BT BF = BT
+type instance Coproduct Boolean BT BT = BT
+
+instance PairColimit Boolean where 
+  
+  coproduct Fls Fls = Fls
+  coproduct Fls Tru = Tru
+  coproduct Tru Fls = Tru
+  coproduct Tru Tru = Tru
+  
+  inj Fls Fls = (IdFls , IdFls)
+  inj Fls Tru = (FlsTru, IdTru)
+  inj Tru Fls = (IdTru , FlsTru)
+  inj Tru Tru = (IdTru , IdTru)
+  
+  IdFls  ||| IdFls  = IdFls
+  FlsTru ||| FlsTru = FlsTru
+  FlsTru ||| IdTru  = IdTru
+  IdTru  ||| FlsTru = IdTru
+  IdTru  ||| IdTru  = IdTru
+  _      ||| _      = error "Other combinations should not type check"
+  

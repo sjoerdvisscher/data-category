@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeFamilies, MultiParamTypeClasses, FlexibleInstances, ScopedTypeVariables #-}
+{-# LANGUAGE TypeFamilies, GADTs, FlexibleInstances #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category.Monoid
@@ -18,18 +18,18 @@ import Data.Monoid
 
 import Data.Category
 
--- | The arrows are the values of the monoid.
-newtype MonoidA m a b = MonoidA m
 
-newtype instance Nat (MonoidA m) d f g =
-  MonoidNat (Component f g m)
+-- | The arrows are the values of the monoid.
+data MonoidA m a b where
+  MonoidA :: Monoid m => m -> MonoidA m m m
 
 instance Monoid m => Category (MonoidA m) where
-  idNat = MonoidNat (MonoidA mempty)
-  natMap f (MonoidNat n) = MonoidNat (f (const n) (obj :: m))
-instance Monoid m => CategoryO (MonoidA m) m where
-  MonoidNat c ! _ = c  
-instance Monoid m => CategoryA (MonoidA m) m m m where
+  
+  data Obj (MonoidA m) a where
+     MonoidO :: Obj (MonoidA m) m
+  
+  src (MonoidA _) = MonoidO
+  tgt (MonoidA _) = MonoidO
+  
+  id MonoidO            = MonoidA mempty
   MonoidA a . MonoidA b = MonoidA $ a `mappend` b
-instance Monoid m => Apply (MonoidA m) m m where
-  MonoidA a $$ b = a `mappend` b
