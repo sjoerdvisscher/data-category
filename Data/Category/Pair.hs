@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeOperators, TypeFamilies, GADTs, EmptyDataDecls, ScopedTypeVariables, UndecidableInstances #-}
+{-# LANGUAGE TypeOperators, TypeFamilies, GADTs, EmptyDataDecls, ScopedTypeVariables, FlexibleInstances, UndecidableInstances #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category.Pair
@@ -21,8 +21,8 @@ import qualified Control.Arrow as A ((&&&), (***), (|||), (+++))
 import Data.Category
 import Data.Category.Functor
 import Data.Category.NaturalTransformation
-import Data.Category.Adjunction
 import Data.Category.Product
+import Data.Category.Adjunction
 
 
 data P1
@@ -75,6 +75,7 @@ pairNat f g c1 c2 = Nat f g (\x -> unCom $ n c1 c2 x) where
   n c _ Fst = c
   n _ c Snd = c
   
+  
 
 -- | The product of 2 objects is the limit of the functor from Pair to (~>).
 type family Product ((~>) :: * -> * -> *) x y :: *
@@ -87,7 +88,7 @@ class Category (~>) => PairLimit (~>) where
     (\_ n -> (n ! Fst) &&& (n ! Snd))
 
   product :: Obj (~>) x -> Obj (~>) y -> Obj (~>) (Product (~>) x y)
-  product x y = limitObject $ pairLimit x y
+  product x y = tuObject $ pairLimit x y
   
   proj :: Obj (~>) x -> Obj (~>) y -> (Product (~>) x y ~> x, Product (~>) x y ~> y)
   proj x y = (n ! Fst, n ! Snd) where 
@@ -102,6 +103,13 @@ class Category (~>) => PairLimit (~>) where
     (proj1, proj2) = proj (src l) (src r)
 
 
+type instance F (LimitFunctor Pair (~>)) f = Product (~>) (F f P1) (F f P2)
+
+instance PairLimit (~>) => Functor (LimitFunctor Pair (~>)) where
+  LimitFunctor %% NatO f   = (f %% Fst) `product` (f %% Snd)
+  LimitFunctor % Nat _ _ n = n Fst      ***       n Snd
+
+
 -- | The coproduct of 2 objects is the colimit of the functor from Pair to (~>).
 type family Coproduct ((~>) :: * -> * -> *) x y :: *
 class Category (~>) => PairColimit (~>) where
@@ -113,7 +121,7 @@ class Category (~>) => PairColimit (~>) where
     (\_ n -> (n ! Fst) ||| (n ! Snd))
   
   coproduct :: Obj (~>) x -> Obj (~>) y -> Obj (~>) (Coproduct (~>) x y)
-  coproduct x y = colimitObject $ pairColimit x y
+  coproduct x y = iuObject $ pairColimit x y
   
   inj :: Obj (~>) x -> Obj (~>) y -> (x ~> Coproduct (~>) x y, y ~> Coproduct (~>) x y)
   inj x y = (n ! Fst, n ! Snd) where 
@@ -128,6 +136,13 @@ class Category (~>) => PairColimit (~>) where
     (inj1, inj2) = inj (tgt l) (tgt r)
     
 
+type instance F (ColimitFunctor Pair (~>)) f = Coproduct (~>) (F f P1) (F f P2)
+
+instance PairColimit (~>) => Functor (ColimitFunctor Pair (~>)) where
+  ColimitFunctor %% NatO f   = (f %% Fst) `coproduct` (f %% Snd)
+  ColimitFunctor % Nat _ _ n = n Fst      +++         n Snd
+  
+  
 type instance Product (->) x y = (x, y)
 
 instance PairLimit (->) where
@@ -164,39 +179,8 @@ instance PairLimit Cat where
   CatA f1 *** CatA f2 = CatA (f1 :***: f2)
 
 
--- | Functor product
-data Prod ((~>) :: * -> * -> *) = Prod
+-- pairLimitAdj :: (PairLimit (~>)) => Adjunction (Nat Pair (~>)) (~>) (Diag Pair (~>)) (LimitFunctor Pair (~>))
+-- pairLimitAdj = Adjunction Diag LimitFunctor 
+--   (Nat Id (LimitFunctor :.: Diag) $ \a -> terminalFactorizer (pairLimit a a) a (id $ Diag %% a))
+--   (Nat (Diag :.: LimitFunctor) Id $ undefined) -- let { f :: Obj (Nat Pair (~>)) a -> })
 
-type instance Dom (Prod (~>)) = Nat Pair (~>)
-type instance Cod (Prod (~>)) = (~>)
-type instance F (Prod (~>)) f = Product (~>) (F f P1) (F f P2)
-
-instance PairLimit (~>) => Functor (Prod (~>)) where
-  Prod %% NatO f   = (f %% Fst) `product` (f %% Snd)
-  Prod % Nat _ _ n = n Fst      ***       n Snd
-
--- prodAdj :: PairLimit (~>) => Adjunction (Nat Pair (~>)) (~>) (Diag Pair (~>)) (Prod (~>))
--- prodAdj = Adjunction Diag Prod
---   (Nat Id (Prod :.: Diag) $ \x -> id x &&& id x)
---   (Nat (Diag :.: Prod) Id $ h)
---     where 
---       h :: PairLimit (~>) => Obj (Nat Pair (~>)) a -> Nat Pair (~>) (Const Pair (~>) (Product (~>) (F a P1) (F a P2))) a
---       h (NatO f) = terminalMorphism $ pairLimit (f %% Fst) (f %% Snd)
-        -- Nat (Const (Prod %% NatO f)) f (\n -> (terminalMorphism $ pairLimit (f %% Fst) (f %% Snd)) ! n)
-  
--- { unit = Nat $ \_ -> id A.&&& id, counit = Nat $ \_ -> fromPairNat (fst :***: snd) }
-
--- data (:*:) :: * -> * -> * where
---   (:*:) :: (Dom f ~ Dom g, Cod f ~ Cod g) => f -> g -> f :*: g
--- type instance Dom (f :*: g) = Dom f
--- type instance Cod (f :*: g) = Cod f
--- type instance F (f :*: g) x = Product (F f x) (F g x)
--- instance ()
---   => FunctorA (g :*: h) a b where
---   _ % f = ((obj :: g) % f) &&& ((obj :: h) % f)
--- 
--- -- | Functor coproduct
--- data f :+: g = f :+: g
--- type instance Dom (f :+: g) = Dom f -- ~ Dom g
--- type instance Cod (f :+: g) = Cod f -- ~ Cod g
--- type instance F (f :+: g) x = Coproduct (F f x) (F g x)

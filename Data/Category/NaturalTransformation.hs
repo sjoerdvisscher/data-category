@@ -88,14 +88,16 @@ type Cocone f n = f :~> ConstF f n
 type Limit   f l = TerminalUniversal f (DiagF f) l
 type Colimit f l = InitialUniversal  f (DiagF f) l
 
-unNatOConst :: Obj (Nat j (~>)) (Const j (~>) l) -> Obj (~>) l
-unNatOConst (NatO (Const x)) = x
 
-limitObject :: (Category (~>), Category (Dom f), Cod f ~ (~>)) => Limit f l -> Obj (~>) l
-limitObject = unNatOConst . src . terminalMorphism
+data LimitFunctor :: (* -> * -> *) -> (* -> * -> *) -> * where
+  LimitFunctor :: (Category j, Category (~>)) => LimitFunctor j (~>)
+type instance Dom (LimitFunctor j (~>)) = Nat j (~>)
+type instance Cod (LimitFunctor j (~>)) = (~>)
 
-colimitObject :: (Category (~>), Category (Dom f), Cod f ~ (~>)) => Colimit f l -> Obj (~>) l
-colimitObject = unNatOConst . tgt . initialMorphism
+data ColimitFunctor :: (* -> * -> *) -> (* -> * -> *) -> * where
+  ColimitFunctor :: (Category j, Category (~>)) => ColimitFunctor j (~>)
+type instance Dom (ColimitFunctor j (~>)) = Nat j (~>)
+type instance Cod (ColimitFunctor j (~>)) = (~>)
 
 
 class Representable f x where

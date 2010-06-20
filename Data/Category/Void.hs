@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeOperators, TypeFamilies, FlexibleInstances, FlexibleContexts, GADTs, EmptyDataDecls, ScopedTypeVariables #-}
+{-# LANGUAGE TypeOperators, TypeFamilies, FlexibleInstances, FlexibleContexts, GADTs, EmptyDataDecls #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category.Void
@@ -34,7 +34,7 @@ magicVoidO x = x `seq` error "we never get this far"
 instance Category Void where
   
   -- | The (empty) data type of the objects in /0/. 
-  data Obj Void a = VoidO
+  data Obj Void a
   
   src = magicVoid
   tgt = magicVoid
@@ -67,14 +67,21 @@ class Category (~>) => VoidColimit (~>) where
   voidColimit = InitialUniversal 
     initialObject
     (voidNat VoidF (Const initialObject)) 
-    (\_ n -> initialize (unNatOConst $ tgt n))
+    (\a _ -> initialize a)
 
   initialObject :: Obj (~>) (InitialObject (~>))
-  initialObject = colimitObject voidColimit
+  initialObject = iuObject voidColimit
 
   initialize :: Obj (~>) a -> InitialObject (~>) ~> a
-  initialize a = initialFactorizer voidColimit a (voidNat undefined (Const a))
+  initialize a = initialFactorizer voidColimit a (voidNat VoidF (Const a))
 
+
+type instance F (ColimitFunctor Void (~>)) f = InitialObject (~>)
+
+instance VoidColimit (~>) => Functor (ColimitFunctor Void (~>)) where
+  ColimitFunctor %% _ = initialObject
+  ColimitFunctor %  _ = initialize initialObject
+  
 
 -- | A terminal object is the limit of the functor from /0/ to (~>).
 class Category (~>) => VoidLimit (~>) where
@@ -85,14 +92,20 @@ class Category (~>) => VoidLimit (~>) where
   voidLimit = TerminalUniversal 
     terminalObject
     (voidNat (Const terminalObject) VoidF)
-    (\_ n -> terminate (unNatOConst $ src n))
+    (\a _ -> terminate a)
 
   terminalObject :: Obj (~>) (TerminalObject (~>))
-  terminalObject = limitObject voidLimit
+  terminalObject = tuObject voidLimit
   
   terminate :: Obj (~>) a -> a ~> TerminalObject (~>)
-  terminate a = terminalFactorizer voidLimit a (voidNat (Const a) undefined)
+  terminate a = terminalFactorizer voidLimit a (voidNat (Const a) VoidF)
 
+
+type instance F (LimitFunctor Void (~>)) f = TerminalObject (~>)
+
+instance VoidLimit (~>) => Functor (LimitFunctor Void (~>)) where
+  LimitFunctor %% _ = terminalObject
+  LimitFunctor %  _ = terminate terminalObject
 
 
 -- | Any empty data type is an initial object in Hask.
