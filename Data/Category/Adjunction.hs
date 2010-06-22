@@ -1,7 +1,7 @@
-{-# LANGUAGE TypeOperators, TypeFamilies, MultiParamTypeClasses, ScopedTypeVariables, FlexibleInstances, FlexibleContexts, UndecidableInstances, RankNTypes, GADTs #-}
+{-# LANGUAGE TypeOperators, TypeFamilies, GADTs, FlexibleContexts #-}
 -----------------------------------------------------------------------------
 -- |
--- Module      :  Data.Category.Functor
+-- Module      :  Data.Category.Adjunction
 -- Copyright   :  (c) Sjoerd Visscher 2010
 -- License     :  BSD-style (see the file LICENSE)
 --
@@ -36,6 +36,7 @@ rightAdjunct (Adjunction f _ _ coun) i h = (coun ! i) . (f % h)
 -- Each pair (FY, unit_Y) is an initial morphism from Y to G.
 adjunctionInitialProp :: Adjunction c d f g -> Obj d y -> InitialUniversal y g (F f y)
 adjunctionInitialProp adj@(Adjunction f _ un _) y = InitialUniversal (f %% y) (un ! y) (rightAdjunct adj)
+
 -- Each pair (GX, counit_X) is a terminal morphism from F to X.
 adjunctionTerminalProp :: Adjunction c d f g -> Obj c x -> TerminalUniversal x f (F g x)
 adjunctionTerminalProp adj@(Adjunction _ g _ coun) x = TerminalUniversal (g %% x) (coun ! x) (leftAdjunct adj)
@@ -73,26 +74,12 @@ curryAdj = Adjunction EndoHask EndoHask
   (Nat (EndoHask :.: EndoHask) Id $ \HaskO -> \(e, f) -> f e) -- counit
 
 
---type Limit   f l = TerminalUniversal f (DiagF f) l
-
--- data TerminalUniversal x u a = TerminalUniversal 
---   { tuObject :: Obj (Dom u) a
---   , terminalMorphism :: Cod u (F u a) x
---   , terminalFactorizer :: forall y. Obj (Dom u) y -> Cod u (F u y) x -> Dom u y a }
-
-  -- pairLimit :: Obj (~>) x -> Obj (~>) y -> Limit (PairF (~>) x y) (Product (~>) x y)
-  -- pairLimit x y = TerminalUniversal
-  --   (product x y)
-  --   (pairNat (Const $ product x y) (PairF x y) (Com $ fst $ proj x y) (Com $ snd $ proj x y)) 
-  --   (\_ n -> (n ! Fst) &&& (n ! Snd))
-
-
--- | Any limit functor is right adjoint to a corresponding diagonal functor
--- prodInHaskAdj :: Adjunction (Diag Pair (->)) ProdInHask
--- prodInHaskAdj = Adjunction { unit = Nat $ \_ -> id A.&&& id, counit = Nat $ \_ -> fromPairNat (fst :***: snd) }
--- diagLimitAdj :: (Obj (Dom f) l -> TerminalUniversal f (DiagF f) l) -> Adjunction (Dom f) (Cod f) (DiagF f) f
--- diagLimitAdj f = Adjunction
---   undefined
---   undefined
---   (Nat Id undefined undefined)
---   (Nat undefined Id undefined)
+-- limitAdj :: HasLimits j (~>) => Adjunction (Nat j (~>)) (~>) (Diag j (~>)) (LimitFunctor j (~>))
+-- limitAdj = Adjunction Diag LimitFunctor 
+--   (Nat Id (LimitFunctor :.: Diag) g)
+--   (Nat (Diag :.: LimitFunctor) Id f)
+--     where
+--       f :: HasLimits j (~>) => Obj (Nat j (~>)) a -> Nat j (~>) (Const j (~>) (Limit j a)) a
+--       f (NatO a) = coneSurface (limit (NatO a))
+--       g :: HasLimits j (~>) => Obj (~>) a -> a ~> Limit j (Const j (~>) a)
+--       g a = limitFactorizer (NatO $ Const a) (Cone a (Diag % id a))

@@ -1,7 +1,7 @@
 {-# LANGUAGE TypeOperators, TypeFamilies, MultiParamTypeClasses, ScopedTypeVariables, FlexibleInstances, FlexibleContexts, UndecidableInstances, RankNTypes, GADTs #-}
 -----------------------------------------------------------------------------
 -- |
--- Module      :  Data.Category.Functor
+-- Module      :  Data.Category.NaturalTransformation
 -- Copyright   :  (c) Sjoerd Visscher 2010
 -- License     :  BSD-style (see the file LICENSE)
 --
@@ -51,6 +51,7 @@ data Comp :: * -> * -> * -> * where
 unCom :: Comp f g z -> Cod f (F f z) (F g z)
 unCom (Com c) = c
 
+
 -- | 'n ! a' returns the component for the object @a@ of a natural transformation @n@.
 (!) :: (Cod f ~ d, Cod g ~ d) => Nat (~>) d f g -> Obj (~>) a -> d (F f a) (F g a)
 Nat _ _ n ! x = n x
@@ -63,41 +64,6 @@ postcompose :: (Functor h, Dom f ~ c, Dom g ~ c, Cod f ~ d, Cod g ~ d, Dom h ~ d
   => h -> Nat c d f g -> Nat c e (h :.: f) (h :.: g)
 postcompose h (Nat f g n) = Nat (h :.: f) (h :.: g) $ (h %) . n
 
-
-
--- | The diagonal functor from (index-) category J to (~>).
-data Diag :: (* -> * -> *) -> (* -> * -> *) -> * where
-  Diag :: (Category j, Category (~>)) => Diag j (~>)
-type instance Dom (Diag j (~>)) = (~>)
-type instance Cod (Diag j (~>)) = Nat j (~>)
-type instance F (Diag j (~>)) a = Const j (~>) a
-instance Functor (Diag j (~>)) where 
-  Diag %% x = NatO $ Const x
-  Diag %  f = Nat (Const $ src f) (Const $ tgt f) $ const f
-
-type DiagF f = Diag (Dom f) (Cod f)
-type ConstF f = Const (Dom f) (Cod f)
-
-
-
--- | A cone from N to F is a natural transformation from the constant functor to N to F.
-type Cone   f n = ConstF f n :~> f
--- | A co-cone from F to N is a natural transformation from F to the constant functor to N.
-type Cocone f n = f :~> ConstF f n
-
-type Limit   f l = TerminalUniversal f (DiagF f) l
-type Colimit f l = InitialUniversal  f (DiagF f) l
-
-
-data LimitFunctor :: (* -> * -> *) -> (* -> * -> *) -> * where
-  LimitFunctor :: (Category j, Category (~>)) => LimitFunctor j (~>)
-type instance Dom (LimitFunctor j (~>)) = Nat j (~>)
-type instance Cod (LimitFunctor j (~>)) = (~>)
-
-data ColimitFunctor :: (* -> * -> *) -> (* -> * -> *) -> * where
-  ColimitFunctor :: (Category j, Category (~>)) => ColimitFunctor j (~>)
-type instance Dom (ColimitFunctor j (~>)) = Nat j (~>)
-type instance Cod (ColimitFunctor j (~>)) = (~>)
 
 
 class Representable f x where

@@ -25,7 +25,7 @@ module Data.Category.Functor (
   -- ** Functor instances
   , Id(..)
   , (:.:)(..)
-  , Const(..)
+  , Const(..), ConstF
   , (:*-:)(..)
   , (:-*:)(..)
   , EndoHask(..)
@@ -114,7 +114,9 @@ type instance F (Const c1 c2 x) a = x
 instance Functor (Const c1 c2 x) where 
   Const x %% _ = x
   Const x %  _ = id x
-  
+
+type ConstF f = Const (Dom f) (Cod f)
+
   
 -- | The covariant functor Hom(X,--)
 data (:*-:) :: * -> (* -> * -> *) -> * where

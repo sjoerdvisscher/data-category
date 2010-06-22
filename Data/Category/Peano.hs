@@ -17,7 +17,7 @@ module Data.Category.Peano where
 import Prelude(($))
 
 import Data.Category
-import Data.Category.Void
+import Data.Category.Limit
 
 
 data Peano :: (* -> * -> *) -> * -> * -> * where
@@ -43,7 +43,7 @@ primRec :: t -> (t -> t) -> NatNum -> t
 primRec z _ Z     = z
 primRec z s (S n) = s (primRec z s n)
   
-instance VoidColimit (Peano (->)) where
+instance HasInitialObject (Peano (->)) where
   
   type InitialObject (Peano (->)) = NatNum
   

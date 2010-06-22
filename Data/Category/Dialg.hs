@@ -18,7 +18,7 @@ import qualified Prelude
 
 import Data.Category
 import Data.Category.Functor
-import Data.Category.Void
+import Data.Category.Limit
 import Data.Category.Product
 
 
@@ -76,14 +76,15 @@ cataHask a@(Dialgebra HaskO f) = DialgA initialObject a $ cata f where cata f = 
 anaHask :: Prelude.Functor f => Ana (EndoHask f) a
 anaHask a@(Dialgebra HaskO f) = DialgA a terminalObject $ ana f where ana f = InF . fmap (ana f) . f 
 
-instance Prelude.Functor f => VoidColimit (Dialg (EndoHask f) (Id (->))) where
+
+instance Prelude.Functor f => HasInitialObject (Dialg (EndoHask f) (Id (->))) where
   
   type InitialObject (Dialg (EndoHask f) (Id (->))) = FixF f
   
   initialObject = Dialgebra HaskO InF
   initialize = cataHask
   
-instance  Prelude.Functor f => VoidLimit (Dialg (Id (->)) (EndoHask f)) where
+instance  Prelude.Functor f => HasTerminalObject (Dialg (Id (->)) (EndoHask f)) where
 
   type TerminalObject (Dialg (Id (->)) (EndoHask f)) = FixF f
   
@@ -95,7 +96,7 @@ instance  Prelude.Functor f => VoidLimit (Dialg (Id (->)) (EndoHask f)) where
 -- | The category for defining the natural numbers and primitive recursion can be described as
 -- @Dialg(F,G)@, with @F(A)=\<1,A>@ and @G(A)=\<A,A>@.
 data NatF ((~>) :: * -> * -> *) where
-  NatF :: VoidLimit (~>) => NatF (~>)
+  NatF :: HasTerminalObject (~>) => NatF (~>)
 type instance Dom (NatF (~>)) = (~>)
 type instance Cod (NatF (~>)) = (~>) :*: (~>)
 type instance F (NatF (~>)) a = (TerminalObject (~>),  a)
@@ -108,7 +109,7 @@ primRec :: t -> (t -> t) -> NatNum -> t
 primRec z _ Z     = z
 primRec z s (S n) = s (primRec z s n)
 
-instance VoidColimit (Dialg (NatF (->)) (DiagProd (->))) where
+instance HasInitialObject (Dialg (NatF (->)) (DiagProd (->))) where
   
   type InitialObject (Dialg (NatF (->)) (DiagProd (->))) = NatNum
     

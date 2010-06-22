@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeFamilies, MultiParamTypeClasses, GADTs, EmptyDataDecls #-}
+{-# LANGUAGE TypeFamilies, MultiParamTypeClasses, GADTs, EmptyDataDecls, FlexibleInstances #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category.Boolean
@@ -18,8 +18,7 @@ module Data.Category.Boolean where
 import Prelude hiding ((.), id, Functor)
 
 import Data.Category
-import Data.Category.Void
-import Data.Category.Pair
+import Data.Category.Limit
 
 
 data BF
@@ -53,13 +52,13 @@ instance Category Boolean where
   _      . _      = error "Other combinations should not type check"
 
 
-instance VoidColimit Boolean where
+instance HasInitialObject Boolean where
   type InitialObject Boolean = BF
   initialObject = Fls
   initialize Fls = IdFls
   initialize Tru = FlsTru
   
-instance VoidLimit Boolean where
+instance HasTerminalObject Boolean where
   type TerminalObject Boolean = BT
   terminalObject = Tru
   terminate Fls = FlsTru
@@ -71,7 +70,7 @@ type instance Product Boolean BF BT = BF
 type instance Product Boolean BT BF = BF
 type instance Product Boolean BT BT = BT
 
-instance PairLimit Boolean where 
+instance HasProducts Boolean where 
   
   product Fls Fls = Fls
   product Fls Tru = Fls
@@ -96,7 +95,7 @@ type instance Coproduct Boolean BF BT = BT
 type instance Coproduct Boolean BT BF = BT
 type instance Coproduct Boolean BT BT = BT
 
-instance PairColimit Boolean where 
+instance HasCoproducts Boolean where 
   
   coproduct Fls Fls = Fls
   coproduct Fls Tru = Tru
@@ -114,4 +113,8 @@ instance PairColimit Boolean where
   IdTru  ||| FlsTru = IdTru
   IdTru  ||| IdTru  = IdTru
   _      ||| _      = error "Other combinations should not type check"
-  
+
+
+instance Show (Obj Boolean a) where
+  show Fls = "Fls"
+  show Tru = "Tru"

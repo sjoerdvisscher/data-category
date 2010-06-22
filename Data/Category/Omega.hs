@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeOperators, TypeFamilies, GADTs, EmptyDataDecls, UndecidableInstances #-}
+{-# LANGUAGE TypeOperators, TypeFamilies, GADTs, EmptyDataDecls, FlexibleInstances #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category.Omega
@@ -17,8 +17,7 @@ module Data.Category.Omega where
 import Prelude hiding ((.), id, Functor, product)
 
 import Data.Category
-import Data.Category.Void
-import Data.Category.Pair
+import Data.Category.Limit
 
 
 data Z
@@ -55,7 +54,7 @@ instance Category Omega where
   _       . _       = error "Other combinations should not type check"
 
 
-instance VoidColimit Omega where
+instance HasInitialObject Omega where
   
   type InitialObject Omega = Z
   
@@ -70,7 +69,7 @@ type instance Product Omega n     Z = Z
 type instance Product Omega (S a) (S b) = S (Product Omega a b)
 
 -- The product in omega is the minimum.
-instance PairLimit Omega where 
+instance HasProducts Omega where 
 
   product OZ     _      = OZ
   product _      OZ     = OZ
@@ -93,7 +92,7 @@ type instance Coproduct Omega n     Z     = n
 type instance Coproduct Omega (S a) (S b) = S (Coproduct Omega a b)
 
 -- -- The coproduct in omega is the maximum.
-instance PairColimit Omega where 
+instance HasCoproducts Omega where 
   
   coproduct OZ     n      = n
   coproduct n      OZ     = n
@@ -110,3 +109,7 @@ instance PairColimit Omega where
   StS a ||| StS b = StS (a ||| b)
   _     ||| _      = error "Other combinations should not type check"
   
+  
+instance Show (Obj Omega a) where
+  show OZ = "OZ"
+  show (OS n) = "OS " ++ show n
