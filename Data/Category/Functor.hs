@@ -144,6 +144,19 @@ instance Functor ((~>) :-*: x) where
   Hom_X _ % Op f = (. f)
 
 
+-- | The dual of a functor
+data DualFunctor f where
+  DualFunctor :: Functor f => f -> DualFunctor f
+  
+type instance Dom (DualFunctor f) = Op (Dom f)
+type instance Cod (DualFunctor f) = Op (Cod f)
+type instance F (DualFunctor f) a = F f a
+
+instance Functor (DualFunctor f) where
+  DualFunctor f %% OpObj x = OpObj $ f %% x
+  DualFunctor f % Op a = Op $ f % a
+
+
 -- | 'EndoHask' is a wrapper to turn instances of the 'Functor' class into categorical functors.
 data EndoHask :: (* -> *) -> * where
   EndoHask :: Prelude.Functor f => EndoHask f

@@ -37,9 +37,11 @@ import Data.Category.Discrete
 -- | The diagonal functor from (index-) category J to (~>).
 data Diag :: (* -> * -> *) -> (* -> * -> *) -> * where
   Diag :: (Category j, Category (~>)) => Diag j (~>)
+  
 type instance Dom (Diag j (~>)) = (~>)
 type instance Cod (Diag j (~>)) = Nat j (~>)
 type instance F (Diag j (~>)) a = Const j (~>) a
+
 instance Functor (Diag j (~>)) where 
   Diag %% x = NatO $ Const x
   Diag %  f = Nat (Const $ src f) (Const $ tgt f) $ const f

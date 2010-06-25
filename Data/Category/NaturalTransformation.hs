@@ -65,7 +65,27 @@ postcompose :: (Functor h, Dom f ~ c, Dom g ~ c, Cod f ~ d, Cod g ~ d, Dom h ~ d
 postcompose h (Nat f g n) = Nat (h :.: f) (h :.: g) $ (h %) . n
 
 
+-- | A functor F: Op(C) -> Set is representable if it is naturally isomorphic to the contravariant hom-functor.
+class Functor f => Representable f where
+  type RepresentingObject f :: *
+  represent   :: (Dom f ~ Op c) => f -> (c :-*: RepresentingObject f) :~> f
+  unrepresent :: (Dom f ~ Op c) => f -> f :~> (c :-*: RepresentingObject f)
 
-class Representable f x where
-  represent :: (x :*-: Dom f) :~> f
-  unrepresent :: f :~> (x :*-: Dom f)
+instance Category (~>) => Representable ((~>) :-*: x) where
+  type RepresentingObject ((~>) :-*: x) = x
+  represent   f = id $ NatO f
+  unrepresent f = id $ NatO f
+
+
+-- | The Yoneda embedding functor.
+data Yoneda :: (* -> * -> *) -> * where
+  Yoneda :: Category (~>) => Yoneda (~>)
+  
+type instance Dom (Yoneda (~>)) = (~>)
+type instance Cod (Yoneda (~>)) = Nat (Op (~>)) (->)
+type instance F (Yoneda (~>)) a = (~>) :-*: a
+
+instance Functor (Yoneda (~>)) where
+  Yoneda %% x = NatO $ Hom_X x
+  Yoneda % f = Nat (Hom_X $ src f) (Hom_X $ tgt f) $ \_ -> (f .)
+

@@ -23,8 +23,6 @@ import Data.Category.Limit
 data Z
 data S n
 
-data OmegaO :: * -> * where
-
 -- | The arrows of omega, there's an arrow from a to b iff a <= b.
 data Omega :: * -> * -> * where
   IdZ :: Omega Z Z
