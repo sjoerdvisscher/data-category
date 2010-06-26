@@ -51,17 +51,17 @@ type DiagF f = Diag (Dom f) (Cod f)
 
 
 -- | A cone from N to F is a natural transformation from the constant functor to N to F.
-data Cone   f n = Cone
-  { coneVertex  :: Obj (Cod f) n
-  , coneSurface :: Nat (Dom f) (Cod f) (ConstF f n) f
-  }
+type Cone   f n = Nat (Dom f) (Cod f) (ConstF f n) f
 
 -- | A co-cone from F to N is a natural transformation from F to the constant functor to N.
-data Cocone f n = Cocone
-  { coconeVertex  :: Obj (Cod f) n
-  , coconeSurface :: Nat (Dom f) (Cod f) f (ConstF f n)
-  }
+type Cocone f n = Nat (Dom f) (Cod f) f (ConstF f n)
 
+
+coneVertex :: Cone f n -> Obj (Cod f) n
+coneVertex (Nat (Const x) _ _) = x
+
+coconeVertex :: Cocone f n -> Obj (Cod f) n
+coconeVertex (Nat _ (Const x) _) = x
 
 
 type family Limit j f :: *  
@@ -71,17 +71,15 @@ class (Category j, Category (~>)) => HasLimits j (~>) where
   limitUniversal :: (Dom f ~ j, Cod f ~ (~>)) => Obj (Nat j (~>)) f -> TerminalUniversal f (Diag j (~>)) (Limit j f)
   limitUniversal f = let l = limit f in TerminalUniversal
     { tuObject           = coneVertex l
-    , terminalMorphism   = coneSurface l
-    , terminalFactorizer = \v s -> limitFactorizer f (Cone v s)
+    , terminalMorphism   = l
+    , terminalFactorizer = \_ s -> limitFactorizer f s
     }
   
   limit :: (Dom f ~ j, Cod f ~ (~>)) => Obj (Nat j (~>)) f -> Cone f (Limit j f)
-  limit f = let u = limitUniversal f in Cone
-    { coneVertex  = tuObject u
-    , coneSurface = terminalMorphism u }
+  limit = terminalMorphism . limitUniversal
   
   limitFactorizer :: (Dom f ~ j, Cod f ~ (~>)) => Obj (Nat j (~>)) f -> Cone f n -> Cod f n (Limit j f)
-  limitFactorizer f (Cone v s) = terminalFactorizer (limitUniversal f) v s
+  limitFactorizer f c = terminalFactorizer (limitUniversal f) (coneVertex c) c
 
 
 type family Colimit j f :: *
@@ -91,17 +89,15 @@ class (Category j, Category (~>)) => HasColimits j (~>) where
   colimitUniversal :: (Dom f ~ j, Cod f ~ (~>)) => Obj (Nat j (~>)) f -> InitialUniversal f (DiagF f) (Colimit j f)
   colimitUniversal f = let l = colimit f in InitialUniversal
     { iuObject          = coconeVertex l
-    , initialMorphism   = coconeSurface l
-    , initialFactorizer = \v s -> colimitFactorizer f (Cocone v s)
+    , initialMorphism   = l
+    , initialFactorizer = \_ s -> colimitFactorizer f s
     }
   
   colimit :: (Dom f ~ j, Cod f ~ (~>)) => Obj (Nat j (~>)) f -> Cocone f (Colimit j f)
-  colimit f = let u = colimitUniversal f in Cocone
-    { coconeVertex  = iuObject u
-    , coconeSurface = initialMorphism u }
+  colimit = initialMorphism . colimitUniversal
     
   colimitFactorizer :: (Dom f ~ j, Cod f ~ (~>)) => Obj (Nat j (~>)) f -> Cocone f n -> Cod f (Colimit j f) n
-  colimitFactorizer f (Cocone v s) = initialFactorizer (colimitUniversal f) v s
+  colimitFactorizer f c = initialFactorizer (colimitUniversal f) (coconeVertex c) c
 
 
 
@@ -143,9 +139,9 @@ type instance Limit Void f = TerminalObject (Cod f)
 
 instance (HasTerminalObject (~>)) => HasLimits Void (~>) where
   
-  limit (NatO f) = Cone terminalObject $ voidNat (Const terminalObject) f
+  limit (NatO f) = voidNat (Const terminalObject) f
   
-  limitFactorizer _ (Cone n _) = terminate n
+  limitFactorizer _ = terminate . coneVertex
 
 
 instance HasTerminalObject (->) where
@@ -179,9 +175,9 @@ type instance Colimit Void f = InitialObject (Cod f)
 
 instance (HasInitialObject (~>)) => HasColimits Void (~>) where
   
-  colimit (NatO f) = Cocone initialObject $ voidNat f (Const initialObject)
+  colimit (NatO f) = voidNat f (Const initialObject)
   
-  colimitFactorizer _ (Cocone n _) = initialize n
+  colimitFactorizer _ = initialize . coconeVertex
 
 
 -- | Any empty data type is an initial object in Hask.
@@ -226,14 +222,14 @@ type instance Limit Pair f = Product (Cod f) (F f P1) (F f P2)
 
 instance (HasProducts (~>)) => HasLimits Pair (~>) where
   
-  limit (NatO f) = Cone prod $ pairNat (Const prod) f (Com . fst $ prj) (Com . snd $ prj)
+  limit (NatO f) = pairNat (Const prod) f (Com . fst $ prj) (Com . snd $ prj)
     where
       x = f %% Fst
       y = f %% Snd
       prod = product x y
       prj = proj x y
   
-  limitFactorizer _ (Cone _ s) = (s ! Fst) &&& (s ! Snd)
+  limitFactorizer _ c = (c ! Fst) &&& (c ! Snd)
 
 
 type instance Product (->) x y = (x, y)
@@ -280,14 +276,14 @@ type instance Colimit Pair f = Coproduct (Cod f) (F f P1) (F f P2)
 
 instance (HasCoproducts (~>)) => HasColimits Pair (~>) where
   
-  colimit (NatO f) = Cocone cop $ pairNat f (Const cop) (Com . fst $ i) (Com . snd $ i)
+  colimit (NatO f) = pairNat f (Const cop) (Com . fst $ i) (Com . snd $ i)
     where
       x = f %% Fst
       y = f %% Snd
       cop = coproduct x y
       i = inj x y
   
-  colimitFactorizer _ (Cocone _ s) = (s ! Fst) ||| (s ! Snd)
+  colimitFactorizer _ c = (c ! Fst) ||| (c ! Snd)
 
 
 type instance Coproduct (->) x y = Either x y
@@ -307,17 +303,18 @@ type instance Limit (Discrete (S n)) f = Product (Cod f) (F f Z) (Limit (Discret
 
 instance HasTerminalObject (~>) => HasLimits (Discrete Z) (~>) where
 
-  limit (NatO f) = Cone terminalObject $ Nat (Const terminalObject) f magicZO
+  limit (NatO f) = Nat (Const terminalObject) f magicZO
   
-  limitFactorizer _ (Cone n _) = terminate n
+  limitFactorizer _ = terminate . coneVertex
   
 instance (HasProducts (~>), Category (Discrete n), HasLimits (Discrete n) (~>)) 
   => HasLimits (Discrete (S n)) (~>) where
     
-  limit (NatO f) = Cone prod undefined -- diagNat (Const prod) f (Com . fst $ prj) (Com . snd $ prj)
+  limit (NatO f) = undefined -- diagNat (Const prod) f (Com . fst $ prj) (Com . snd $ prj)
     where
       x = (f %% OZ)
-      Cone y ns = limit (NatO $ Next f)
+      cone = limit (NatO $ Next f)
+      y = coneVertex cone
       prod = product x y
       prj = proj x y
       
@@ -329,17 +326,18 @@ type instance Colimit (Discrete (S n)) f = Coproduct (Cod f) (F f Z) (Colimit (D
 
 instance HasInitialObject (~>) => HasColimits (Discrete Z) (~>) where
 
-  colimit (NatO f) = Cocone initialObject $ Nat f (Const initialObject) magicZO
+  colimit (NatO f) = Nat f (Const initialObject) magicZO
   
-  colimitFactorizer _ (Cocone n _) = initialize n
+  colimitFactorizer _ = initialize . coconeVertex
   
 instance (HasCoproducts (~>), Category (Discrete n), HasColimits (Discrete n) (~>)) 
   => HasColimits (Discrete (S n)) (~>) where
     
-  colimit (NatO f) = Cocone cop undefined -- diagNat (Const cop) f (Com . fst $ i) (Com . snd $ i)
+  colimit (NatO f) = undefined -- diagNat (Const cop) f (Com . fst $ i) (Com . snd $ i)
     where
       x = (f %% OZ)
-      Cocone y ns = colimit (NatO $ Next f)
+      cocone = colimit (NatO $ Next f)
+      y = coconeVertex cocone
       cop = coproduct x y
       i = inj x y
       

@@ -18,6 +18,7 @@ Library
     Data.Category,
     Data.Category.Functor,
     Data.Category.NaturalTransformation,
+    Data.Category.Limit,
     Data.Category.Adjunction,
     Data.Category.Void,
     Data.Category.Unit,

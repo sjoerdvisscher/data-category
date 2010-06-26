@@ -127,8 +127,8 @@ type instance Cod (x :*-: (~>)) = (->)
 type instance F (x :*-: (~>)) a = x ~> a
 
 instance Functor (x :*-: (~>)) where 
-  (%%) = undefined
-  HomX_ _ % f = (f .)
+  HomX_ _ %% _ = HaskO
+  HomX_ _ %  f = (f .)
 
 
 -- | The contravariant functor Hom(--,X)
@@ -140,7 +140,7 @@ type instance Cod ((~>) :-*: x) = (->)
 type instance F ((~>) :-*: x) a = a ~> x
 
 instance Functor ((~>) :-*: x) where 
-  (%%) = undefined
+  Hom_X _ %% _   = HaskO
   Hom_X _ % Op f = (. f)
 
 
