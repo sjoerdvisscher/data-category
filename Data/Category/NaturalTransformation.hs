@@ -44,6 +44,11 @@ instance (Category c, Category d) => Category (Nat c d) where
   Nat _ h ngh . Nat f _ nfg = Nat f h $ \i -> ngh i . nfg i
 
 
+-- | Horizontal composition of natural transformations.
+o :: Category e => Nat d e j k -> Nat c d f g -> Nat c e (j :.: f) (k :.: g)
+Nat j k njk `o` Nat f g nfg = Nat (j :.: f) (k :.: g) $ \x -> k % nfg x . njk (f %% x)
+
+
 -- This data type can be used when creating data instances of @Nat@.
 data Comp :: * -> * -> * -> * where
   Com :: Cod f (F f z) (F g z) -> Comp f g z
@@ -61,13 +66,13 @@ Nat _ _ n ! x = n x
 data Precompose :: * -> (* -> * -> *) -> * where
   Precompose :: (Functor f, Category d) => f -> Precompose f d
 
-type instance Dom (Precompose f d) = Nat (Cod f) d
-type instance Cod (Precompose f d) = Nat (Dom f) d
-type instance F (Precompose f d) g = g :.: f
+type instance Dom (Precompose f d) = Nat (Op (Cod f)) d
+type instance Cod (Precompose f d) = Nat (Op (Dom f)) d
+type instance F (Precompose f d) g = g :.: DualFunctor f
 
 instance Functor (Precompose f d) where
-  Precompose f %% NatO g = NatO $ g :.: f
-  Precompose f % (Nat g h n) = Nat (g :.: f) (h :.: f) $ n . (f %%)
+  Precompose f %% NatO g = NatO $ g :.: DualFunctor f
+  Precompose f % (Nat g h n) = Nat (g :.: DualFunctor f) (h :.: DualFunctor f) $ n . (DualFunctor f %%)
 
 
 data Postcompose :: * -> (* -> * -> *) -> * where

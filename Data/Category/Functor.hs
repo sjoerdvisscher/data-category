@@ -28,6 +28,7 @@ module Data.Category.Functor (
   , Const(..), ConstF
   , (:*-:)(..)
   , (:-*:)(..)
+  , DualFunctor(..)
   , EndoHask(..)
   
   -- * Universal properties
