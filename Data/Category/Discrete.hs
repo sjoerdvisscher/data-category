@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeFamilies, GADTs, EmptyDataDecls, FlexibleContexts, FlexibleInstances, UndecidableInstances #-}
+{-# LANGUAGE TypeFamilies, TypeOperators, GADTs, EmptyDataDecls, FlexibleContexts, FlexibleInstances, UndecidableInstances #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category.Discrete
@@ -75,7 +75,7 @@ data Next :: * -> * -> * where
   
 type instance Dom (Next n f) = Discrete n
 type instance Cod (Next n f) = Cod f
-type instance F (Next n f) a = F f (S a)
+type instance Next n f :% a = f :% S a
 
 instance Functor (Next n f) where
   Next f %% n = f %% OS n
@@ -91,8 +91,8 @@ data DiscreteDiagram :: (* -> * -> *) -> * -> * -> * where
   
 type instance Dom (DiscreteDiagram (~>) n xs) = Discrete n
 type instance Cod (DiscreteDiagram (~>) n xs) = (~>)
-type instance F (DiscreteDiagram (~>) (S n) (x, xs)) Z = x
-type instance F (DiscreteDiagram (~>) (S n) (x, xs)) (S a) = F (DiscreteDiagram (~>) n xs) a
+type instance DiscreteDiagram (~>) (S n) (x, xs) :% Z = x
+type instance DiscreteDiagram (~>) (S n) (x, xs) :% (S a) = DiscreteDiagram (~>) n xs :% a
 
 instance Functor (DiscreteDiagram (~>) n xs) where
   

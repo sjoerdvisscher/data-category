@@ -26,7 +26,7 @@ data Nat :: (* -> * -> *) -> (* -> * -> *) -> * -> * -> * where
 
 -- | Natural transformations are built up of components, 
 -- one for each object @z@ in the domain category of @f@ and @g@.
-type Component f g z = Cod f (F f z) (F g z)
+type Component f g z = Cod f (f :% z) (g :% z)
 
 
 -- | Functor category D^C.
@@ -51,15 +51,15 @@ Nat j k njk `o` Nat f g nfg = Nat (j :.: f) (k :.: g) $ \x -> k % nfg x . njk (f
 
 -- This data type can be used when creating data instances of @Nat@.
 data Comp :: * -> * -> * -> * where
-  Com :: Cod f (F f z) (F g z) -> Comp f g z
+  Com :: Cod f (f :% z) (g :% z) -> Comp f g z
 
-unCom :: Comp f g z -> Cod f (F f z) (F g z)
+unCom :: Comp f g z -> Cod f (f :% z) (g :% z)
 unCom (Com c) = c
 
 
 
 -- | 'n ! a' returns the component for the object @a@ of a natural transformation @n@.
-(!) :: (Cod f ~ d, Cod g ~ d) => Nat (~>) d f g -> Obj (~>) a -> d (F f a) (F g a)
+(!) :: (Cod f ~ d, Cod g ~ d) => Nat (~>) d f g -> Obj (~>) a -> d (f :% a) (g :% a)
 Nat _ _ n ! x = n x
 
 
@@ -68,7 +68,7 @@ data Precompose :: * -> (* -> * -> *) -> * where
 
 type instance Dom (Precompose f d) = Nat (Cod f) d
 type instance Cod (Precompose f d) = Nat (Dom f) d
-type instance F (Precompose f d) g = g :.: f
+type instance Precompose f d :% g = g :.: f
 
 instance Functor (Precompose f d) where
   Precompose f %% NatO g = NatO $ g :.: f
@@ -80,7 +80,7 @@ data Postcompose :: * -> (* -> * -> *) -> * where
 
 type instance Dom (Postcompose f c) = Nat c (Dom f)
 type instance Cod (Postcompose f c) = Nat c (Cod f)
-type instance F (Postcompose f c) g = f :.: g
+type instance Postcompose f c :% g = f :.: g
 
 instance Functor (Postcompose f c) where
   Postcompose f %% NatO g = NatO $ f :.: g
@@ -105,7 +105,7 @@ data Yoneda :: (* -> * -> *) -> * where
   
 type instance Dom (Yoneda (~>)) = (~>)
 type instance Cod (Yoneda (~>)) = Nat (Op (~>)) (->)
-type instance F (Yoneda (~>)) a = (~>) :-*: a
+type instance Yoneda (~>) :% a = (~>) :-*: a
 
 instance Functor (Yoneda (~>)) where
   Yoneda %% x = NatO $ Hom_X x

@@ -17,10 +17,10 @@ module Data.Category.Functor (
   , CatW
 
   -- * Functors
-  , F
   , Dom
   , Cod
   , Functor(..)
+  , (:%)
   
   -- ** Functor instances
   , Id(..)
@@ -28,7 +28,7 @@ module Data.Category.Functor (
   , Const(..), ConstF
   , (:*-:)(..)
   , (:-*:)(..)
-  , DualFunctor(..)
+  , Opposite(..)
   , EndoHask(..)
   
   -- * Universal properties
@@ -43,18 +43,20 @@ import qualified Prelude
 import Data.Category
 
 
--- | Functors are represented by a type tag. The type family 'F' turns the tag into the actual functor.
-type family F ftag a :: *
 -- | The domain, or source category, of the functor.
 type family Dom ftag :: * -> * -> *
 -- | The codomain, or target category, of the functor.
 type family Cod ftag :: * -> * -> *
 
--- | The mapping of arrows by covariant functors.
--- To make this type check, we need to pass the type tag along.
+-- | Functors map objects and arrows. As objects are represented at both the type and value level, we need 3 maps in total.
 class Functor ftag where
-  (%%) :: ftag -> Obj (Dom ftag) a -> Obj (Cod ftag) (F ftag a)
-  (%)  :: ftag -> Dom ftag a b -> Cod ftag (F ftag a) (F ftag b)
+  -- | @%%@ maps objects at the value level.
+  (%%) :: ftag -> Obj (Dom ftag) a -> Obj (Cod ftag) (ftag :% a)
+  -- | @%@ maps arrows.
+  (%)  :: ftag -> Dom ftag a b -> Cod ftag (ftag :% a) (ftag :% b)
+
+-- | @:%@ maps objects at the type level.
+type family ftag :% a :: *
 
 
 -- | Functors are arrows in the category Cat.
@@ -85,7 +87,7 @@ data Id ((~>) :: * -> * -> *) = Id
 
 type instance Dom (Id (~>)) = (~>)
 type instance Cod (Id (~>)) = (~>)
-type instance F (Id (~>)) a = a
+type instance Id (~>) :% a = a
 
 instance Functor (Id (~>)) where 
   _ %% x = x
@@ -98,7 +100,7 @@ data (g :.: h) where
   
 type instance Dom (g :.: h) = Dom h
 type instance Cod (g :.: h) = Cod g
-type instance F (g :.: h) a = F g (F h a)
+type instance (g :.: h) :% a = g :% (h :% a)
 
 instance Functor (g :.: h) where 
   (g :.: h) %% x = g %% (h %% x)
@@ -111,7 +113,7 @@ data Const (c1 :: * -> * -> *) (c2 :: * -> * -> *) x where
   
 type instance Dom (Const c1 c2 x) = c1
 type instance Cod (Const c1 c2 x) = c2
-type instance F (Const c1 c2 x) a = x
+type instance Const c1 c2 x :% a = x
 
 instance Functor (Const c1 c2 x) where 
   Const x %% _ = x
@@ -126,7 +128,7 @@ data (:*-:) :: * -> (* -> * -> *) -> * where
   
 type instance Dom (x :*-: (~>)) = (~>)
 type instance Cod (x :*-: (~>)) = (->)
-type instance F (x :*-: (~>)) a = x ~> a
+type instance (x :*-: (~>)) :% a = x ~> a
 
 instance Functor (x :*-: (~>)) where 
   HomX_ _ %% _ = HaskO
@@ -139,7 +141,7 @@ data (:-*:) :: (* -> * -> *) -> * -> * where
 
 type instance Dom ((~>) :-*: x) = Op (~>)
 type instance Cod ((~>) :-*: x) = (->)
-type instance F ((~>) :-*: x) a = a ~> x
+type instance ((~>) :-*: x) :% a = a ~> x
 
 instance Functor ((~>) :-*: x) where 
   Hom_X _ %% _   = HaskO
@@ -147,16 +149,16 @@ instance Functor ((~>) :-*: x) where
 
 
 -- | The dual of a functor
-data DualFunctor f where
-  DualFunctor :: Functor f => f -> DualFunctor f
+data Opposite f where
+  Opposite :: Functor f => f -> Opposite f
   
-type instance Dom (DualFunctor f) = Op (Dom f)
-type instance Cod (DualFunctor f) = Op (Cod f)
-type instance F (DualFunctor f) a = F f a
+type instance Dom (Opposite f) = Op (Dom f)
+type instance Cod (Opposite f) = Op (Cod f)
+type instance Opposite f :% a = f :% a
 
-instance Functor (DualFunctor f) where
-  DualFunctor f %% OpObj x = OpObj $ f %% x
-  DualFunctor f % Op a = Op $ f % a
+instance Functor (Opposite f) where
+  Opposite f %% OpObj x = OpObj $ f %% x
+  Opposite f % Op a = Op $ f % a
 
 
 -- | 'EndoHask' is a wrapper to turn instances of the 'Functor' class into categorical functors.
@@ -165,7 +167,7 @@ data EndoHask :: (* -> *) -> * where
   
 type instance Dom (EndoHask f) = (->)
 type instance Cod (EndoHask f) = (->)
-type instance F (EndoHask f) r = f r
+type instance EndoHask f :% r = f r
 
 instance Functor (EndoHask f) where
   EndoHask %% HaskO = HaskO
@@ -174,10 +176,10 @@ instance Functor (EndoHask f) where
 
 data InitialUniversal  x u a = InitialUniversal
   { iuObject :: Obj (Dom u) a
-  , initialMorphism :: Cod u x (F u a)
-  , initialFactorizer :: forall y. Obj (Dom u) y -> Cod u x (F u y) -> Dom u a y }
+  , initialMorphism :: Cod u x (u :% a)
+  , initialFactorizer :: forall y. Obj (Dom u) y -> Cod u x (u :% y) -> Dom u a y }
   
 data TerminalUniversal x u a = TerminalUniversal 
   { tuObject :: Obj (Dom u) a
-  , terminalMorphism :: Cod u (F u a) x
-  , terminalFactorizer :: forall y. Obj (Dom u) y -> Cod u (F u y) x -> Dom u y a }
+  , terminalMorphism :: Cod u (u :% a) x
+  , terminalFactorizer :: forall y. Obj (Dom u) y -> Cod u (u :% y) x -> Dom u y a }

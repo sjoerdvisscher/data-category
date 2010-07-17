@@ -35,7 +35,7 @@ instance Category (Dialg f g) where
   
   data Obj (Dialg f g) a where
     Dialgebra :: (Category c, Category d, Dom f ~ c, Dom g ~ c, Cod f ~ d, Cod g ~ d, Functor f, Functor g) 
-      => Obj c a -> d (F f a) (F g a) -> Obj (Dialg f g) a
+      => Obj c a -> d (f :% a) (g :% a) -> Obj (Dialg f g) a
       
   src (DialgA s _ _) = s
   tgt (DialgA _ t _) = t
@@ -99,7 +99,7 @@ data NatF ((~>) :: * -> * -> *) where
   NatF :: HasTerminalObject (~>) => NatF (~>)
 type instance Dom (NatF (~>)) = (~>)
 type instance Cod (NatF (~>)) = (~>) :*: (~>)
-type instance F (NatF (~>)) a = (TerminalObject (~>),  a)
+type instance NatF (~>) :% a = (TerminalObject (~>),  a)
 instance Functor (NatF (~>)) where
   NatF %% x = ProdO terminalObject x
   NatF %  f = id terminalObject :**: f

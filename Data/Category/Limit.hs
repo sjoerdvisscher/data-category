@@ -40,7 +40,7 @@ data Diag :: (* -> * -> *) -> (* -> * -> *) -> * where
   
 type instance Dom (Diag j (~>)) = (~>)
 type instance Cod (Diag j (~>)) = Nat j (~>)
-type instance F (Diag j (~>)) a = Const j (~>) a
+type instance Diag j (~>) :% a = Const j (~>) a
 
 instance Functor (Diag j (~>)) where 
   Diag %% x = NatO $ Const x
@@ -108,7 +108,7 @@ class (Category j, Functor f) => HasColimit j f where
 -- 
 -- type instance Dom (LimitFunctor j (~>)) = Nat j (~>)
 -- type instance Cod (LimitFunctor j (~>)) = (~>)
--- type instance F (LimitFunctor j (~>)) f = Limit j f
+-- type instance LimitFunctor j (~>) :% f = Limit j f
 -- 
 -- instance Functor (LimitFunctor j (~>)) where
 --   LimitFunctor %% NatO f     = coneVertex (limit (NatO f))
@@ -120,7 +120,7 @@ class (Category j, Functor f) => HasColimit j f where
 --   
 -- type instance Dom (ColimitFunctor j (~>)) = Nat j (~>)
 -- type instance Cod (ColimitFunctor j (~>)) = (~>)
--- type instance F (ColimitFunctor j (~>)) f = Colimit j f
+-- type instance ColimitFunctor j (~>) :% f = Colimit j f
 -- 
 -- instance Functor (ColimitFunctor j (~>)) where
 --   ColimitFunctor %% NatO f     = coconeVertex (colimit (NatO f))
@@ -224,7 +224,7 @@ class Category (~>) => HasProducts (~>) where
 
 instance (Functor f, Dom f ~ Pair, HasProducts (Cod f)) => HasLimit Pair f where
   
-  type Limit Pair f = Product (Cod f) (F f P1) (F f P2)
+  type Limit Pair f = Product (Cod f) (f :% P1) (f :% P2)
 
   limit (NatO f) = pairNat (Const prod) f (Com . fst $ prj) (Com . snd $ prj)
     where
@@ -278,7 +278,7 @@ class Category (~>) => HasCoproducts (~>) where
 
 instance (Functor f, Dom f ~ Pair, HasCoproducts (Cod f)) => HasColimit Pair f where
   
-  type Colimit Pair f = Coproduct (Cod f) (F f P1) (F f P2)
+  type Colimit Pair f = Coproduct (Cod f) (f :% P1) (f :% P2)
 
   colimit (NatO f) = pairNat f (Const cop) (Com . fst $ i) (Com . snd $ i)
     where
@@ -313,7 +313,7 @@ instance (Functor f, Dom f ~ Discrete Z, HasTerminalObject (Cod f)) => HasLimit 
 instance (Functor f, Dom f ~ Discrete (S n), HasProducts (Cod f), Category (Discrete n), HasLimit (Discrete n) (Next n f)) 
   => HasLimit (Discrete (S n)) f where
     
-  type Limit (Discrete (S n)) f = Product (Cod f) (F f Z) (Limit (Discrete n) (Next n f))
+  type Limit (Discrete (S n)) f = Product (Cod f) (f :% Z) (Limit (Discrete n) (Next n f))
 
   limit (NatO f) = undefined -- diagNat (Const prod) f (Com . fst $ prj) (Com . snd $ prj)
     where
@@ -337,7 +337,7 @@ instance (Functor f, Dom f ~ Discrete Z, HasInitialObject (Cod f)) => HasColimit
 instance (Functor f, Dom f ~ Discrete (S n), HasCoproducts (Cod f), Category (Discrete n), HasColimit (Discrete n) (Next n f)) 
   => HasColimit (Discrete (S n)) f where
     
-  type Colimit (Discrete (S n)) f = Coproduct (Cod f) (F f Z) (Colimit (Discrete n) (Next n f))
+  type Colimit (Discrete (S n)) f = Coproduct (Cod f) (f :% Z) (Colimit (Discrete n) (Next n f))
 
   colimit (NatO f) = undefined -- diagNat (Const cop) f (Com . fst $ i) (Com . snd $ i)
     where

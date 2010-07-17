@@ -32,7 +32,7 @@ instance (Category (Dom t), Category (Dom s)) => Category (t :/\: s) where
     
   data Obj (t :/\: s) x where
     CommaO :: (Cod t ~ (~>), Cod s ~ (~>))
-      => Obj (Dom t) a -> (F t a ~> F s b) -> Obj (Dom s) b -> Obj (t :/\: s) (a, b)
+      => Obj (Dom t) a -> (t :% a ~> s :% b) -> Obj (Dom s) b -> Obj (t :/\: s) (a, b)
     
   src (CommaA so _ _ _) = so
   tgt (CommaA _ _ _ to) = to

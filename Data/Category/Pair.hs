@@ -55,8 +55,8 @@ data PairDiagram :: (* -> * -> *) -> * -> * -> * where
   PairDiagram :: Category (~>) => Obj (~>) x -> Obj (~>) y -> PairDiagram (~>) x y
 type instance Dom (PairDiagram (~>) x y) = Pair
 type instance Cod (PairDiagram (~>) x y) = (~>)
-type instance F (PairDiagram (~>) x y) P1 = x
-type instance F (PairDiagram (~>) x y) P2 = y
+type instance PairDiagram (~>) x y :% P1 = x
+type instance PairDiagram (~>) x y :% P2 = y
 instance Functor (PairDiagram (~>) x y) where
   PairDiagram x _ %% Fst = x
   PairDiagram _ y %% Snd = y

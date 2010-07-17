@@ -35,17 +35,17 @@ unit (Adjunction _ _ u _) = u
 counit :: Adjunction c d f g -> (f :.: g) :~> Id c
 counit (Adjunction _ _ _ c) = c
 
-leftAdjunct :: Adjunction c d f g -> Obj d a -> c (F f a) b -> d a (F g b)
+leftAdjunct :: Adjunction c d f g -> Obj d a -> c (f :% a) b -> d a (g :% b)
 leftAdjunct (Adjunction _ g un _) i h = (g % h) . (un ! i)
-rightAdjunct :: Adjunction c d f g -> Obj c b -> d a (F g b) -> c (F f a) b
+rightAdjunct :: Adjunction c d f g -> Obj c b -> d a (g :% b) -> c (f :% a) b
 rightAdjunct (Adjunction f _ _ coun) i h = (coun ! i) . (f % h)
 
 -- Each pair (FY, unit_Y) is an initial morphism from Y to G.
-adjunctionInitialProp :: Adjunction c d f g -> Obj d y -> InitialUniversal y g (F f y)
+adjunctionInitialProp :: Adjunction c d f g -> Obj d y -> InitialUniversal y g (f :% y)
 adjunctionInitialProp adj@(Adjunction f _ un _) y = InitialUniversal (f %% y) (un ! y) (rightAdjunct adj)
 
 -- Each pair (GX, counit_X) is a terminal morphism from F to X.
-adjunctionTerminalProp :: Adjunction c d f g -> Obj c x -> TerminalUniversal x f (F g x)
+adjunctionTerminalProp :: Adjunction c d f g -> Obj c x -> TerminalUniversal x f (g :% x)
 adjunctionTerminalProp adj@(Adjunction _ g _ coun) x = TerminalUniversal (g %% x) (coun ! x) (leftAdjunct adj)
 
 
@@ -81,11 +81,11 @@ curryAdj = mkAdjunction EndoHask EndoHask (\HaskO -> \a e -> (e, a)) (\HaskO -> 
 
 data RightAdjoint :: * -> * -> * where
   RightAdjoint :: (Functor f, Dom f ~ d, Cod f ~ c, Category c, Category d) => 
-    f -> (forall x. Obj c x -> TerminalUniversal x f (F g x)) -> RightAdjoint f g
+    f -> (forall x. Obj c x -> TerminalUniversal x f (g :% x)) -> RightAdjoint f g
   
 type instance Dom (RightAdjoint f g) = Cod f
 type instance Cod (RightAdjoint f g) = Dom f
-type instance F (RightAdjoint f g) a = F g a
+type instance RightAdjoint f g :% a = g :% a
 
 instance Functor (RightAdjoint f g) where
   RightAdjoint f univ %% x = tuObject (univ x)
