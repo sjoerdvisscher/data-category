@@ -47,7 +47,7 @@ import Data.Category
 type family F ftag a :: *
 -- | The domain, or source category, of the functor.
 type family Dom ftag :: * -> * -> *
--- | The codomain, or target category, of the funcor.
+-- | The codomain, or target category, of the functor.
 type family Cod ftag :: * -> * -> *
 
 -- | The mapping of arrows by covariant functors.
@@ -65,6 +65,7 @@ data Cat :: * -> * -> * where
 data CatW :: (* -> * -> *) -> *
 
 
+-- | @Cat@ is the category with categories as objects and funtors as arrows.
 instance Category Cat where
   
   -- | The objects in the category Cat are the categories themselves.

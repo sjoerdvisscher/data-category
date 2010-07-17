@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeOperators, TypeFamilies, GADTs, FlexibleContexts, ScopedTypeVariables #-}
+{-# LANGUAGE TypeOperators, TypeFamilies, GADTs, FlexibleContexts, ScopedTypeVariables, RankNTypes #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category.Adjunction

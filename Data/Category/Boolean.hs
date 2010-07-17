@@ -29,6 +29,7 @@ data Boolean a b where
   FlsTru :: Boolean BF BT
   IdTru  :: Boolean BT BT
 
+-- | @Boolean@ is the category with true and false as objects, and an arrow from false to true.
 instance Category Boolean where
   data Obj Boolean a where
     Fls :: Obj Boolean BF
@@ -52,12 +53,14 @@ instance Category Boolean where
   _      . _      = error "Other combinations should not type check"
 
 
+-- | False is the initial object in the Boolean category.
 instance HasInitialObject Boolean where
   type InitialObject Boolean = BF
   initialObject = Fls
   initialize Fls = IdFls
   initialize Tru = FlsTru
   
+-- | True is the terminal object in the Boolean category.
 instance HasTerminalObject Boolean where
   type TerminalObject Boolean = BT
   terminalObject = Tru

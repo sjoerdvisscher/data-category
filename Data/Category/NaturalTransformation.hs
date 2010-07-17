@@ -66,13 +66,13 @@ Nat _ _ n ! x = n x
 data Precompose :: * -> (* -> * -> *) -> * where
   Precompose :: (Functor f, Category d) => f -> Precompose f d
 
-type instance Dom (Precompose f d) = Nat (Op (Cod f)) d
-type instance Cod (Precompose f d) = Nat (Op (Dom f)) d
-type instance F (Precompose f d) g = g :.: DualFunctor f
+type instance Dom (Precompose f d) = Nat (Cod f) d
+type instance Cod (Precompose f d) = Nat (Dom f) d
+type instance F (Precompose f d) g = g :.: f
 
 instance Functor (Precompose f d) where
-  Precompose f %% NatO g = NatO $ g :.: DualFunctor f
-  Precompose f % (Nat g h n) = Nat (g :.: DualFunctor f) (h :.: DualFunctor f) $ n . (DualFunctor f %%)
+  Precompose f %% NatO g = NatO $ g :.: f
+  Precompose f % (Nat g h n) = Nat (g :.: f) (h :.: f) $ n . (f %%)
 
 
 data Postcompose :: * -> (* -> * -> *) -> * where
@@ -110,4 +110,3 @@ type instance F (Yoneda (~>)) a = (~>) :-*: a
 instance Functor (Yoneda (~>)) where
   Yoneda %% x = NatO $ Hom_X x
   Yoneda % f = Nat (Hom_X $ src f) (Hom_X $ tgt f) $ \_ -> (f .)
-

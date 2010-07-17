@@ -20,6 +20,7 @@ import Data.Category.Functor
 data (:*:) :: (* -> * -> *) -> (* -> * -> *) -> * -> * -> * where
   (:**:) :: c1 a1 b1 -> c2 a2 b2 -> (:*:) c1 c2 (a1, a2) (b1, b2)
 
+-- | The product category of category @c1@ and @c2@.
 instance (Category c1, Category c2) => Category (c1 :*: c2) where
   
   data Obj (c1 :*: c2) a where

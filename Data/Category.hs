@@ -35,6 +35,7 @@ class Category (~>) where
   (.) :: b ~> c -> a ~> b -> a ~> c
 
 
+-- | The category with Haskell types as objects and Haskell functions as arrows.
 instance Category (->) where
   data Obj (->) a = HaskO
   
@@ -48,6 +49,7 @@ instance Category (->) where
 data Op :: (* -> * -> *) -> * -> * -> * where
   Op :: (a ~> b) -> Op (~>) b a
 
+-- | @Op (~>)@ is opposite category of the category @(~>)@.
 instance Category (~>) => Category (Op (~>)) where
   data Obj (Op (~>)) a = OpObj (Obj (~>) a)
   
