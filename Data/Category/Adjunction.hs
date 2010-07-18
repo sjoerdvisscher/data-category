@@ -49,6 +49,22 @@ adjunctionTerminalProp :: Adjunction c d f g -> Obj c x -> TerminalUniversal x f
 adjunctionTerminalProp adj@(Adjunction _ g _ coun) x = TerminalUniversal (g %% x) (coun ! x) (leftAdjunct adj)
 
 
+
+initialPropAdjunction :: (Functor f, Functor g, Category c, Category d, Dom f ~ d, Cod f ~ c, Dom g ~ c, Cod g ~ d)
+  => f -> g -> (forall y. Obj d y -> InitialUniversal y g (f :% y)) -> Adjunction c d f g
+initialPropAdjunction f g univ = mkAdjunction f g un coun
+  where
+    coun a = let ga = g %% a in initialFactorizer (univ ga) a (id ga)
+    un   a = initialMorphism (univ a)
+    
+terminalPropAdjunction :: (Functor f, Functor g, Category c, Category d, Dom f ~ d, Cod f ~ c, Dom g ~ c, Cod g ~ d)
+  => f -> g -> (forall x. Obj c x -> TerminalUniversal x f (g :% x)) -> Adjunction c d f g
+terminalPropAdjunction f g univ = mkAdjunction f g un coun
+  where
+    un   a = let fa = f %% a in terminalFactorizer (univ fa) a (id fa)
+    coun a = terminalMorphism (univ a)
+    
+
 data AdjArrow c d where
   AdjArrow :: (Category c, Category d) => Adjunction c d f g -> AdjArrow (CatW c) (CatW d)
 
@@ -79,26 +95,18 @@ curryAdj :: Adjunction (->) (->) (EndoHask ((,) e)) (EndoHask ((->) e))
 curryAdj = mkAdjunction EndoHask EndoHask (\HaskO -> \a e -> (e, a)) (\HaskO -> \(e, f) -> f e)
 
 
-data RightAdjoint :: * -> * -> * where
-  RightAdjoint :: (Functor f, Dom f ~ d, Cod f ~ c, Category c, Category d) => 
-    f -> (forall x. Obj c x -> TerminalUniversal x f (g :% x)) -> RightAdjoint f g
-  
-type instance Dom (RightAdjoint f g) = Cod f
-type instance Cod (RightAdjoint f g) = Dom f
-type instance RightAdjoint f g :% a = g :% a
+-- | The limit functor is right adjoint to the diagonal functor.
+limitAdj :: forall (~>) j. (Category (~>), Category j) => LimitFunctor j (~>) 
+  -> Adjunction (Nat j (~>)) (~>) (Diag j (~>)) (LimitFunctor j (~>))
+limitAdj limitF@(LimitFunctor univ) = terminalPropAdjunction Diag limitF univ'
+  where
+    univ' :: Obj (Nat j (~>)) f -> TerminalUniversal f (Diag j (~>)) (Limit j f)
+    univ' (NatO f) = univ f
 
-instance Functor (RightAdjoint f g) where
-  RightAdjoint f univ %% x = tuObject (univ x)
-  -- RightAdjoint f univ % h  = terminalFactorizer (univ $ src h) o m
-  --   where
-  --     targetUniv = univ $ tgt h
-  --     o = tuObject targetUniv
-  --     m = terminalMorphism targetUniv . h
-
-terminalPropAdjunction :: RightAdjoint f g -> Adjunction (Cod f) (Dom f) f (RightAdjoint f g) 
-terminalPropAdjunction g@(RightAdjoint f univ) = mkAdjunction f g 
-  (\a -> let fa = f %% a in terminalFactorizer (univ fa) a (id fa))
-  (terminalMorphism . univ)
-
--- limitAdj :: HasLimits j (~>) => Adjunction (Nat j (~>)) (~>) (Diag j (~>)) (RightAdjoint (Diag j (~>)) (LimitFunctor j (~>)))
--- limitAdj = terminalPropAdjunction (RightAdjoint Diag limitUniversal :: RightAdjoint (Diag j (~>)) (LimitFunctor j (~>)))
+-- | The colimit functor is left adjoint to the diagonal functor.
+colimitAdj :: forall (~>) j. (Category (~>), Category j) => ColimitFunctor j (~>) 
+  -> Adjunction (~>) (Nat j (~>)) (ColimitFunctor j (~>)) (Diag j (~>))
+colimitAdj colimitF@(ColimitFunctor univ) = initialPropAdjunction colimitF Diag univ'
+  where
+    univ' :: Obj (Nat j (~>)) f -> InitialUniversal f (Diag j (~>)) (Colimit j f)
+    univ' (NatO f) = univ f
