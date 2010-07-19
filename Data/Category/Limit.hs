@@ -118,6 +118,11 @@ instance Functor (LimitFunctor j (~>)) where
   LimitFunctor univ %% NatO f       = tuObject (univ f)
   LimitFunctor univ % n@(Nat f g _) = terminalFactorizer (univ g) (tuObject (univ f)) (n . terminalMorphism (univ f))
 
+
+liftLimit :: (Dom f ~ j, Dom g ~ j, Cod f ~ (~>), Cod g ~ (~>), HasLimit j f, HasLimit j g, Category (~>)) 
+  => Nat j (~>) f g -> Limit j f ~> Limit j g
+liftLimit n@(Nat f g _) = limitFactorizer g (n . limit f)
+
     
 data ColimitFunctor :: (* -> * -> *) -> (* -> * -> *) -> * where
   ColimitFunctor :: (Category (~>), Category j) 
@@ -131,6 +136,12 @@ type instance ColimitFunctor j (~>) :% f = Colimit j f
 instance Functor (ColimitFunctor j (~>)) where
   ColimitFunctor univ %% NatO f       = iuObject (univ f)
   ColimitFunctor univ % n@(Nat f g _) = initialFactorizer (univ f) (iuObject (univ g)) (initialMorphism (univ g) . n)
+
+
+liftColimit :: (Dom f ~ j, Dom g ~ j, Cod f ~ (~>), Cod g ~ (~>), HasColimit j f, HasColimit j g, Category (~>)) 
+  => Nat j (~>) f g -> Colimit j f ~> Colimit j g
+liftColimit n@(Nat f g _) = colimitFactorizer f (colimit g . n)
+
 
 
 -- | A terminal object is the limit of the functor from /0/ to (~>).
@@ -357,10 +368,23 @@ instance (Functor f, Dom f ~ Discrete (S n), HasCoproducts (Cod f), Category (Di
 
 
 
-data ForAll f = ForAll { unForAll :: forall a. f a }
+newtype ForAll f = ForAll { unForAll :: forall a. f a }
 
 instance HasLimit (->) (EndoHask f) where
   
   type Limit (->) (EndoHask f) = ForAll f
 
   limit EndoHask = Nat (Const HaskO) EndoHask $ \HaskO -> unForAll
+  
+  limitFactorizer EndoHask c n = ForAll ((c ! HaskO) n)
+
+
+data Exists f = forall a. Exists { unExists :: f a }
+
+instance HasColimit (->) (EndoHask f) where
+  
+  type Colimit (->) (EndoHask f) = Exists f
+  
+  colimit EndoHask = Nat EndoHask (Const HaskO) $ \HaskO -> Exists
+  
+  colimitFactorizer EndoHask c (Exists fa) = (c ! HaskO) fa
