@@ -65,6 +65,6 @@ instance Functor (KleisliAdjG (~>) m) where
 
 kleisliAdj :: (Monad m, Dom m ~ (~>), Cod m ~ (~>), Category (~>)) 
   => m -> Adjunction (Kleisli (~>) m) (~>) (KleisliAdjF (~>) m) (KleisliAdjG (~>) m)
-kleisliAdj m = Adjunction (KleisliAdjF m) (KleisliAdjG m)
-  (Nat Id (KleisliAdjG m :.: KleisliAdjF m) $ \x -> point m ! x)
-  (Nat (KleisliAdjF m :.: KleisliAdjG m) Id $ \(KleisliO _ x) -> Kleisli m x $ m % id x)
+kleisliAdj m = mkAdjunction (KleisliAdjF m) (KleisliAdjG m)
+  (\x -> point m ! x)
+  (\(KleisliO _ x) -> Kleisli m x $ m % id x)
