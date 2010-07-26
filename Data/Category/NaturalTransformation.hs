@@ -9,7 +9,26 @@
 -- Stability   :  experimental
 -- Portability :  non-portable
 -----------------------------------------------------------------------------
-module Data.Category.NaturalTransformation where
+module Data.Category.NaturalTransformation (
+
+  -- * Natural transformations
+    (:~>)
+  , Nat
+  , Component
+  , Com(..)
+  , o
+  , (!)
+  
+  -- ** Functor category
+  , Nat(..)
+  , Obj(..)
+  
+  -- ** Related functors
+  , Precompose(..)
+  , Postcompose(..)
+  , YonedaEmbedding(..)
+  
+) where
   
 import Prelude hiding ((.), id, Functor)
 
@@ -20,12 +39,13 @@ import Data.Category.Functor
 -- | @f :~> g@ is a natural transformation from functor f to functor g.
 type f :~> g = (c ~ Dom f, c ~ Dom g, d ~ Cod f, d ~ Cod g) => Nat c d f g
 
-data Nat :: (* -> * -> *) -> (* -> * -> *) -> * -> * -> * where
-  Nat :: (Functor f, Functor g, c ~ Dom f, c ~ Dom g, d ~ Cod f, d ~ Cod g) 
-    => f -> g -> (forall a. Obj c a -> Component f g a) -> Nat c d f g
-
 -- | Natural transformations are built up of components, 
 -- one for each object @z@ in the domain category of @f@ and @g@.
+data Nat :: (* -> * -> *) -> (* -> * -> *) -> * -> * -> * where
+  Nat :: (Functor f, Functor g, c ~ Dom f, c ~ Dom g, d ~ Cod f, d ~ Cod g) 
+    => f -> g -> (forall z. Obj c z -> Component f g z) -> Nat c d f g
+
+-- | A component for an object @z@ is an arrow from @F z@ to @G z@.
 type Component f g z = Cod f (f :% z) (g :% z)
 
 
@@ -49,12 +69,9 @@ o :: Category e => Nat d e j k -> Nat c d f g -> Nat c e (j :.: f) (k :.: g)
 Nat j k njk `o` Nat f g nfg = Nat (j :.: f) (k :.: g) $ \x -> k % nfg x . njk (f %% x)
 
 
--- This data type can be used when creating data instances of @Nat@.
-data Comp :: * -> * -> * -> * where
-  Com :: Cod f (f :% z) (g :% z) -> Comp f g z
-
-unCom :: Comp f g z -> Cod f (f :% z) (g :% z)
-unCom (Com c) = c
+-- | A newtype wrapper for components,
+--   which can be useful for helper functions dealing with components.
+newtype Com f g z = Com { unCom :: Component f g z }
 
 
 
@@ -63,6 +80,8 @@ unCom (Com c) = c
 Nat _ _ n ! x = n x
 
 
+-- | @Precompose f d@ is the functor such that @Precompose f d :% g = g :.: f@, 
+--   for functors @g@ that compose with @f@ and with codomain @d@.
 data Precompose :: * -> (* -> * -> *) -> * where
   Precompose :: (Functor f, Category d) => f -> Precompose f d
 
@@ -75,6 +94,8 @@ instance Functor (Precompose f d) where
   Precompose f % (Nat g h n) = Nat (g :.: f) (h :.: f) $ n . (f %%)
 
 
+-- | @Postcompose f c@ is the functor such that @Postcompose f c :% g = f :.: g@, 
+--   for functors @g@ that compose with @f@ and with domain @c@.
 data Postcompose :: * -> (* -> * -> *) -> * where
   Postcompose :: (Functor f, Category c) => f -> Postcompose f c
 
@@ -100,13 +121,13 @@ instance Category (~>) => Representable ((~>) :-*: x) where
 
 
 -- | The Yoneda embedding functor.
-data Yoneda :: (* -> * -> *) -> * where
-  Yoneda :: Category (~>) => Yoneda (~>)
+data YonedaEmbedding :: (* -> * -> *) -> * where
+  YonedaEmbedding :: Category (~>) => YonedaEmbedding (~>)
   
-type instance Dom (Yoneda (~>)) = (~>)
-type instance Cod (Yoneda (~>)) = Nat (Op (~>)) (->)
-type instance Yoneda (~>) :% a = (~>) :-*: a
+type instance Dom (YonedaEmbedding (~>)) = (~>)
+type instance Cod (YonedaEmbedding (~>)) = Nat (Op (~>)) (->)
+type instance YonedaEmbedding (~>) :% a = (~>) :-*: a
 
-instance Functor (Yoneda (~>)) where
-  Yoneda %% x = NatO $ Hom_X x
-  Yoneda % f = Nat (Hom_X $ src f) (Hom_X $ tgt f) $ \_ -> (f .)
+instance Functor (YonedaEmbedding (~>)) where
+  YonedaEmbedding %% x = NatO $ Hom_X x
+  YonedaEmbedding % f = Nat (Hom_X $ src f) (Hom_X $ tgt f) $ \_ -> (f .)

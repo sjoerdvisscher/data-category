@@ -26,6 +26,7 @@ import qualified Prelude
 
 -- | An instance of @Category (~>)@ declares the arrow @(~>)@ as a category.
 class Category (~>) where
+  
   data Obj (~>) :: * -> *
 
   src :: a ~> b -> Obj (~>) a
@@ -37,6 +38,7 @@ class Category (~>) where
 
 -- | The category with Haskell types as objects and Haskell functions as arrows.
 instance Category (->) where
+  
   data Obj (->) a = HaskO
   
   src _ = HaskO
@@ -51,6 +53,7 @@ data Op :: (* -> * -> *) -> * -> * -> * where
 
 -- | @Op (~>)@ is opposite category of the category @(~>)@.
 instance Category (~>) => Category (Op (~>)) where
+  
   data Obj (Op (~>)) a = OpObj (Obj (~>) a)
   
   src (Op a)      = OpObj $ tgt a

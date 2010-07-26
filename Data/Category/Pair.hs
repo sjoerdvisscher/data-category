@@ -65,9 +65,9 @@ instance Functor (PairDiagram (~>) x y) where
 
 
 pairNat :: (Functor f, Functor g, Dom f ~ Pair, Cod f ~ d, Dom g ~ Pair, Cod g ~ d) 
-  => f -> g -> Comp f g P1 -> Comp f g P2 -> Nat Pair d f g
+  => f -> g -> Com f g P1 -> Com f g P2 -> Nat Pair d f g
 pairNat f g c1 c2 = Nat f g (\x -> unCom $ n c1 c2 x) where
   n :: (Functor f, Functor g, Dom f ~ Pair, Cod f ~ d, Dom g ~ Pair, Cod g ~ d) 
-    => Comp f g P1 -> Comp f g P2 -> Obj Pair a -> Comp f g a
+    => Com f g P1 -> Com f g P2 -> Obj Pair a -> Com f g a
   n c _ Fst = c
   n _ c Snd = c

@@ -174,11 +174,13 @@ instance Functor (EndoHask f) where
   EndoHask % f = fmap f
 
 
+-- | An initial universal property, a universal morphism from x to u.
 data InitialUniversal  x u a = InitialUniversal
   { iuObject :: Obj (Dom u) a
   , initialMorphism :: Cod u x (u :% a)
   , initialFactorizer :: forall y. Obj (Dom u) y -> Cod u x (u :% y) -> Dom u a y }
   
+-- | A terminal universal property, a universal morphism from u to x.
 data TerminalUniversal x u a = TerminalUniversal 
   { tuObject :: Obj (Dom u) a
   , terminalMorphism :: Cod u (u :% a) x
