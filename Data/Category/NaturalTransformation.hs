@@ -35,6 +35,7 @@ import Prelude hiding ((.), id, Functor)
 import Data.Category
 import Data.Category.Functor
 
+infixl 9 !
 
 -- | @f :~> g@ is a natural transformation from functor f to functor g.
 type f :~> g = (c ~ Dom f, c ~ Dom g, d ~ Cod f, d ~ Cod g) => Nat c d f g

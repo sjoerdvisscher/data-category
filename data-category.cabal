@@ -23,12 +23,12 @@ Library
     Data.Category.Void,
     Data.Category.Unit,
     Data.Category.Pair,
+    Data.Category.Discrete,
     Data.Category.Product,
     Data.Category.Monoid,
     Data.Category.Boolean,
     Data.Category.Omega,
     Data.Category.Kleisli,
-    Data.Category.Discrete,
     Data.Category.Dialg,
     Data.Category.Peano,
     Data.Category.Comma

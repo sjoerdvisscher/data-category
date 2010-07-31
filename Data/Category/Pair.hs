@@ -71,3 +71,6 @@ pairNat f g c1 c2 = Nat f g (\x -> unCom $ n c1 c2 x) where
     => Com f g P1 -> Com f g P2 -> Obj Pair a -> Com f g a
   n c _ Fst = c
   n _ c Snd = c
+
+arrowPair :: Category (~>) => (x1 ~> x2) -> (y1 ~> y2) -> Nat Pair (~>) (PairDiagram (~>) x1 y1) (PairDiagram (~>) x2 y2)
+arrowPair l r = pairNat (PairDiagram (src l) (src r)) (PairDiagram (tgt l) (tgt r)) (Com l) (Com r)

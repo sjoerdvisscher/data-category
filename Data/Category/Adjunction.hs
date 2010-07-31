@@ -96,17 +96,19 @@ curryAdj = mkAdjunction EndoHask EndoHask (\HaskO -> \a e -> (e, a)) (\HaskO -> 
 
 
 -- | The limit functor is right adjoint to the diagonal functor.
-limitAdj :: forall (~>) j. (Category (~>), Category j) => LimitFunctor j (~>) 
+limitAdj :: forall j (~>). HasLimits j (~>) 
+  => LimitFunctor j (~>) 
   -> Adjunction (Nat j (~>)) (~>) (Diag j (~>)) (LimitFunctor j (~>))
-limitAdj limitF@(LimitFunctor univ) = terminalPropAdjunction Diag limitF univ'
+limitAdj LimitFunctor = terminalPropAdjunction Diag LimitFunctor univ
   where
-    univ' :: Obj (Nat j (~>)) f -> TerminalUniversal f (Diag j (~>)) (Limit j f)
-    univ' (NatO f) = univ f
+    univ :: Obj (Nat j (~>)) f -> TerminalUniversal f (Diag j (~>)) (LimitFam j (~>) f)
+    univ f @ NatO{} = limitUniv f
 
 -- | The colimit functor is left adjoint to the diagonal functor.
-colimitAdj :: forall (~>) j. (Category (~>), Category j) => ColimitFunctor j (~>) 
+colimitAdj :: forall j (~>). HasColimits j (~>) 
+  => ColimitFunctor j (~>) 
   -> Adjunction (~>) (Nat j (~>)) (ColimitFunctor j (~>)) (Diag j (~>))
-colimitAdj colimitF@(ColimitFunctor univ) = initialPropAdjunction colimitF Diag univ'
+colimitAdj ColimitFunctor = initialPropAdjunction ColimitFunctor Diag univ
   where
-    univ' :: Obj (Nat j (~>)) f -> InitialUniversal f (Diag j (~>)) (Colimit j f)
-    univ' (NatO f) = univ f
+    univ :: Obj (Nat j (~>)) f -> InitialUniversal f (Diag j (~>)) (ColimitFam j (~>) f)
+    univ f @ NatO{} = colimitUniv f

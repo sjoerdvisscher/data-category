@@ -62,12 +62,12 @@ instance HasInitialObject Omega where
   initialize (OS n) = GTZ $ initialize n
 
 
-type instance Product Omega Z     n = Z
-type instance Product Omega n     Z = Z
-type instance Product Omega (S a) (S b) = S (Product Omega a b)
+type instance BinaryProduct Omega Z     n = Z
+type instance BinaryProduct Omega n     Z = Z
+type instance BinaryProduct Omega (S a) (S b) = S (BinaryProduct Omega a b)
 
 -- The product in omega is the minimum.
-instance HasProducts Omega where 
+instance HasBinaryProducts Omega where 
 
   product OZ     _      = OZ
   product _      OZ     = OZ
@@ -85,12 +85,12 @@ instance HasProducts Omega where
   _     &&& _      = error "Other combinations should not type check"
 
 
-type instance Coproduct Omega Z     n     = n
-type instance Coproduct Omega n     Z     = n
-type instance Coproduct Omega (S a) (S b) = S (Coproduct Omega a b)
+type instance BinaryCoproduct Omega Z     n     = n
+type instance BinaryCoproduct Omega n     Z     = n
+type instance BinaryCoproduct Omega (S a) (S b) = S (BinaryCoproduct Omega a b)
 
 -- -- The coproduct in omega is the maximum.
-instance HasCoproducts Omega where 
+instance HasBinaryCoproducts Omega where 
   
   coproduct OZ     n      = n
   coproduct n      OZ     = n

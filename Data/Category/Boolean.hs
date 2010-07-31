@@ -68,12 +68,12 @@ instance HasTerminalObject Boolean where
   terminate Tru = IdTru
 
 
-type instance Product Boolean BF BF = BF
-type instance Product Boolean BF BT = BF
-type instance Product Boolean BT BF = BF
-type instance Product Boolean BT BT = BT
+type instance BinaryProduct Boolean BF BF = BF
+type instance BinaryProduct Boolean BF BT = BF
+type instance BinaryProduct Boolean BT BF = BF
+type instance BinaryProduct Boolean BT BT = BT
 
-instance HasProducts Boolean where 
+instance HasBinaryProducts Boolean where 
   
   product Fls Fls = Fls
   product Fls Tru = Fls
@@ -93,12 +93,12 @@ instance HasProducts Boolean where
   _      &&& _      = error "Other combinations should not type check"
 
 
-type instance Coproduct Boolean BF BF = BF
-type instance Coproduct Boolean BF BT = BT
-type instance Coproduct Boolean BT BF = BT
-type instance Coproduct Boolean BT BT = BT
+type instance BinaryCoproduct Boolean BF BF = BF
+type instance BinaryCoproduct Boolean BF BT = BT
+type instance BinaryCoproduct Boolean BT BF = BT
+type instance BinaryCoproduct Boolean BT BT = BT
 
-instance HasCoproducts Boolean where 
+instance HasBinaryCoproducts Boolean where 
   
   coproduct Fls Fls = Fls
   coproduct Fls Tru = Tru
