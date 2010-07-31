@@ -72,7 +72,7 @@ newtype FixF f = InF { outF :: f (FixF f) }
 cataHask :: Prelude.Functor f => Cata (EndoHask f) a
 cataHask a@(Dialgebra HaskO f) = DialgA initialObject a $ cata f where cata f = f . fmap (cata f) . outF 
 
--- -- | Anamorphisms for endofunctors in Hask.
+-- | Anamorphisms for endofunctors in Hask.
 anaHask :: Prelude.Functor f => Ana (EndoHask f) a
 anaHask a@(Dialgebra HaskO f) = DialgA a terminalObject $ ana f where ana f = InF . fmap (ana f) . f 
 

@@ -13,17 +13,14 @@ module Data.Category.NaturalTransformation (
 
   -- * Natural transformations
     (:~>)
-  , Nat
+  , Nat(..)
+  , Obj(..)
   , Component
   , Com(..)
   , o
   , (!)
   
-  -- ** Functor category
-  , Nat(..)
-  , Obj(..)
-  
-  -- ** Related functors
+  -- * Related functors
   , Precompose(..)
   , Postcompose(..)
   , YonedaEmbedding(..)
