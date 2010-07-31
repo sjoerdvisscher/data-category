@@ -1,4 +1,7 @@
 Data-category is a collection of categories, and some categorical constructions on them.
 
-The Control.Category definition of a category is limited, as it only allows to define categories which have the same objects as Hask, i.e. all Haskell types.
-In Data.Category a type o is only an object in category c if there is an instance CategoryO c o.
+You can restrict the types of the objects of your category by using a GADT for the arrow type.
+To be able to proof to the compiler that a type is an object in some category, objects also need to be represented at the value level.
+Therefore the Category class has an associated data type Obj. This which will often also be a GADT.
+
+See the Monoid, Boolean and Product categories for some examples.
