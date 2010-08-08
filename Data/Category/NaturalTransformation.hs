@@ -13,13 +13,16 @@ module Data.Category.NaturalTransformation (
 
   -- * Natural transformations
     (:~>)
-  , Nat(..)
-  , Obj(..)
   , Component
   , Com(..)
-  , o
   , (!)
-  
+  , o
+
+  -- * Functor category
+  , Nat(..)
+  , Obj(..)
+  , Endo(..)
+    
   -- * Related functors
   , Precompose(..)
   , Postcompose(..)
@@ -43,8 +46,22 @@ data Nat :: (* -> * -> *) -> (* -> * -> *) -> * -> * -> * where
   Nat :: (Functor f, Functor g, c ~ Dom f, c ~ Dom g, d ~ Cod f, d ~ Cod g) 
     => f -> g -> (forall z. Obj c z -> Component f g z) -> Nat c d f g
 
+
 -- | A component for an object @z@ is an arrow from @F z@ to @G z@.
 type Component f g z = Cod f (f :% z) (g :% z)
+
+-- | A newtype wrapper for components,
+--   which can be useful for helper functions dealing with components.
+newtype Com f g z = Com { unCom :: Component f g z }
+
+-- | 'n ! a' returns the component for the object @a@ of a natural transformation @n@.
+(!) :: (Cod f ~ d, Cod g ~ d) => Nat (~>) d f g -> Obj (~>) a -> d (f :% a) (g :% a)
+Nat _ _ n ! x = n x
+
+
+-- | Horizontal composition of natural transformations.
+o :: Category e => Nat d e j k -> Nat c d f g -> Nat c e (j :.: f) (k :.: g)
+Nat j k njk `o` Nat f g nfg = Nat (j :.: f) (k :.: g) $ \x -> k % nfg x . njk (f %% x)
 
 
 -- | Functor category D^C.
@@ -62,20 +79,9 @@ instance (Category c, Category d) => Category (Nat c d) where
   Nat _ h ngh . Nat f _ nfg = Nat f h $ \i -> ngh i . nfg i
 
 
--- | Horizontal composition of natural transformations.
-o :: Category e => Nat d e j k -> Nat c d f g -> Nat c e (j :.: f) (k :.: g)
-Nat j k njk `o` Nat f g nfg = Nat (j :.: f) (k :.: g) $ \x -> k % nfg x . njk (f %% x)
+-- | The category of endofunctors.
+type Endo (~>) = Nat (~>) (~>)
 
-
--- | A newtype wrapper for components,
---   which can be useful for helper functions dealing with components.
-newtype Com f g z = Com { unCom :: Component f g z }
-
-
-
--- | 'n ! a' returns the component for the object @a@ of a natural transformation @n@.
-(!) :: (Cod f ~ d, Cod g ~ d) => Nat (~>) d f g -> Obj (~>) a -> d (f :% a) (g :% a)
-Nat _ _ n ! x = n x
 
 
 -- | @Precompose f d@ is the functor such that @Precompose f d :% g = g :.: f@, 
