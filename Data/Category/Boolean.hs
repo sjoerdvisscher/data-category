@@ -80,10 +80,14 @@ instance HasBinaryProducts Boolean where
   product Tru Fls = Fls
   product Tru Tru = Tru
   
-  proj Fls Fls = (IdFls , IdFls)
-  proj Fls Tru = (IdFls , FlsTru)
-  proj Tru Fls = (FlsTru, IdFls)
-  proj Tru Tru = (IdTru , IdTru)
+  proj1 Fls Fls = IdFls
+  proj1 Fls Tru = IdFls
+  proj1 Tru Fls = FlsTru
+  proj1 Tru Tru = IdTru
+  proj2 Fls Fls = IdFls
+  proj2 Fls Tru = FlsTru
+  proj2 Tru Fls = IdFls
+  proj2 Tru Tru = IdTru
   
   IdFls  &&& IdFls  = IdFls
   IdFls  &&& FlsTru = IdFls
@@ -105,11 +109,15 @@ instance HasBinaryCoproducts Boolean where
   coproduct Tru Fls = Tru
   coproduct Tru Tru = Tru
   
-  inj Fls Fls = (IdFls , IdFls)
-  inj Fls Tru = (FlsTru, IdTru)
-  inj Tru Fls = (IdTru , FlsTru)
-  inj Tru Tru = (IdTru , IdTru)
-  
+  inj1 Fls Fls = IdFls
+  inj1 Fls Tru = FlsTru
+  inj1 Tru Fls = IdTru
+  inj1 Tru Tru = IdTru
+  inj2 Fls Fls = IdFls
+  inj2 Fls Tru = IdTru
+  inj2 Tru Fls = FlsTru
+  inj2 Tru Tru = IdTru
+    
   IdFls  ||| IdFls  = IdFls
   FlsTru ||| FlsTru = FlsTru
   FlsTru ||| IdTru  = IdTru

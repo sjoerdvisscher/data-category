@@ -65,8 +65,10 @@ module Data.Category.Limit (
   -- ** Limits of type Pair
   , BinaryProduct
   , HasBinaryProducts(..)
+  , (:*:)
   , BinaryCoproduct
   , HasBinaryCoproducts(..)
+  , (:+:)
   
   -- ** Limits of type Hask
   , ForAll(..)
@@ -317,13 +319,13 @@ class Category (~>) => HasBinaryProducts (~>) where
   
   product :: Obj (~>) x -> Obj (~>) y -> Obj (~>) (BinaryProduct (~>) x y)
   
-  proj :: Obj (~>) x -> Obj (~>) y -> (BinaryProduct (~>) x y ~> x, BinaryProduct (~>) x y ~> y)
+  proj1 :: Obj (~>) x -> Obj (~>) y -> BinaryProduct (~>) x y ~> x
+  proj2 :: Obj (~>) x -> Obj (~>) y -> BinaryProduct (~>) x y ~> y
 
   (&&&) :: (a ~> x) -> (a ~> y) -> (a ~> BinaryProduct (~>) x y)
 
   (***) :: (a1 ~> b1) -> (a2 ~> b2) -> (BinaryProduct (~>) a1 a2 ~> BinaryProduct (~>) b1 b2)
-  l *** r = (l . proj1) &&& (r . proj2) where
-    (proj1, proj2) = proj (src l) (src r)
+  l *** r = (l . proj1 (src l) (src r)) &&& (r . proj2 (src l) (src r)) where
 
 
 type instance LimitFam Pair (~>) f = BinaryProduct (~>) (f :% P1) (f :% P2)
@@ -331,13 +333,11 @@ type instance LimitFam Pair (~>) f = BinaryProduct (~>) (f :% P1) (f :% P2)
 instance HasBinaryProducts (~>) => HasLimits Pair (~>) where
 
   limitUniv (NatO f) = limitUniversal
-    (pairNat (Const prod) f (Com $ fst prj) (Com $ snd prj))
+    (pairNat (Const $ product x y) f (Com $ proj1 x y) (Com $ proj2 x y))
     (\c -> c ! Fst &&& c ! Snd)
     where
       x = f %% Fst
       y = f %% Snd
-      prod = product x y
-      prj = proj x y
 
 
 type instance BinaryProduct (->) x y = (x, y)
@@ -346,23 +346,61 @@ instance HasBinaryProducts (->) where
   
   product HaskO HaskO = HaskO
   
-  proj _ _ = (fst, snd)
+  proj1 HaskO HaskO = fst
+  proj2 HaskO HaskO = snd
   
   (&&&) = (A.&&&)
   (***) = (A.***)
 
-type instance BinaryProduct Cat (CatW c1) (CatW c2) = CatW (c1 :*: c2)
+type instance BinaryProduct Cat (CatW c1) (CatW c2) = CatW (c1 :**: c2)
 
 instance HasBinaryProducts Cat where
   
   product CatO CatO = CatO
   
-  proj CatO CatO = (CatA Proj1, CatA Proj2)
+  proj1 CatO CatO = CatA Proj1
+  proj2 CatO CatO = CatA Proj2
   
   CatA f1 &&& CatA f2 = CatA ((f1 :***: f2) :.: DiagProd)
   CatA f1 *** CatA f2 = CatA (f1 :***: f2)
 
 
+type instance BinaryProduct (c1 :**: c2) (x1, x2) (y1, y2) = (BinaryProduct c1 x1 y1, BinaryProduct c2 x2 y2)
+
+instance (HasBinaryProducts c1, HasBinaryProducts c2) => HasBinaryProducts (c1 :**: c2) where
+  
+  product (ProdO x1 x2) (ProdO y1 y2) = ProdO (product x1 y1) (product x2 y2)
+  
+  proj1 (ProdO x1 x2) (ProdO y1 y2) = proj1 x1 y1 :**: proj1 x2 y2
+  proj2 (ProdO x1 x2) (ProdO y1 y2) = proj2 x1 y1 :**: proj2 x2 y2
+  
+  (f1 :**: f2) &&& (g1 :**: g2) = (f1 &&& g1) :**: (f2 &&& g2)
+  (f1 :**: f2) *** (g1 :**: g2) = (f1 *** g1) :**: (f2 *** g2)
+
+
+-- | The product of two functors.
+data p :*: q where 
+  (:*:) :: (Functor p, Functor q, Dom p ~ Dom q, Cod p ~ (~>), Cod q ~ (~>), HasBinaryProducts (~>)) => p -> q -> p :*: q
+type instance Dom (p :*: q) = Dom p
+type instance Cod (p :*: q) = Cod p
+type instance (p :*: q) :% a = BinaryProduct (Cod p) (p :% a) (q :% a)
+instance Functor (p :*: q) where
+  (p :*: q) %% a = (p %% a) `product` (q %% a)
+  (p :*: q) %  f = (p %  f)  ***      (q %  f)
+
+type instance BinaryProduct (Nat c d) x y = x :*: y
+
+instance (Category c, HasBinaryProducts d) => HasBinaryProducts (Nat c d) where
+  
+  product (NatO f) (NatO g) = NatO (f :*: g)
+  
+  proj1 (NatO f) (NatO g) = Nat (f :*: g) f $ \z -> proj1 (f %% z) (g %% z)
+  proj2 (NatO f) (NatO g) = Nat (f :*: g) g $ \z -> proj2 (f %% z) (g %% z)
+  
+  Nat a f af &&& Nat _ g ag = Nat a (f :*: g) $ \z -> af z &&& ag z
+  Nat f1 f2 f *** Nat g1 g2 g = Nat (f1 :*: g1) (f2 :*: g2) $ \z -> f z *** g z
+  
+  
 
 type family BinaryCoproduct ((~>) :: * -> * -> *) x y :: *
 
@@ -371,13 +409,13 @@ class Category (~>) => HasBinaryCoproducts (~>) where
 
   coproduct :: Obj (~>) x -> Obj (~>) y -> Obj (~>) (BinaryCoproduct (~>) x y)
   
-  inj :: Obj (~>) x -> Obj (~>) y -> (x ~> BinaryCoproduct (~>) x y, y ~> BinaryCoproduct (~>) x y)
+  inj1 :: Obj (~>) x -> Obj (~>) y -> x ~> BinaryCoproduct (~>) x y
+  inj2 :: Obj (~>) x -> Obj (~>) y -> y ~> BinaryCoproduct (~>) x y
 
   (|||) :: (x ~> a) -> (y ~> a) -> (BinaryCoproduct (~>) x y ~> a)
     
   (+++) :: (a1 ~> b1) -> (a2 ~> b2) -> (BinaryCoproduct (~>) a1 a2 ~> BinaryCoproduct (~>) b1 b2)
-  l +++ r = (inj1 . l) ||| (inj2 . r) where
-    (inj1, inj2) = inj (tgt l) (tgt r)
+  l +++ r = (inj1 (tgt l) (tgt r) . l) ||| (inj2 (tgt l) (tgt r) . r) where
     
 
 type instance ColimitFam Pair (~>) f = BinaryCoproduct (~>) (f :% P1) (f :% P2)
@@ -385,13 +423,11 @@ type instance ColimitFam Pair (~>) f = BinaryCoproduct (~>) (f :% P1) (f :% P2)
 instance HasBinaryCoproducts (~>) => HasColimits Pair (~>) where
   
   colimitUniv (NatO f) = colimitUniversal
-    (pairNat f (Const cop) (Com $ fst i) (Com $ snd i))
+    (pairNat f (Const $ coproduct x y) (Com $ inj1 x y) (Com $ inj2 x y))
     (\c -> c ! Fst ||| c ! Snd)
     where
       x = f %% Fst
       y = f %% Snd
-      cop = coproduct x y
-      i = inj x y
 
 
 type instance BinaryCoproduct (->) x y = Either x y
@@ -400,10 +436,47 @@ instance HasBinaryCoproducts (->) where
   
   coproduct HaskO HaskO = HaskO
   
-  inj _ _ = (Left, Right)
+  inj1 HaskO HaskO = Left
+  inj2 HaskO HaskO = Right
   
   (|||) = (A.|||)
   (+++) = (A.+++)
+  
+  
+type instance BinaryCoproduct (c1 :**: c2) (x1, x2) (y1, y2) = (BinaryCoproduct c1 x1 y1, BinaryCoproduct c2 x2 y2)
+
+instance (HasBinaryCoproducts c1, HasBinaryCoproducts c2) => HasBinaryCoproducts (c1 :**: c2) where
+  
+  coproduct (ProdO x1 x2) (ProdO y1 y2) = ProdO (coproduct x1 y1) (coproduct x2 y2)
+  
+  inj1 (ProdO x1 x2) (ProdO y1 y2) = inj1 x1 y1 :**: inj1 x2 y2
+  inj2 (ProdO x1 x2) (ProdO y1 y2) = inj2 x1 y1 :**: inj2 x2 y2
+  
+  (f1 :**: f2) ||| (g1 :**: g2) = (f1 ||| g1) :**: (f2 ||| g2)
+  (f1 :**: f2) +++ (g1 :**: g2) = (f1 +++ g1) :**: (f2 +++ g2)
+
+
+-- | The coproduct of two functors.
+data p :+: q where 
+  (:+:) :: (Functor p, Functor q, Dom p ~ Dom q, Cod p ~ (~>), Cod q ~ (~>), HasBinaryCoproducts (~>)) => p -> q -> p :+: q
+type instance Dom (p :+: q) = Dom p
+type instance Cod (p :+: q) = Cod p
+type instance (p :+: q) :% a = BinaryCoproduct (Cod p) (p :% a) (q :% a)
+instance Functor (p :+: q) where
+  (p :+: q) %% a = (p %% a) `coproduct` (q %% a)
+  (p :+: q) %  f = (p %  f)  +++        (q %  f)
+
+type instance BinaryCoproduct (Nat c d) x y = x :+: y
+
+instance (Category c, HasBinaryCoproducts d) => HasBinaryCoproducts (Nat c d) where
+  
+  coproduct (NatO f) (NatO g) = NatO (f :+: g)
+  
+  inj1 (NatO f) (NatO g) = Nat f (f :+: g) $ \z -> inj1 (f %% z) (g %% z)
+  inj2 (NatO f) (NatO g) = Nat g (f :+: g) $ \z -> inj2 (f %% z) (g %% z)
+  
+  Nat f a fa ||| Nat g _ ga = Nat (f :+: g) a $ \z -> fa z ||| ga z
+  Nat f1 f2 f +++ Nat g1 g2 g = Nat (f1 :+: g1) (f2 :+: g2) $ \z -> f z +++ g z
 
 
 

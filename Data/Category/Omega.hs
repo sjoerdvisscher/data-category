@@ -73,10 +73,14 @@ instance HasBinaryProducts Omega where
   product _      OZ     = OZ
   product (OS a) (OS b) = OS (product a b)
   
-  proj OZ     OZ     = (IdZ, IdZ)
-  proj OZ     (OS n) = (IdZ, GTZ . snd $ proj OZ n)
-  proj (OS n) OZ     = (GTZ . fst $ proj n OZ, IdZ)
-  proj (OS a) (OS b) = (StS proj1, StS proj2) where (proj1, proj2) = proj a b
+  proj1 OZ     OZ     = IdZ
+  proj1 OZ     (OS n) = IdZ
+  proj1 (OS n) OZ     = GTZ $ proj1 n OZ
+  proj1 (OS a) (OS b) = StS $ proj1 a b
+  proj2 OZ     OZ     = IdZ
+  proj2 OZ     (OS n) = GTZ $ proj2 OZ n
+  proj2 (OS n) OZ     = IdZ
+  proj2 (OS a) (OS b) = StS $ proj2 a b
   
   IdZ   &&& _     = IdZ
   _     &&& IdZ   = IdZ
@@ -96,10 +100,14 @@ instance HasBinaryCoproducts Omega where
   coproduct n      OZ     = n
   coproduct (OS a) (OS b) = OS (coproduct a b)
   
-  inj OZ OZ = (IdZ, IdZ)
-  inj OZ (OS n) = (GTZ inj1, StS inj2) where (inj1, inj2) = inj OZ n
-  inj (OS n) OZ = (StS inj1, GTZ inj2) where (inj1, inj2) = inj n OZ
-  inj (OS a) (OS b) = (StS inj1, StS inj2) where (inj1, inj2) = inj a b
+  inj1 OZ     OZ     = IdZ
+  inj1 OZ     (OS n) = GTZ $ inj1 OZ n
+  inj1 (OS n) OZ     = StS $ inj1 n OZ
+  inj1 (OS a) (OS b) = StS $ inj1 a b
+  inj2 OZ     OZ     = IdZ
+  inj2 OZ     (OS n) = StS $ inj2 OZ n
+  inj2 (OS n) OZ     = GTZ $ inj2 n OZ
+  inj2 (OS a) (OS b) = StS $ inj2 a b
   
   IdZ   ||| IdZ   = IdZ
   GTZ _ ||| a     = a

@@ -66,27 +66,27 @@ type Ana f a = Coalgebra f a -> Coalg f a (TerminalFAlgebra f)
 
 
 -- | 'FixF' provides the initial F-algebra for endofunctors in Hask.
-newtype FixF f = InF { outF :: f (FixF f) }
+newtype FixF f = InF { outF :: f :% FixF f }
 
 -- | Catamorphisms for endofunctors in Hask.
 cataHask :: Prelude.Functor f => Cata (EndoHask f) a
-cataHask a@(Dialgebra HaskO f) = DialgA initialObject a $ cata f where cata f = f . fmap (cata f) . outF 
+cataHask a@(Dialgebra HaskO f) = DialgA initialObject a $ cata f where cata f = f . (EndoHask % cata f) . outF 
 
 -- | Anamorphisms for endofunctors in Hask.
 anaHask :: Prelude.Functor f => Ana (EndoHask f) a
-anaHask a@(Dialgebra HaskO f) = DialgA a terminalObject $ ana f where ana f = InF . fmap (ana f) . f 
+anaHask a@(Dialgebra HaskO f) = DialgA a terminalObject $ ana f where ana f = InF . (EndoHask % ana f) . f 
 
 
 instance Prelude.Functor f => HasInitialObject (Dialg (EndoHask f) (Id (->))) where
   
-  type InitialObject (Dialg (EndoHask f) (Id (->))) = FixF f
+  type InitialObject (Dialg (EndoHask f) (Id (->))) = FixF (EndoHask f)
   
   initialObject = Dialgebra HaskO InF
   initialize = cataHask
   
 instance  Prelude.Functor f => HasTerminalObject (Dialg (Id (->)) (EndoHask f)) where
 
-  type TerminalObject (Dialg (Id (->)) (EndoHask f)) = FixF f
+  type TerminalObject (Dialg (Id (->)) (EndoHask f)) = FixF (EndoHask f)
   
   terminalObject = Dialgebra HaskO outF
   terminate = anaHask
@@ -98,7 +98,7 @@ instance  Prelude.Functor f => HasTerminalObject (Dialg (Id (->)) (EndoHask f)) 
 data NatF ((~>) :: * -> * -> *) where
   NatF :: HasTerminalObject (~>) => NatF (~>)
 type instance Dom (NatF (~>)) = (~>)
-type instance Cod (NatF (~>)) = (~>) :*: (~>)
+type instance Cod (NatF (~>)) = (~>) :**: (~>)
 type instance NatF (~>) :% a = (TerminalObject (~>),  a)
 instance Functor (NatF (~>)) where
   NatF %% x = ProdO terminalObject x
@@ -116,6 +116,6 @@ instance HasInitialObject (Dialg (NatF (->)) (DiagProd (->))) where
   initialObject = Dialgebra HaskO (const Z :**: S)
   
   initialize o@(Dialgebra HaskO p) = DialgA initialObject o $ f p where
-    f :: ((->) :*: (->)) ((), t) (t, t) -> NatNum -> t
+    f :: ((->) :**: (->)) ((), t) (t, t) -> NatNum -> t
     f (z :**: s) = primRec (z ()) s
     
