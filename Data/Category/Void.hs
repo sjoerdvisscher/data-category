@@ -49,9 +49,8 @@ data VoidDiagram ((~>) :: * -> * -> *) = VoidDiagram
 type instance Dom (VoidDiagram (~>)) = Void
 type instance Cod (VoidDiagram (~>)) = (~>)
 
-instance Functor (VoidDiagram (~>)) where 
-  VoidDiagram %% x = magicVoidO x
-  VoidDiagram %  f = magicVoid f
+instance Category (~>) => Functor (VoidDiagram (~>)) where 
+  VoidDiagram % f = magicVoid f
 
 
 voidNat :: (Functor f, Functor g, Dom f ~ Void, Dom g ~ Void, Cod f ~ d, Cod g ~ d)

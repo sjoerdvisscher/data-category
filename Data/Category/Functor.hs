@@ -49,11 +49,12 @@ type family Dom ftag :: * -> * -> *
 type family Cod ftag :: * -> * -> *
 
 -- | Functors map objects and arrows. As objects are represented at both the type and value level, we need 3 maps in total.
-class Functor ftag where
-  -- | @%%@ maps objects at the value level.
-  (%%) :: ftag -> Obj (Dom ftag) a -> Obj (Cod ftag) (ftag :% a)
+class (Category (Dom ftag), Category (Cod ftag)) => Functor ftag where
   -- | @%@ maps arrows.
   (%)  :: ftag -> Dom ftag a b -> Cod ftag (ftag :% a) (ftag :% b)
+  -- | @%%@ maps objects at the value level.
+  (%%) :: ftag -> Obj (Dom ftag) a -> Obj (Cod ftag) (ftag :% a)
+  f %% a = src (f % id a)
 
 -- | @:%@ maps objects at the type level.
 type family ftag :% a :: *
@@ -89,9 +90,8 @@ type instance Dom (Id (~>)) = (~>)
 type instance Cod (Id (~>)) = (~>)
 type instance Id (~>) :% a = a
 
-instance Functor (Id (~>)) where 
-  _ %% x = x
-  _ %  f = f
+instance Category (~>) => Functor (Id (~>)) where 
+  _ % f = f
 
 
 -- | The composition of two functors.
@@ -102,9 +102,8 @@ type instance Dom (g :.: h) = Dom h
 type instance Cod (g :.: h) = Cod g
 type instance (g :.: h) :% a = g :% (h :% a)
 
-instance Functor (g :.: h) where 
-  (g :.: h) %% x = g %% (h %% x)
-  (g :.: h) %  f = g %  (h %  f)
+instance (Category (Cod g), Category (Dom h)) => Functor (g :.: h) where 
+  (g :.: h) % f = g % (h % f)
 
 
 -- | The constant functor.
@@ -115,9 +114,8 @@ type instance Dom (Const c1 c2 x) = c1
 type instance Cod (Const c1 c2 x) = c2
 type instance Const c1 c2 x :% a = x
 
-instance Functor (Const c1 c2 x) where 
-  Const x %% _ = x
-  Const x %  _ = id x
+instance (Category c1, Category c2) => Functor (Const c1 c2 x) where 
+  Const x % _ = id x
 
 type ConstF f = Const (Dom f) (Cod f)
 
@@ -130,9 +128,8 @@ type instance Dom (x :*-: (~>)) = (~>)
 type instance Cod (x :*-: (~>)) = (->)
 type instance (x :*-: (~>)) :% a = x ~> a
 
-instance Functor (x :*-: (~>)) where 
-  HomX_ _ %% _ = HaskO
-  HomX_ _ %  f = (f .)
+instance Category (~>) => Functor (x :*-: (~>)) where 
+  HomX_ _ % f = (f .)
 
 
 -- | The contravariant functor Hom(--,X)
@@ -143,8 +140,7 @@ type instance Dom ((~>) :-*: x) = Op (~>)
 type instance Cod ((~>) :-*: x) = (->)
 type instance ((~>) :-*: x) :% a = a ~> x
 
-instance Functor ((~>) :-*: x) where 
-  Hom_X _ %% _   = HaskO
+instance Category (~>) => Functor ((~>) :-*: x) where 
   Hom_X _ % Op f = (. f)
 
 
@@ -156,8 +152,7 @@ type instance Dom (Opposite f) = Op (Dom f)
 type instance Cod (Opposite f) = Op (Cod f)
 type instance Opposite f :% a = f :% a
 
-instance Functor (Opposite f) where
-  Opposite f %% OpObj x = OpObj $ f %% x
+instance (Category (Dom f), Category (Cod f)) => Functor (Opposite f) where
   Opposite f % Op a = Op $ f % a
 
 
@@ -170,7 +165,6 @@ type instance Cod (EndoHask f) = (->)
 type instance EndoHask f :% r = f r
 
 instance Functor (EndoHask f) where
-  EndoHask %% HaskO = HaskO
   EndoHask % f = fmap f
 
 

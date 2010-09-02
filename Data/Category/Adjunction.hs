@@ -54,14 +54,14 @@ initialPropAdjunction :: (Functor f, Functor g, Category c, Category d, Dom f ~ 
   => f -> g -> (forall y. Obj d y -> InitialUniversal y g (f :% y)) -> Adjunction c d f g
 initialPropAdjunction f g univ = mkAdjunction f g un coun
   where
-    coun a = let ga = g %% a in initialFactorizer (univ ga) a (id ga)
+    coun a = initialFactorizer (univ (g %% a)) a (g % id a)
     un   a = initialMorphism (univ a)
     
 terminalPropAdjunction :: (Functor f, Functor g, Category c, Category d, Dom f ~ d, Cod f ~ c, Dom g ~ c, Cod g ~ d)
   => f -> g -> (forall x. Obj c x -> TerminalUniversal x f (g :% x)) -> Adjunction c d f g
 terminalPropAdjunction f g univ = mkAdjunction f g un coun
   where
-    un   a = let fa = f %% a in terminalFactorizer (univ fa) a (id fa)
+    un   a = terminalFactorizer (univ (f %% a)) a (f % id a)
     coun a = terminalMorphism (univ a)
     
 

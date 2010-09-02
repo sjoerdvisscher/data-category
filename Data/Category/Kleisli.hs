@@ -40,27 +40,25 @@ instance (Category (~>), Monad m, Dom m ~ (~>), Cod m ~ (~>)) => Category (Kleis
   src (Kleisli m _ f) = KleisliO m (src f)
   tgt (Kleisli m b _) = KleisliO m b
   
-  id (KleisliO m o)                 = Kleisli m o $ point m ! o
+  id (KleisliO m a)                 = Kleisli m a $ point m ! a
   (Kleisli m c f) . (Kleisli _ _ g) = Kleisli m c $ (join m ! c) . (m % f) . g
 
 
 
 data KleisliAdjF ((~>) :: * -> * -> *) m where
-  KleisliAdjF :: (Category (~>), Monad m, Dom m ~ (~>), Cod m ~ (~>)) => m -> KleisliAdjF (~>) m
+  KleisliAdjF :: m -> KleisliAdjF (~>) m
 type instance Dom (KleisliAdjF (~>) m) = (~>)
 type instance Cod (KleisliAdjF (~>) m) = Kleisli (~>) m
 type instance KleisliAdjF (~>) m :% a = a
-instance Functor (KleisliAdjF (~>) m) where
-  KleisliAdjF m %% x = KleisliO m x
-  KleisliAdjF m %  f = Kleisli m (tgt f) $ (point m ! tgt f) . f
+instance (Category (~>), Monad m, Dom m ~ (~>), Cod m ~ (~>)) => Functor (KleisliAdjF (~>) m) where
+  KleisliAdjF m % f = Kleisli m (tgt f) $ (point m ! tgt f) . f
    
 data KleisliAdjG ((~>) :: * -> * -> *) m where
-  KleisliAdjG :: (Category (~>), Monad m, Dom m ~ (~>), Cod m ~ (~>)) => m -> KleisliAdjG (~>) m
+  KleisliAdjG :: m -> KleisliAdjG (~>) m
 type instance Dom (KleisliAdjG (~>) m) = Kleisli (~>) m
 type instance Cod (KleisliAdjG (~>) m) = (~>)
 type instance KleisliAdjG (~>) m :% a = m :% a
-instance Functor (KleisliAdjG (~>) m) where
-  KleisliAdjG m %% KleisliO _ x = m %% x
+instance (Category (~>), Monad m, Dom m ~ (~>), Cod m ~ (~>)) => Functor (KleisliAdjG (~>) m) where
   KleisliAdjG m % Kleisli _ b f = (join m ! b) . (m % f)
 
 kleisliAdj :: (Monad m, Dom m ~ (~>), Cod m ~ (~>), Category (~>)) 

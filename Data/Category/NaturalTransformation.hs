@@ -21,7 +21,7 @@ module Data.Category.NaturalTransformation (
   -- * Functor category
   , Nat(..)
   , Obj(..)
-  , Endo(..)
+  , Endo
     
   -- * Related functors
   , Precompose(..)
@@ -75,7 +75,7 @@ instance (Category c, Category d) => Category (Nat c d) where
   src (Nat f _ _) = NatO f
   tgt (Nat _ g _) = NatO g
   
-  id (NatO f)               = Nat f f $ \i -> id $ f %% i
+  id (NatO f)               = Nat f f $ \i -> f % id i
   Nat _ h ngh . Nat f _ nfg = Nat f h $ \i -> ngh i . nfg i
 
 
@@ -87,28 +87,26 @@ type Endo (~>) = Nat (~>) (~>)
 -- | @Precompose f d@ is the functor such that @Precompose f d :% g = g :.: f@, 
 --   for functors @g@ that compose with @f@ and with codomain @d@.
 data Precompose :: * -> (* -> * -> *) -> * where
-  Precompose :: (Functor f, Category d) => f -> Precompose f d
+  Precompose :: f -> Precompose f d
 
 type instance Dom (Precompose f d) = Nat (Cod f) d
 type instance Cod (Precompose f d) = Nat (Dom f) d
 type instance Precompose f d :% g = g :.: f
 
-instance Functor (Precompose f d) where
-  Precompose f %% NatO g = NatO $ g :.: f
+instance (Functor f, Category d) => Functor (Precompose f d) where
   Precompose f % (Nat g h n) = Nat (g :.: f) (h :.: f) $ n . (f %%)
 
 
 -- | @Postcompose f c@ is the functor such that @Postcompose f c :% g = f :.: g@, 
 --   for functors @g@ that compose with @f@ and with domain @c@.
 data Postcompose :: * -> (* -> * -> *) -> * where
-  Postcompose :: (Functor f, Category c) => f -> Postcompose f c
+  Postcompose :: f -> Postcompose f c
 
 type instance Dom (Postcompose f c) = Nat c (Dom f)
 type instance Cod (Postcompose f c) = Nat c (Cod f)
 type instance Postcompose f c :% g = f :.: g
 
-instance Functor (Postcompose f c) where
-  Postcompose f %% NatO g = NatO $ f :.: g
+instance (Functor f, Category c) => Functor (Postcompose f c) where
   Postcompose f % (Nat g h n) = Nat (f :.: g) (f :.: h) $ (f %) . n
 
 
@@ -132,6 +130,5 @@ type instance Dom (YonedaEmbedding (~>)) = (~>)
 type instance Cod (YonedaEmbedding (~>)) = Nat (Op (~>)) (->)
 type instance YonedaEmbedding (~>) :% a = (~>) :-*: a
 
-instance Functor (YonedaEmbedding (~>)) where
-  YonedaEmbedding %% x = NatO $ Hom_X x
+instance Category (~>) => Functor (YonedaEmbedding (~>)) where
   YonedaEmbedding % f = Nat (Hom_X $ src f) (Hom_X $ tgt f) $ \_ -> (f .)

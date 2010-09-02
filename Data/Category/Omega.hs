@@ -74,12 +74,12 @@ instance HasBinaryProducts Omega where
   product (OS a) (OS b) = OS (product a b)
   
   proj1 OZ     OZ     = IdZ
-  proj1 OZ     (OS n) = IdZ
+  proj1 OZ     (OS _) = IdZ
   proj1 (OS n) OZ     = GTZ $ proj1 n OZ
   proj1 (OS a) (OS b) = StS $ proj1 a b
   proj2 OZ     OZ     = IdZ
   proj2 OZ     (OS n) = GTZ $ proj2 OZ n
-  proj2 (OS n) OZ     = IdZ
+  proj2 (OS _) OZ     = IdZ
   proj2 (OS a) (OS b) = StS $ proj2 a b
   
   IdZ   &&& _     = IdZ

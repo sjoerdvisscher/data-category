@@ -57,9 +57,7 @@ type instance Dom (PairDiagram (~>) x y) = Pair
 type instance Cod (PairDiagram (~>) x y) = (~>)
 type instance PairDiagram (~>) x y :% P1 = x
 type instance PairDiagram (~>) x y :% P2 = y
-instance Functor (PairDiagram (~>) x y) where
-  PairDiagram x _ %% Fst = x
-  PairDiagram _ y %% Snd = y
+instance Category (~>) => Functor (PairDiagram (~>) x y) where
   PairDiagram x _ % IdFst = id x
   PairDiagram _ y % IdSnd = id y
 

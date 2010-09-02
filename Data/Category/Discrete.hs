@@ -77,8 +77,7 @@ type instance Dom (Next n f) = Discrete n
 type instance Cod (Next n f) = Cod f
 type instance Next n f :% a = f :% S a
 
-instance Functor (Next n f) where
-  Next f %% n = f %% OS n
+instance (Functor f, Category (Discrete n)) => Functor (Next n f) where
   Next f % IdZ       = f % StepS IdZ
   Next f % (StepS a) = f % StepS (StepS a)
     
@@ -87,19 +86,18 @@ infixr 7 :::
 
 data DiscreteDiagram :: (* -> * -> *) -> * -> * -> * where
   Nil   :: DiscreteDiagram (~>) Z ()
-  (:::) :: Category (~>) => Obj (~>) x -> DiscreteDiagram (~>) n xs -> DiscreteDiagram (~>) (S n) (x, xs)
+  (:::) :: Obj (~>) x -> DiscreteDiagram (~>) n xs -> DiscreteDiagram (~>) (S n) (x, xs)
   
 type instance Dom (DiscreteDiagram (~>) n xs) = Discrete n
 type instance Cod (DiscreteDiagram (~>) n xs) = (~>)
 type instance DiscreteDiagram (~>) (S n) (x, xs) :% Z = x
 type instance DiscreteDiagram (~>) (S n) (x, xs) :% (S a) = DiscreteDiagram (~>) n xs :% a
 
-instance Functor (DiscreteDiagram (~>) n xs) where
-  
-  Nil        %% x  = magicZO x
-  (x ::: _)  %% OZ = x
-  (_ ::: xs) %% OS n = xs %% n
-  
-  Nil        %  f = magicZ f
-  (x ::: _)  %  IdZ = id x
-  (_ ::: xs) %  StepS n = xs % n
+instance (Category (~>)) 
+  => Functor (DiscreteDiagram (~>) Z ()) where
+  Nil        % f = magicZ f
+
+instance (Category (~>), Category (Discrete n), Functor (DiscreteDiagram (~>) n xs)) 
+  => Functor (DiscreteDiagram (~>) (S n) (x, xs)) where
+  (x ::: _)  % IdZ = id x
+  (_ ::: xs) % StepS n = xs % n

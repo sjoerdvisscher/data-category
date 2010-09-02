@@ -70,11 +70,11 @@ newtype FixF f = InF { outF :: f :% FixF f }
 
 -- | Catamorphisms for endofunctors in Hask.
 cataHask :: Prelude.Functor f => Cata (EndoHask f) a
-cataHask a@(Dialgebra HaskO f) = DialgA initialObject a $ cata f where cata f = f . (EndoHask % cata f) . outF 
+cataHask a@(Dialgebra HaskO f) = DialgA initialObject a $ cata_f where cata_f = f . (EndoHask % cata_f) . outF 
 
 -- | Anamorphisms for endofunctors in Hask.
 anaHask :: Prelude.Functor f => Ana (EndoHask f) a
-anaHask a@(Dialgebra HaskO f) = DialgA a terminalObject $ ana f where ana f = InF . (EndoHask % ana f) . f 
+anaHask a@(Dialgebra HaskO f) = DialgA a terminalObject $ ana_f where ana_f = InF . (EndoHask % ana_f) . f 
 
 
 instance Prelude.Functor f => HasInitialObject (Dialg (EndoHask f) (Id (->))) where
@@ -96,13 +96,12 @@ instance  Prelude.Functor f => HasTerminalObject (Dialg (Id (->)) (EndoHask f)) 
 -- | The category for defining the natural numbers and primitive recursion can be described as
 -- @Dialg(F,G)@, with @F(A)=\<1,A>@ and @G(A)=\<A,A>@.
 data NatF ((~>) :: * -> * -> *) where
-  NatF :: HasTerminalObject (~>) => NatF (~>)
+  NatF :: NatF (~>)
 type instance Dom (NatF (~>)) = (~>)
 type instance Cod (NatF (~>)) = (~>) :**: (~>)
 type instance NatF (~>) :% a = (TerminalObject (~>),  a)
-instance Functor (NatF (~>)) where
-  NatF %% x = ProdO terminalObject x
-  NatF %  f = id terminalObject :**: f
+instance HasTerminalObject (~>) => Functor (NatF (~>)) where
+  NatF % f = id terminalObject :**: f
 
 data NatNum = Z | S NatNum
 primRec :: t -> (t -> t) -> NatNum -> t

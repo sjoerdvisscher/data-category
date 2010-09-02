@@ -99,15 +99,14 @@ infixr 2 |||
 
 -- | The diagonal functor from (index-) category J to (~>).
 data Diag :: (* -> * -> *) -> (* -> * -> *) -> * where
-  Diag :: (Category j, Category (~>)) => Diag j (~>)
+  Diag :: Diag j (~>)
   
 type instance Dom (Diag j (~>)) = (~>)
 type instance Cod (Diag j (~>)) = Nat j (~>)
 type instance Diag j (~>) :% a = Const j (~>) a
 
-instance Functor (Diag j (~>)) where 
-  Diag %% x = NatO $ Const x
-  Diag %  f = Nat (Const $ src f) (Const $ tgt f) $ const f
+instance (Category j, Category (~>)) => Functor (Diag j (~>)) where 
+  Diag % f = Nat (Const $ src f) (Const $ tgt f) $ const f
 
 -- | The diagonal functor with the same domain and codomain as @f@.
 type DiagF f = Diag (Dom f) (Cod f)
@@ -205,9 +204,8 @@ type instance Dom (LimitFunctor j (~>)) = Nat j (~>)
 type instance Cod (LimitFunctor j (~>)) = (~>)
 type instance LimitFunctor j (~>) :% f = LimitFam j (~>) f
 
-instance Functor (LimitFunctor j (~>)) where
-  LimitFunctor %% f @ NatO{} = tuObject (limitUniv f)
-  LimitFunctor %  n @ Nat{}  = limitFactorizer (limitUniv (tgt n)) (n . limit (limitUniv (src n)))
+instance (Category j, Category (~>)) => Functor (LimitFunctor j (~>)) where
+  LimitFunctor % n @ Nat{}  = limitFactorizer (limitUniv (tgt n)) (n . limit (limitUniv (src n)))
 
 
 
@@ -227,9 +225,8 @@ type instance Dom (ColimitFunctor j (~>)) = Nat j (~>)
 type instance Cod (ColimitFunctor j (~>)) = (~>)
 type instance ColimitFunctor j (~>) :% f = ColimitFam j (~>) f
 
-instance Functor (ColimitFunctor j (~>)) where
-  ColimitFunctor %% f @ NatO{} = iuObject (colimitUniv f)
-  ColimitFunctor %  n @ Nat{}  = colimitFactorizer (colimitUniv (src n)) (colimit (colimitUniv (tgt n)) . n)
+instance (Category j, Category (~>)) => Functor (ColimitFunctor j (~>)) where
+  ColimitFunctor % n @ Nat{}  = colimitFactorizer (colimitUniv (src n)) (colimit (colimitUniv (tgt n)) . n)
 
 
 
@@ -384,9 +381,8 @@ data p :*: q where
 type instance Dom (p :*: q) = Dom p
 type instance Cod (p :*: q) = Cod p
 type instance (p :*: q) :% a = BinaryProduct (Cod p) (p :% a) (q :% a)
-instance Functor (p :*: q) where
-  (p :*: q) %% a = (p %% a) `product` (q %% a)
-  (p :*: q) %  f = (p %  f)  ***      (q %  f)
+instance (Category (Dom p), Category (Cod p)) => Functor (p :*: q) where
+  (p :*: q) % f = (p % f) *** (q % f)
 
 type instance BinaryProduct (Nat c d) x y = x :*: y
 
@@ -462,9 +458,8 @@ data p :+: q where
 type instance Dom (p :+: q) = Dom p
 type instance Cod (p :+: q) = Cod p
 type instance (p :+: q) :% a = BinaryCoproduct (Cod p) (p :% a) (q :% a)
-instance Functor (p :+: q) where
-  (p :+: q) %% a = (p %% a) `coproduct` (q %% a)
-  (p :+: q) %  f = (p %  f)  +++        (q %  f)
+instance (Category (Dom p), Category (Cod p)) => Functor (p :+: q) where
+  (p :+: q) % f = (p % f) +++ (q % f)
 
 type instance BinaryCoproduct (Nat c d) x y = x :+: y
 
