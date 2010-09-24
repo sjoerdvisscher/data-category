@@ -23,6 +23,9 @@ module Data.Category (
 import Prelude (($))
 import qualified Prelude
 
+infixr 8 .
+
+
 -- | Whenever objects are required at value level, they are represented by their identity arrows.
 type Obj (~>) a = a ~> a
 

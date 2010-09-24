@@ -24,6 +24,7 @@ module Data.Category.NaturalTransformation (
   , Endo
     
   -- * Related functors
+  , FunctorCompose(..)
   , Precompose(..)
   , Postcompose(..)
   , YonedaEmbedding(..)
@@ -34,6 +35,7 @@ import Prelude hiding ((.), id, Functor)
 
 import Data.Category
 import Data.Category.Functor
+import Data.Category.Product
 
 infixl 9 !
 
@@ -82,6 +84,16 @@ instance (Category c, Category d) => Category (Nat c d) where
 -- | The category of endofunctors.
 type Endo (~>) = Nat (~>) (~>)
 
+
+-- | Composition of endofunctors is a functor.
+data FunctorCompose ((~>) :: * -> * -> *) = FunctorCompose
+
+type instance Dom (FunctorCompose (~>)) = Endo (~>) :**: Endo (~>)
+type instance Cod (FunctorCompose (~>)) = Endo (~>)
+type instance FunctorCompose (~>) :% (f, g) = f :.: g
+
+instance Category (~>) => Functor (FunctorCompose (~>)) where
+  FunctorCompose % (n1 :**: n2) = n1 `o` n2
 
 
 -- | @Precompose f d@ is the functor such that @Precompose f d :% g = g :.: f@, 

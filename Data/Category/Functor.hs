@@ -41,6 +41,8 @@ import qualified Prelude
   
 import Data.Category
 
+infixr 9 %
+infixr 9 :%
 
 -- | The domain, or source category, of the functor.
 type family Dom ftag :: * -> * -> *

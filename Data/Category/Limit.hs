@@ -65,9 +65,11 @@ module Data.Category.Limit (
   -- ** Limits of type Pair
   , BinaryProduct
   , HasBinaryProducts(..)
+  , ProductFunctor(..)
   , (:*:)
   , BinaryCoproduct
   , HasBinaryCoproducts(..)
+  , CoproductFunctor(..)
   , (:+:)
   
   -- ** Limits of type Hask
@@ -91,10 +93,10 @@ import Data.Category.Unit
 import Data.Category.Product
 import Data.Category.Discrete
 
-infixr 3 ***
-infixr 3 &&&
-infixr 2 +++
-infixr 2 |||
+infixl 3 ***
+infixl 3 &&&
+infixl 2 +++
+infixl 2 |||
 
 
 -- | The diagonal functor from (index-) category J to (~>).
@@ -367,6 +369,14 @@ instance (HasBinaryProducts c1, HasBinaryProducts c2) => HasBinaryProducts (c1 :
   (f1 :**: f2) *** (g1 :**: g2) = (f1 *** g1) :**: (f2 *** g2)
 
 
+-- | Binary product as a bifunctor.
+data ProductFunctor ((~>) :: * -> * -> *) = ProductFunctor
+type instance Dom (ProductFunctor (~>)) = (~>) :**: (~>)
+type instance Cod (ProductFunctor (~>)) = (~>)
+type instance ProductFunctor (~>) :% (a, b) = BinaryProduct (~>) a b
+instance HasBinaryProducts (~>) => Functor (ProductFunctor (~>)) where
+  ProductFunctor % (a1 :**: a2) = a1 *** a2
+
 -- | The product of two functors.
 data p :*: q where 
   (:*:) :: (Functor p, Functor q, Dom p ~ Dom q, Cod p ~ (~>), Cod q ~ (~>), HasBinaryProducts (~>)) => p -> q -> p :*: q
@@ -435,6 +445,14 @@ instance (HasBinaryCoproducts c1, HasBinaryCoproducts c2) => HasBinaryCoproducts
   (f1 :**: f2) ||| (g1 :**: g2) = (f1 ||| g1) :**: (f2 ||| g2)
   (f1 :**: f2) +++ (g1 :**: g2) = (f1 +++ g1) :**: (f2 +++ g2)
 
+
+-- | Binary coproduct as a bifunctor.
+data CoproductFunctor ((~>) :: * -> * -> *) = CoproductFunctor
+type instance Dom (CoproductFunctor (~>)) = (~>) :**: (~>)
+type instance Cod (CoproductFunctor (~>)) = (~>)
+type instance CoproductFunctor (~>) :% (a, b) = BinaryCoproduct (~>) a b
+instance HasBinaryCoproducts (~>) => Functor (CoproductFunctor (~>)) where
+  CoproductFunctor % (a1 :**: a2) = a1 +++ a2
 
 -- | The coproduct of two functors.
 data p :+: q where 
