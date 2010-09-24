@@ -17,27 +17,25 @@ import Prelude()
 
 import Data.Category
 import Data.Category.Functor
-import Data.Category.NaturalTransformation
 
 
+data CommaO :: * -> * -> * -> * where
+  CommaO :: (Cod t ~ (~>), Cod s ~ (~>))
+    => Obj (Dom t) a -> (t :% a ~> s :% b) -> Obj (Dom s) b -> CommaO t s (a, b)
+    
 data (:/\:) :: * -> * -> * -> * -> * where 
   CommaA :: 
-    Obj (t :/\: s) (a, b) ->
+    CommaO t s (a, b) ->
     Dom t a a' -> 
     Dom s b b' -> 
-    Obj (t :/\: s) (a', b') ->
+    CommaO t s (a', b') ->
     (t :/\: s) (a, b) (a', b')
 
 instance (Category (Dom t), Category (Dom s)) => Category (t :/\: s) where
     
-  data Obj (t :/\: s) x where
-    CommaO :: (Cod t ~ (~>), Cod s ~ (~>))
-      => Obj (Dom t) a -> (t :% a ~> s :% b) -> Obj (Dom s) b -> Obj (t :/\: s) (a, b)
-    
-  src (CommaA so _ _ _) = so
-  tgt (CommaA _ _ _ to) = to
+  src (CommaA so@(CommaO a _ b) _ _ _)    = CommaA so a        b        so
+  tgt (CommaA _ _ _ to@(CommaO a _ b))    = CommaA to a        b        to
   
-  id x@(CommaO a _ b)                     = CommaA x  (id a)   (id b)   x
   (CommaA _ g h to) . (CommaA so g' h' _) = CommaA so (g . g') (h . h') to
 
 

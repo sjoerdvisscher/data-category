@@ -20,33 +20,40 @@ import Data.Category
 import Data.Category.Limit
 
 
-data Peano :: (* -> * -> *) -> * -> * -> * where
-  PeanoA :: Obj (Peano (~>)) a -> Obj (Peano (~>)) b -> (a ~> b) -> Peano (~>) a b
-
-instance Category (~>) => Category (Peano (~>)) where
-  
-  data Obj (Peano (~>)) a where
-    PeanoO :: Obj (~>) x -> x -> (x ~> x) -> Obj (Peano (~>)) x
+data PeanoO (~>) a where
+  PeanoO :: (TerminalObject (~>) ~> x) -> (x ~> x) -> PeanoO (~>) x
     
-  src (PeanoA s _ _) = s
-  tgt (PeanoA _ t _) = t
+data Peano :: (* -> * -> *) -> * -> * -> * where
+  PeanoA :: PeanoO (~>) a -> PeanoO (~>) b -> (a ~> b) -> Peano (~>) a b
+
+peanoId :: Category (~>) => PeanoO (~>) a -> Obj (Peano (~>)) a
+peanoId o@(PeanoO z _) = PeanoA o o $ tgt z
+
+peanoO :: Category (~>) => Obj (Peano (~>)) a -> PeanoO (~>) a
+peanoO (PeanoA o _ _) = o
+
+instance HasTerminalObject (~>) => Category (Peano (~>)) where
   
-  id p@(PeanoO x _ _)             = PeanoA p p $ id x
+  src (PeanoA s _ _) = peanoId s
+  tgt (PeanoA _ t _) = peanoId t
+  
   (PeanoA _ t f) . (PeanoA s _ g) = PeanoA s t $ f . g
   
   
 -- | The natural numbers are the initial object for the 'Peano' category.
-data NatNum = Z | S NatNum
+data NatNum = Z () | S NatNum
 
 -- | Primitive recursion is the factorizer from the natural numbers.
-primRec :: t -> (t -> t) -> NatNum -> t
-primRec z _ Z     = z
-primRec z s (S n) = s (primRec z s n)
+primRec :: (() -> t) -> (t -> t) -> NatNum -> t
+primRec z _ (Z ()) = z ()
+primRec z s (S  n) = s (primRec z s n)
   
 instance HasInitialObject (Peano (->)) where
   
   type InitialObject (Peano (->)) = NatNum
   
-  initialObject = PeanoO HaskO Z S
+  initialObject = peanoId $ PeanoO Z S
   
-  initialize o@(PeanoO HaskO z s) = PeanoA initialObject o $ primRec z s
+  initialize a = PeanoA (peanoO initialObject) o $ primRec z s
+    where
+      o@(PeanoO z s) = peanoO a

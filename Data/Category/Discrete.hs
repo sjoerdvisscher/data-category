@@ -18,55 +18,40 @@ import Prelude hiding ((.), id, Functor, product)
 import Data.Category
 import Data.Category.Functor
 import Data.Category.NaturalTransformation
-import Data.Category.Void
-import Data.Category.Pair
+
 
 data Z
-data S n = S n
+data S n
 
 -- | The arrows in Discrete n, a finite set of identity arrows.
 data Discrete :: * -> * -> * -> * where
-  IdZ   :: Discrete (S n) Z Z
-  StepS :: Discrete n a a -> Discrete (S n) (S a) (S a)
-
-
-instance Category (Discrete n) => Category (Discrete (S n)) where
-  
-  data Obj (Discrete (S n)) a where
-    OZ :: Obj (Discrete (S n)) Z
-    OS :: Obj (Discrete n) o -> Obj (Discrete (S n)) (S o)
-    
-  src IdZ       = OZ
-  src (StepS a) = OS $ src a
-  
-  tgt IdZ       = OZ
-  tgt (StepS a) = OS $ tgt a
-  
-  id OZ             = IdZ
-  id (OS n)         = StepS $ id n
-  
-  IdZ     . IdZ     = IdZ
-  StepS a . StepS b = StepS (a . b)
-  _       . _       = error "Other combinations should not type-check."
+  Z :: Discrete (S n) Z Z
+  S :: Discrete n a a -> Discrete (S n) (S a) (S a)
 
 
 magicZ :: Discrete Z a b -> x
 magicZ x = x `seq` error "we never get this far"
 
-magicZO :: Obj (Discrete Z) a -> x
-magicZO x = x `seq` error "we never get this far"
-
-
 
 instance Category (Discrete Z) where
   
-  data Obj (Discrete Z) a
+  src   = magicZ
+  tgt   = magicZ
   
-  src = magicZ
-  tgt = magicZ
-  
-  id    = magicZO
   a . b = magicZ (a `seq` b)
+
+
+instance Category (Discrete n) => Category (Discrete (S n)) where
+  
+  src Z     = Z
+  src (S a) = S $ src a
+  
+  tgt Z     = Z
+  tgt (S a) = S $ tgt a
+  
+  Z   . Z   = Z
+  S a . S b = S (a . b)
+  _   . _   = error "Other combinations should not type-check."
 
 
 
@@ -78,8 +63,8 @@ type instance Cod (Next n f) = Cod f
 type instance Next n f :% a = f :% S a
 
 instance (Functor f, Category (Discrete n)) => Functor (Next n f) where
-  Next f % IdZ       = f % StepS IdZ
-  Next f % (StepS a) = f % StepS (StepS a)
+  Next f % Z     = f % S Z
+  Next f % (S a) = f % S (S a)
     
 
 infixr 7 :::
@@ -99,5 +84,5 @@ instance (Category (~>))
 
 instance (Category (~>), Category (Discrete n), Functor (DiscreteDiagram (~>) n xs)) 
   => Functor (DiscreteDiagram (~>) (S n) (x, xs)) where
-  (x ::: _)  % IdZ = id x
-  (_ ::: xs) % StepS n = xs % n
+  (x ::: _)  % Z   = x
+  (_ ::: xs) % S n = xs % n

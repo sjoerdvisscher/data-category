@@ -27,26 +27,20 @@ data P2
 
 -- | The arrows of Pair.
 data Pair :: * -> * -> * where
-  IdFst :: Pair P1 P1
-  IdSnd :: Pair P2 P2
+  P1 :: Pair P1 P1
+  P2 :: Pair P2 P2
 
+-- | The category with just 2 objects and their identity arrows.
 instance Category Pair where
   
-  data Obj Pair a where
-    Fst :: Obj Pair P1
-    Snd :: Obj Pair P2
+  src P1  = P1
+  src P2  = P2
   
-  src IdFst = Fst
-  src IdSnd = Snd
+  tgt P1  = P1
+  tgt P2  = P2
   
-  tgt IdFst = Fst
-  tgt IdSnd = Snd
-  
-  id  Fst       = IdFst
-  id  Snd       = IdSnd
-  
-  IdFst . IdFst = IdFst
-  IdSnd . IdSnd = IdSnd
+  P1 . P1 = P1
+  P2 . P2 = P2
   _     . _     = undefined -- this can't happen
 
 
@@ -58,8 +52,8 @@ type instance Cod (PairDiagram (~>) x y) = (~>)
 type instance PairDiagram (~>) x y :% P1 = x
 type instance PairDiagram (~>) x y :% P2 = y
 instance Category (~>) => Functor (PairDiagram (~>) x y) where
-  PairDiagram x _ % IdFst = id x
-  PairDiagram _ y % IdSnd = id y
+  PairDiagram x _ % P1 = x
+  PairDiagram _ y % P2 = y
 
 
 pairNat :: (Functor f, Functor g, Dom f ~ Pair, Cod f ~ d, Dom g ~ Pair, Cod g ~ d) 
@@ -67,8 +61,8 @@ pairNat :: (Functor f, Functor g, Dom f ~ Pair, Cod f ~ d, Dom g ~ Pair, Cod g ~
 pairNat f g c1 c2 = Nat f g (\x -> unCom $ n c1 c2 x) where
   n :: (Functor f, Functor g, Dom f ~ Pair, Cod f ~ d, Dom g ~ Pair, Cod g ~ d) 
     => Com f g P1 -> Com f g P2 -> Obj Pair a -> Com f g a
-  n c _ Fst = c
-  n _ c Snd = c
+  n c _ P1 = c
+  n _ c P2 = c
 
 arrowPair :: Category (~>) => (x1 ~> x2) -> (y1 ~> y2) -> Nat Pair (~>) (PairDiagram (~>) x1 y1) (PairDiagram (~>) x2 y2)
 arrowPair l r = pairNat (PairDiagram (src l) (src r)) (PairDiagram (tgt l) (tgt r)) (Com l) (Com r)

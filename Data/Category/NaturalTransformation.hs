@@ -17,10 +17,10 @@ module Data.Category.NaturalTransformation (
   , Com(..)
   , (!)
   , o
+  , natId
 
   -- * Functor category
   , Nat(..)
-  , Obj(..)
   , Endo
     
   -- * Related functors
@@ -61,7 +61,11 @@ Nat _ _ n ! x = n x
 
 -- | Horizontal composition of natural transformations.
 o :: Category e => Nat d e j k -> Nat c d f g -> Nat c e (j :.: f) (k :.: g)
-Nat j k njk `o` Nat f g nfg = Nat (j :.: f) (k :.: g) $ \x -> k % nfg x . njk (f %% x)
+Nat j k njk `o` Nat f g nfg = Nat (j :.: f) (k :.: g) $ \x -> k % nfg x . njk (f % x)
+
+-- | The identity natural transformation of a functor.
+natId :: Functor f => f -> Nat (Dom f) (Cod f) f f
+natId f = Nat f f $ \i -> f % i
 
 
 -- | Functor category D^C.
@@ -69,13 +73,9 @@ Nat j k njk `o` Nat f g nfg = Nat (j :.: f) (k :.: g) $ \x -> k % nfg x . njk (f
 -- Arrows of D^C are natural transformations.
 instance (Category c, Category d) => Category (Nat c d) where
   
-  data Obj (Nat c d) a where
-    NatO :: (Functor f, Dom f ~ c, Cod f ~ d) => f -> Obj (Nat c d) f
-    
-  src (Nat f _ _) = NatO f
-  tgt (Nat _ g _) = NatO g
+  src (Nat f _ _)           = natId f
+  tgt (Nat _ g _)           = natId g
   
-  id (NatO f)               = Nat f f $ \i -> f % id i
   Nat _ h ngh . Nat f _ nfg = Nat f h $ \i -> ngh i . nfg i
 
 
@@ -94,7 +94,7 @@ type instance Cod (Precompose f d) = Nat (Dom f) d
 type instance Precompose f d :% g = g :.: f
 
 instance (Functor f, Category d) => Functor (Precompose f d) where
-  Precompose f % (Nat g h n) = Nat (g :.: f) (h :.: f) $ n . (f %%)
+  Precompose f % (Nat g h n) = Nat (g :.: f) (h :.: f) $ n . (f %)
 
 
 -- | @Postcompose f c@ is the functor such that @Postcompose f c :% g = f :.: g@, 
@@ -118,8 +118,8 @@ class Functor f => Representable f where
 
 instance Category (~>) => Representable ((~>) :-*: x) where
   type RepresentingObject ((~>) :-*: x) = x
-  represent   f = id $ NatO f
-  unrepresent f = id $ NatO f
+  represent   f = natId f
+  unrepresent f = natId f
 
 
 -- | The Yoneda embedding functor.

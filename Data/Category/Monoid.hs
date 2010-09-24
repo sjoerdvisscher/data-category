@@ -25,11 +25,7 @@ data MonoidA m a b where
 
 instance Monoid m => Category (MonoidA m) where
   
-  data Obj (MonoidA m) a where
-     MonoidO :: Obj (MonoidA m) m
+  src (MonoidA _) = MonoidA mempty
+  tgt (MonoidA _) = MonoidA mempty
   
-  src (MonoidA _) = MonoidO
-  tgt (MonoidA _) = MonoidO
-  
-  id MonoidO            = MonoidA mempty
   MonoidA a . MonoidA b = MonoidA $ a `mappend` b

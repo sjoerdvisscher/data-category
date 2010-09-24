@@ -13,7 +13,7 @@
 -----------------------------------------------------------------------------
 module Data.Category.Dialg where
 
-import Prelude hiding ((.), id, Functor)
+import Prelude hiding ((.), Functor)
 import qualified Prelude
 
 import Data.Category
@@ -23,24 +23,26 @@ import Data.Category.Product
 
 
 -- | Objects of Dialg(F,G) are (F,G)-dialgebras.
-type Dialgebra f g a = Obj (Dialg f g) a
+data Dialgebra f g a where
+  Dialgebra :: (Category c, Category d, Dom f ~ c, Dom g ~ c, Cod f ~ d, Cod g ~ d, Functor f, Functor g) 
+    => Obj c a -> d (f :% a) (g :% a) -> Dialgebra f g a
 
 -- | Arrows of Dialg(F,G) are (F,G)-homomorphisms.
 data Dialg f g a b where
   DialgA :: (Category c, Category d, Dom f ~ c, Dom g ~ c, Cod f ~ d, Cod g ~ d, Functor f, Functor g) 
     => Dialgebra f g a -> Dialgebra f g b -> c a b -> Dialg f g a b
 
+dialgId :: Dialgebra f g a -> Obj (Dialg f g) a
+dialgId d@(Dialgebra a _) = DialgA d d a
+
+dialgebra :: Obj (Dialg f g) a -> Dialgebra f g a
+dialgebra (DialgA d _ _) = d
 
 instance Category (Dialg f g) where
   
-  data Obj (Dialg f g) a where
-    Dialgebra :: (Category c, Category d, Dom f ~ c, Dom g ~ c, Cod f ~ d, Cod g ~ d, Functor f, Functor g) 
-      => Obj c a -> d (f :% a) (g :% a) -> Obj (Dialg f g) a
-      
-  src (DialgA s _ _) = s
-  tgt (DialgA _ t _) = t
+  src (DialgA s _ _) = dialgId s
+  tgt (DialgA _ t _) = dialgId t
   
-  id x@(Dialgebra a _)        = DialgA x x $ id a
   DialgA _ t f . DialgA s _ g = DialgA s t $ f . g
 
 
@@ -70,26 +72,26 @@ newtype FixF f = InF { outF :: f :% FixF f }
 
 -- | Catamorphisms for endofunctors in Hask.
 cataHask :: Prelude.Functor f => Cata (EndoHask f) a
-cataHask a@(Dialgebra HaskO f) = DialgA initialObject a $ cata_f where cata_f = f . (EndoHask % cata_f) . outF 
+cataHask a@(Dialgebra _ f) = DialgA (dialgebra initialObject) a $ cata_f where cata_f = f . (EndoHask % cata_f) . outF 
 
 -- | Anamorphisms for endofunctors in Hask.
 anaHask :: Prelude.Functor f => Ana (EndoHask f) a
-anaHask a@(Dialgebra HaskO f) = DialgA a terminalObject $ ana_f where ana_f = InF . (EndoHask % ana_f) . f 
+anaHask a@(Dialgebra _ f) = DialgA a (dialgebra terminalObject) $ ana_f where ana_f = InF . (EndoHask % ana_f) . f 
 
 
 instance Prelude.Functor f => HasInitialObject (Dialg (EndoHask f) (Id (->))) where
   
   type InitialObject (Dialg (EndoHask f) (Id (->))) = FixF (EndoHask f)
   
-  initialObject = Dialgebra HaskO InF
-  initialize = cataHask
+  initialObject = dialgId $ Dialgebra id InF
+  initialize a = cataHask (dialgebra a)
   
 instance  Prelude.Functor f => HasTerminalObject (Dialg (Id (->)) (EndoHask f)) where
 
   type TerminalObject (Dialg (Id (->)) (EndoHask f)) = FixF (EndoHask f)
   
-  terminalObject = Dialgebra HaskO outF
-  terminate = anaHask
+  terminalObject = dialgId $ Dialgebra id outF
+  terminate a = anaHask (dialgebra a)
   
 
 
@@ -101,20 +103,20 @@ type instance Dom (NatF (~>)) = (~>)
 type instance Cod (NatF (~>)) = (~>) :**: (~>)
 type instance NatF (~>) :% a = (TerminalObject (~>),  a)
 instance HasTerminalObject (~>) => Functor (NatF (~>)) where
-  NatF % f = id terminalObject :**: f
+  NatF % f = terminalObject :**: f
 
-data NatNum = Z | S NatNum
-primRec :: t -> (t -> t) -> NatNum -> t
-primRec z _ Z     = z
-primRec z s (S n) = s (primRec z s n)
+data NatNum = Z () | S NatNum
+primRec :: (() -> t) -> (t -> t) -> NatNum -> t
+primRec z _ (Z ()) = z ()
+primRec z s (S  n) = s (primRec z s n)
 
 instance HasInitialObject (Dialg (NatF (->)) (DiagProd (->))) where
   
   type InitialObject (Dialg (NatF (->)) (DiagProd (->))) = NatNum
     
-  initialObject = Dialgebra HaskO (const Z :**: S)
+  initialObject = dialgId $ Dialgebra id (Z :**: S)
   
-  initialize o@(Dialgebra HaskO p) = DialgA initialObject o $ f p where
+  initialize a = DialgA (dialgebra initialObject) (dialgebra a) $ f undefined where
     f :: ((->) :**: (->)) ((), t) (t, t) -> NatNum -> t
-    f (z :**: s) = primRec (z ()) s
+    f (z :**: s) = primRec z s
     

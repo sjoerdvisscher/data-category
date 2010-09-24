@@ -23,13 +23,8 @@ data (:**:) :: (* -> * -> *) -> (* -> * -> *) -> * -> * -> * where
 -- | The product category of category @c1@ and @c2@.
 instance (Category c1, Category c2) => Category (c1 :**: c2) where
   
-  data Obj (c1 :**: c2) a where
-    ProdO :: Obj c1 a1 -> Obj c2 a2 -> Obj (c1 :**: c2) (a1, a2)
-    
-  src (a1 :**: a2)            = ProdO (src a1) (src a2)
-  tgt (a1 :**: a2)            = ProdO (tgt a1) (tgt a2)
-  
-  id (ProdO x1 x2)            = id x1 :**: id x2
+  src (a1 :**: a2)            = src a1 :**: src a2
+  tgt (a1 :**: a2)            = tgt a1 :**: tgt a2
   
   (a1 :**: a2) . (b1 :**: b2) = (a1 . b1) :**: (a2 . b2)
 

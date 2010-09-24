@@ -19,15 +19,12 @@ data UnitO
 
 -- | The arrows of Unit.
 data Unit a b where
-  UnitId :: Unit UnitO UnitO
+  Unit :: Unit UnitO UnitO
 
+-- | The singeleton category with just one object with only its identity arrow.
 instance Category Unit where
   
-  data Obj Unit a where
-    UnitO :: Obj Unit UnitO
+  src Unit = Unit
+  tgt Unit = Unit
   
-  src UnitId = UnitO
-  tgt UnitId = UnitO
-  
-  id UnitO        = UnitId
-  UnitId . UnitId = UnitId
+  Unit . Unit = Unit

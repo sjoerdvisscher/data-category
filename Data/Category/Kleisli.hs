@@ -32,15 +32,15 @@ class Pointed m => Monad m where
 data Kleisli ((~>) :: * -> * -> *) m a b where
   Kleisli :: m -> Obj (~>) b -> a ~> (m :% b) -> Kleisli (~>) m a b
 
+kleisliId :: (Monad m, Dom m ~ (~>), Cod m ~ (~>)) 
+  => m -> Obj (~>) a -> Kleisli (~>) m a a
+kleisliId m a = Kleisli m a $ point m ! a
 
 instance (Category (~>), Monad m, Dom m ~ (~>), Cod m ~ (~>)) => Category (Kleisli (~>) m) where
   
-  data Obj (Kleisli (~>) m) a = KleisliO m (Obj (~>) a)
+  src (Kleisli m _ f) = kleisliId m (src f)
+  tgt (Kleisli m b _) = kleisliId m b
   
-  src (Kleisli m _ f) = KleisliO m (src f)
-  tgt (Kleisli m b _) = KleisliO m b
-  
-  id (KleisliO m a)                 = Kleisli m a $ point m ! a
   (Kleisli m c f) . (Kleisli _ _ g) = Kleisli m c $ (join m ! c) . (m % f) . g
 
 
@@ -65,4 +65,4 @@ kleisliAdj :: (Monad m, Dom m ~ (~>), Cod m ~ (~>), Category (~>))
   => m -> Adjunction (Kleisli (~>) m) (~>) (KleisliAdjF (~>) m) (KleisliAdjG (~>) m)
 kleisliAdj m = mkAdjunction (KleisliAdjF m) (KleisliAdjG m)
   (\x -> point m ! x)
-  (\(KleisliO _ x) -> Kleisli m x $ m % id x)
+  (\(Kleisli _ x _) -> Kleisli m x $ m % x)

@@ -13,7 +13,7 @@ module Data.Category (
   
   -- * Category
     Category(..)
-  , Obj(..)
+  , Obj
   
   -- * Opposite category
   , Op(..)
@@ -23,28 +23,24 @@ module Data.Category (
 import Prelude (($))
 import qualified Prelude
 
+-- | Whenever objects are required at value level, they are represented by their identity arrows.
+type Obj (~>) a = a ~> a
 
 -- | An instance of @Category (~>)@ declares the arrow @(~>)@ as a category.
 class Category (~>) where
   
-  data Obj (~>) :: * -> *
-
   src :: a ~> b -> Obj (~>) a
   tgt :: a ~> b -> Obj (~>) b
 
-  id  :: Obj (~>) a -> a ~> a
   (.) :: b ~> c -> a ~> b -> a ~> c
 
 
 -- | The category with Haskell types as objects and Haskell functions as arrows.
 instance Category (->) where
   
-  data Obj (->) a = HaskO
+  src _ = Prelude.id
+  tgt _ = Prelude.id
   
-  src _ = HaskO
-  tgt _ = HaskO
-  
-  id _  = Prelude.id  
   (.)   = (Prelude..)    
 
 
@@ -54,10 +50,7 @@ data Op :: (* -> * -> *) -> * -> * -> * where
 -- | @Op (~>)@ is opposite category of the category @(~>)@.
 instance Category (~>) => Category (Op (~>)) where
   
-  data Obj (Op (~>)) a = OpObj (Obj (~>) a)
+  src (Op a)      = Op $ tgt a
+  tgt (Op a)      = Op $ src a
   
-  src (Op a)      = OpObj $ tgt a
-  tgt (Op a)      = OpObj $ src a
-  
-  id (OpObj x)    = Op $ id x
   (Op a) . (Op b) = Op $ b . a

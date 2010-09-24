@@ -21,111 +21,96 @@ import Data.Category
 import Data.Category.Limit
 
 
-data BF
-data BT
+data Fls
+data Tru
   
 data Boolean a b where
-  IdFls  :: Boolean BF BF
-  FlsTru :: Boolean BF BT
-  IdTru  :: Boolean BT BT
+  Fls :: Boolean Fls Fls
+  F2T :: Boolean Fls Tru
+  Tru :: Boolean Tru Tru
 
 -- | @Boolean@ is the category with true and false as objects, and an arrow from false to true.
 instance Category Boolean where
-  data Obj Boolean a where
-    Fls :: Obj Boolean BF
-    Tru :: Obj Boolean BT
   
-  src IdFls  = Fls
-  src FlsTru = Fls
-  src IdTru  = Tru
+  src Fls   = Fls
+  src F2T   = Fls
+  src Tru   = Tru
   
-  tgt IdFls  = Fls
-  tgt FlsTru = Tru
-  tgt IdTru  = Tru
+  tgt Fls   = Fls
+  tgt F2T   = Tru
+  tgt Tru   = Tru
   
-  id Fls     = IdFls
-  id Tru     = IdTru
-  
-  IdFls  . IdFls  = IdFls
-  FlsTru . IdFls  = FlsTru
-  IdTru  . FlsTru = FlsTru
-  IdTru  . IdTru  = IdTru
+  Fls . Fls = Fls
+  F2T . Fls = F2T
+  Tru . F2T = F2T
+  Tru . Tru = Tru
   _      . _      = error "Other combinations should not type check"
 
 
 -- | False is the initial object in the Boolean category.
 instance HasInitialObject Boolean where
-  type InitialObject Boolean = BF
+  type InitialObject Boolean = Fls
   initialObject = Fls
-  initialize Fls = IdFls
-  initialize Tru = FlsTru
+  initialize Fls = Fls
+  initialize Tru = F2T
+  initialize _   = error "Other values should not type check"
   
 -- | True is the terminal object in the Boolean category.
 instance HasTerminalObject Boolean where
-  type TerminalObject Boolean = BT
+  type TerminalObject Boolean = Tru
   terminalObject = Tru
-  terminate Fls = FlsTru
-  terminate Tru = IdTru
+  terminate Fls = F2T
+  terminate Tru = Tru
+  terminate _   = error "Other values should not type check"
 
 
-type instance BinaryProduct Boolean BF BF = BF
-type instance BinaryProduct Boolean BF BT = BF
-type instance BinaryProduct Boolean BT BF = BF
-type instance BinaryProduct Boolean BT BT = BT
+type instance BinaryProduct Boolean Fls Fls = Fls
+type instance BinaryProduct Boolean Fls Tru = Fls
+type instance BinaryProduct Boolean Tru Fls = Fls
+type instance BinaryProduct Boolean Tru Tru = Tru
 
 instance HasBinaryProducts Boolean where 
   
-  product Fls Fls = Fls
-  product Fls Tru = Fls
-  product Tru Fls = Fls
-  product Tru Tru = Tru
-  
-  proj1 Fls Fls = IdFls
-  proj1 Fls Tru = IdFls
-  proj1 Tru Fls = FlsTru
-  proj1 Tru Tru = IdTru
-  proj2 Fls Fls = IdFls
-  proj2 Fls Tru = FlsTru
-  proj2 Tru Fls = IdFls
-  proj2 Tru Tru = IdTru
-  
-  IdFls  &&& IdFls  = IdFls
-  IdFls  &&& FlsTru = IdFls
-  FlsTru &&& IdFls  = IdFls
-  FlsTru &&& FlsTru = FlsTru
-  IdTru  &&& IdTru  = IdTru
-  _      &&& _      = error "Other combinations should not type check"
+  proj1 Fls Fls = Fls
+  proj1 Fls Tru = Fls
+  proj1 Tru Fls = F2T
+  proj1 Tru Tru = Tru
+  proj1 _   _   = error "Other combinations should not type check"
+  proj2 Fls Fls = Fls
+  proj2 Fls Tru = F2T
+  proj2 Tru Fls = Fls
+  proj2 Tru Tru = Tru
+  proj2 _   _   = error "Other combinations should not type check"
+    
+  Fls &&& Fls = Fls
+  Fls &&& F2T = Fls
+  F2T &&& Fls = Fls
+  F2T &&& F2T = F2T
+  Tru &&& Tru = Tru
+  _   &&& _   = error "Other combinations should not type check"
 
 
-type instance BinaryCoproduct Boolean BF BF = BF
-type instance BinaryCoproduct Boolean BF BT = BT
-type instance BinaryCoproduct Boolean BT BF = BT
-type instance BinaryCoproduct Boolean BT BT = BT
+type instance BinaryCoproduct Boolean Fls Fls = Fls
+type instance BinaryCoproduct Boolean Fls Tru = Tru
+type instance BinaryCoproduct Boolean Tru Fls = Tru
+type instance BinaryCoproduct Boolean Tru Tru = Tru
 
 instance HasBinaryCoproducts Boolean where 
   
-  coproduct Fls Fls = Fls
-  coproduct Fls Tru = Tru
-  coproduct Tru Fls = Tru
-  coproduct Tru Tru = Tru
-  
-  inj1 Fls Fls = IdFls
-  inj1 Fls Tru = FlsTru
-  inj1 Tru Fls = IdTru
-  inj1 Tru Tru = IdTru
-  inj2 Fls Fls = IdFls
-  inj2 Fls Tru = IdTru
-  inj2 Tru Fls = FlsTru
-  inj2 Tru Tru = IdTru
+  inj1 Fls Fls = Fls
+  inj1 Fls Tru = F2T
+  inj1 Tru Fls = Tru
+  inj1 Tru Tru = Tru
+  inj1 _   _   = error "Other combinations should not type check"
+  inj2 Fls Fls = Fls
+  inj2 Fls Tru = Tru
+  inj2 Tru Fls = F2T
+  inj2 Tru Tru = Tru
+  inj2 _   _   = error "Other combinations should not type check"
     
-  IdFls  ||| IdFls  = IdFls
-  FlsTru ||| FlsTru = FlsTru
-  FlsTru ||| IdTru  = IdTru
-  IdTru  ||| FlsTru = IdTru
-  IdTru  ||| IdTru  = IdTru
-  _      ||| _      = error "Other combinations should not type check"
-
-
-instance Show (Obj Boolean a) where
-  show Fls = "Fls"
-  show Tru = "Tru"
+  Fls ||| Fls = Fls
+  F2T ||| F2T = F2T
+  F2T ||| Tru = Tru
+  Tru ||| F2T = Tru
+  Tru ||| Tru = Tru
+  _   ||| _   = error "Other combinations should not type check"

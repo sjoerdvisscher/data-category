@@ -27,19 +27,13 @@ data Void a b
 magicVoid :: Void a b -> x
 magicVoid x = x `seq` error "we never get this far"
 
-magicVoidO :: Obj Void a -> x
-magicVoidO x = x `seq` error "we never get this far"
 
-
+-- | The empty category.
 instance Category Void where
   
-  -- | The (empty) data type of the objects in /0/. 
-  data Obj Void a
+  src   = magicVoid
+  tgt   = magicVoid
   
-  src = magicVoid
-  tgt = magicVoid
-  
-  id    = magicVoidO
   a . b = magicVoid (a `seq` b)
 
 
@@ -55,4 +49,4 @@ instance Category (~>) => Functor (VoidDiagram (~>)) where
 
 voidNat :: (Functor f, Functor g, Dom f ~ Void, Dom g ~ Void, Cod f ~ d, Cod g ~ d)
   => f -> g -> Nat Void d f g
-voidNat f g = Nat f g magicVoidO
+voidNat f g = Nat f g magicVoid

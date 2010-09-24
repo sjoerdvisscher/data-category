@@ -13,7 +13,6 @@ module Data.Category.Functor (
 
   -- * Cat
     Cat(..)
-  , Obj(..)
   , CatW
 
   -- * Functors
@@ -48,15 +47,12 @@ type family Dom ftag :: * -> * -> *
 -- | The codomain, or target category, of the functor.
 type family Cod ftag :: * -> * -> *
 
--- | Functors map objects and arrows. As objects are represented at both the type and value level, we need 3 maps in total.
+-- | Functors map objects and arrows.
 class (Category (Dom ftag), Category (Cod ftag)) => Functor ftag where
   -- | @%@ maps arrows.
   (%)  :: ftag -> Dom ftag a b -> Cod ftag (ftag :% a) (ftag :% b)
-  -- | @%%@ maps objects at the value level.
-  (%%) :: ftag -> Obj (Dom ftag) a -> Obj (Cod ftag) (ftag :% a)
-  f %% a = src (f % id a)
 
--- | @:%@ maps objects at the type level.
+-- | @:%@ maps objects.
 type family ftag :% a :: *
 
 
@@ -71,14 +67,9 @@ data CatW :: (* -> * -> *) -> *
 -- | @Cat@ is the category with categories as objects and funtors as arrows.
 instance Category Cat where
   
-  -- | The objects in the category Cat are the categories themselves.
-  data Obj Cat a where
-    CatO :: Category (~>) => Obj Cat (CatW (~>))
-    
-  src (CatA _) = CatO
-  tgt (CatA _) = CatO
+  src (CatA _)      = CatA Id
+  tgt (CatA _)      = CatA Id
   
-  id CatO           = CatA Id
   CatA f1 . CatA f2 = CatA (f1 :.: f2)
 
 
@@ -115,7 +106,7 @@ type instance Cod (Const c1 c2 x) = c2
 type instance Const c1 c2 x :% a = x
 
 instance (Category c1, Category c2) => Functor (Const c1 c2 x) where 
-  Const x % _ = id x
+  Const x % _ = x
 
 type ConstF f = Const (Dom f) (Cod f)
 

@@ -78,7 +78,7 @@ module Data.Category.Limit (
   
 ) where
 
-import Prelude hiding ((.), id, Functor, product)
+import Prelude hiding ((.), Functor, product)
 import qualified Prelude (Functor)
 import qualified Control.Arrow as A ((&&&), (***), (|||), (+++))
 
@@ -244,7 +244,7 @@ type instance LimitFam Void (~>) f = TerminalObject (~>)
 
 instance (HasTerminalObject (~>)) => HasLimits Void (~>) where
   
-  limitUniv (NatO f) = limitUniversal
+  limitUniv (Nat f _ _) = limitUniversal
     (voidNat (Const terminalObject) f)
     (terminate . coneVertex)
 
@@ -254,18 +254,18 @@ instance HasTerminalObject (->) where
   
   type TerminalObject (->) = ()
   
-  terminalObject = HaskO
+  terminalObject = id
   
-  terminate HaskO _ = ()
+  terminate _ _ = ()
 
 -- | @Unit@ is the terminal category.
 instance HasTerminalObject Cat where
   
   type TerminalObject Cat = CatW Unit
   
-  terminalObject = CatO
+  terminalObject = CatA Id
   
-  terminate CatO = CatA $ Const UnitO
+  terminate (CatA _) = CatA $ Const Unit
 
 
 -- | An initial object is the colimit of the functor from /0/ to (~>).
@@ -282,7 +282,7 @@ type instance ColimitFam Void (~>) f = InitialObject (~>)
 
 instance HasInitialObject (~>) => HasColimits Void (~>) where
   
-  colimitUniv (NatO f) = colimitUniversal
+  colimitUniv (Nat f _ _) = colimitUniversal
     (voidNat f (Const initialObject))
     (initialize . coconeVertex)
 
@@ -294,18 +294,18 @@ instance HasInitialObject (->) where
   
   type InitialObject (->) = Zero
   
-  initialObject = HaskO
+  initialObject = id
   
   -- With thanks to Conor McBride
-  initialize HaskO x = x `seq` error "we never get this far"
+  initialize _ x = x `seq` error "we never get this far"
 
 instance HasInitialObject Cat where
   
   type InitialObject Cat = CatW Void
   
-  initialObject = CatO
+  initialObject = CatA Id
   
-  initialize CatO = CatA VoidDiagram
+  initialize (CatA _) = CatA VoidDiagram
 
 
 
@@ -313,8 +313,6 @@ type family BinaryProduct ((~>) :: * -> * -> *) x y :: *
 
 -- | The product of 2 objects is the limit of the functor from Pair to (~>).
 class Category (~>) => HasBinaryProducts (~>) where
-  
-  product :: Obj (~>) x -> Obj (~>) y -> Obj (~>) (BinaryProduct (~>) x y)
   
   proj1 :: Obj (~>) x -> Obj (~>) y -> BinaryProduct (~>) x y ~> x
   proj2 :: Obj (~>) x -> Obj (~>) y -> BinaryProduct (~>) x y ~> y
@@ -329,22 +327,20 @@ type instance LimitFam Pair (~>) f = BinaryProduct (~>) (f :% P1) (f :% P2)
 
 instance HasBinaryProducts (~>) => HasLimits Pair (~>) where
 
-  limitUniv (NatO f) = limitUniversal
-    (pairNat (Const $ product x y) f (Com $ proj1 x y) (Com $ proj2 x y))
-    (\c -> c ! Fst &&& c ! Snd)
+  limitUniv (Nat f _ _) = limitUniversal
+    (pairNat (Const $ x *** y) f (Com $ proj1 x y) (Com $ proj2 x y))
+    (\c -> c ! P1 &&& c ! P2)
     where
-      x = f %% Fst
-      y = f %% Snd
+      x = f % P1
+      y = f % P2
 
 
 type instance BinaryProduct (->) x y = (x, y)
 
 instance HasBinaryProducts (->) where
   
-  product HaskO HaskO = HaskO
-  
-  proj1 HaskO HaskO = fst
-  proj2 HaskO HaskO = snd
+  proj1 _ _ = fst
+  proj2 _ _ = snd
   
   (&&&) = (A.&&&)
   (***) = (A.***)
@@ -353,10 +349,8 @@ type instance BinaryProduct Cat (CatW c1) (CatW c2) = CatW (c1 :**: c2)
 
 instance HasBinaryProducts Cat where
   
-  product CatO CatO = CatO
-  
-  proj1 CatO CatO = CatA Proj1
-  proj2 CatO CatO = CatA Proj2
+  proj1 (CatA _) (CatA _) = CatA Proj1
+  proj2 (CatA _) (CatA _) = CatA Proj2
   
   CatA f1 &&& CatA f2 = CatA ((f1 :***: f2) :.: DiagProd)
   CatA f1 *** CatA f2 = CatA (f1 :***: f2)
@@ -366,10 +360,8 @@ type instance BinaryProduct (c1 :**: c2) (x1, x2) (y1, y2) = (BinaryProduct c1 x
 
 instance (HasBinaryProducts c1, HasBinaryProducts c2) => HasBinaryProducts (c1 :**: c2) where
   
-  product (ProdO x1 x2) (ProdO y1 y2) = ProdO (product x1 y1) (product x2 y2)
-  
-  proj1 (ProdO x1 x2) (ProdO y1 y2) = proj1 x1 y1 :**: proj1 x2 y2
-  proj2 (ProdO x1 x2) (ProdO y1 y2) = proj2 x1 y1 :**: proj2 x2 y2
+  proj1 (x1 :**: x2) (y1 :**: y2) = proj1 x1 y1 :**: proj1 x2 y2
+  proj2 (x1 :**: x2) (y1 :**: y2) = proj2 x1 y1 :**: proj2 x2 y2
   
   (f1 :**: f2) &&& (g1 :**: g2) = (f1 &&& g1) :**: (f2 &&& g2)
   (f1 :**: f2) *** (g1 :**: g2) = (f1 *** g1) :**: (f2 *** g2)
@@ -388,10 +380,8 @@ type instance BinaryProduct (Nat c d) x y = x :*: y
 
 instance (Category c, HasBinaryProducts d) => HasBinaryProducts (Nat c d) where
   
-  product (NatO f) (NatO g) = NatO (f :*: g)
-  
-  proj1 (NatO f) (NatO g) = Nat (f :*: g) f $ \z -> proj1 (f %% z) (g %% z)
-  proj2 (NatO f) (NatO g) = Nat (f :*: g) g $ \z -> proj2 (f %% z) (g %% z)
+  proj1 (Nat f _ _) (Nat g _ _) = Nat (f :*: g) f $ \z -> proj1 (f % z) (g % z)
+  proj2 (Nat f _ _) (Nat g _ _) = Nat (f :*: g) g $ \z -> proj2 (f % z) (g % z)
   
   Nat a f af &&& Nat _ g ag = Nat a (f :*: g) $ \z -> af z &&& ag z
   Nat f1 f2 f *** Nat g1 g2 g = Nat (f1 :*: g1) (f2 :*: g2) $ \z -> f z *** g z
@@ -403,8 +393,6 @@ type family BinaryCoproduct ((~>) :: * -> * -> *) x y :: *
 -- | The coproduct of 2 objects is the colimit of the functor from Pair to (~>).
 class Category (~>) => HasBinaryCoproducts (~>) where
 
-  coproduct :: Obj (~>) x -> Obj (~>) y -> Obj (~>) (BinaryCoproduct (~>) x y)
-  
   inj1 :: Obj (~>) x -> Obj (~>) y -> x ~> BinaryCoproduct (~>) x y
   inj2 :: Obj (~>) x -> Obj (~>) y -> y ~> BinaryCoproduct (~>) x y
 
@@ -418,22 +406,20 @@ type instance ColimitFam Pair (~>) f = BinaryCoproduct (~>) (f :% P1) (f :% P2)
 
 instance HasBinaryCoproducts (~>) => HasColimits Pair (~>) where
   
-  colimitUniv (NatO f) = colimitUniversal
-    (pairNat f (Const $ coproduct x y) (Com $ inj1 x y) (Com $ inj2 x y))
-    (\c -> c ! Fst ||| c ! Snd)
+  colimitUniv (Nat f _ _) = colimitUniversal
+    (pairNat f (Const $ x +++ y) (Com $ inj1 x y) (Com $ inj2 x y))
+    (\c -> c ! P1 ||| c ! P2)
     where
-      x = f %% Fst
-      y = f %% Snd
+      x = f % P1
+      y = f % P2
 
 
 type instance BinaryCoproduct (->) x y = Either x y
 
 instance HasBinaryCoproducts (->) where
   
-  coproduct HaskO HaskO = HaskO
-  
-  inj1 HaskO HaskO = Left
-  inj2 HaskO HaskO = Right
+  inj1 _ _ = Left
+  inj2 _ _ = Right
   
   (|||) = (A.|||)
   (+++) = (A.+++)
@@ -443,10 +429,8 @@ type instance BinaryCoproduct (c1 :**: c2) (x1, x2) (y1, y2) = (BinaryCoproduct 
 
 instance (HasBinaryCoproducts c1, HasBinaryCoproducts c2) => HasBinaryCoproducts (c1 :**: c2) where
   
-  coproduct (ProdO x1 x2) (ProdO y1 y2) = ProdO (coproduct x1 y1) (coproduct x2 y2)
-  
-  inj1 (ProdO x1 x2) (ProdO y1 y2) = inj1 x1 y1 :**: inj1 x2 y2
-  inj2 (ProdO x1 x2) (ProdO y1 y2) = inj2 x1 y1 :**: inj2 x2 y2
+  inj1 (x1 :**: x2) (y1 :**: y2) = inj1 x1 y1 :**: inj1 x2 y2
+  inj2 (x1 :**: x2) (y1 :**: y2) = inj2 x1 y1 :**: inj2 x2 y2
   
   (f1 :**: f2) ||| (g1 :**: g2) = (f1 ||| g1) :**: (f2 ||| g2)
   (f1 :**: f2) +++ (g1 :**: g2) = (f1 +++ g1) :**: (f2 +++ g2)
@@ -465,10 +449,8 @@ type instance BinaryCoproduct (Nat c d) x y = x :+: y
 
 instance (Category c, HasBinaryCoproducts d) => HasBinaryCoproducts (Nat c d) where
   
-  coproduct (NatO f) (NatO g) = NatO (f :+: g)
-  
-  inj1 (NatO f) (NatO g) = Nat f (f :+: g) $ \z -> inj1 (f %% z) (g %% z)
-  inj2 (NatO f) (NatO g) = Nat g (f :+: g) $ \z -> inj2 (f %% z) (g %% z)
+  inj1 (Nat f _ _) (Nat g _ _) = Nat f (f :+: g) $ \z -> inj1 (f % z) (g % z)
+  inj2 (Nat f _ _) (Nat g _ _) = Nat g (f :+: g) $ \z -> inj2 (f % z) (g % z)
   
   Nat f a fa ||| Nat g _ ga = Nat (f :+: g) a $ \z -> fa z ||| ga z
   Nat f1 f2 f +++ Nat g1 g2 g = Nat (f1 :+: g1) (f2 :+: g2) $ \z -> f z +++ g z
@@ -481,8 +463,8 @@ type instance LimitFam (->) (->) (EndoHask f) = ForAll f
 
 endoHaskLimit :: Prelude.Functor f => LimitUniversal (EndoHask f)
 endoHaskLimit = limitUniversal
-  (Nat (Const HaskO) EndoHask $ \HaskO -> unForAll)
-  (\c n -> ForAll ((c ! HaskO) n)) -- ForAll . (c ! Hask)
+  (Nat (Const id) EndoHask $ \_ -> unForAll)
+  (\c n -> ForAll ((c ! id) n)) -- ForAll . (c ! id)
 
 
 data Exists f = forall a. Exists (f a)
@@ -491,5 +473,5 @@ type instance ColimitFam (->) (->) (EndoHask f) = Exists f
 
 endoHaskColimit :: Prelude.Functor f => ColimitUniversal (EndoHask f)
 endoHaskColimit = colimitUniversal
-  (Nat EndoHask (Const HaskO) $ \HaskO -> Exists)
-  (\c (Exists fa) -> (c ! HaskO) fa) -- (c ! HaskO) . unExists
+  (Nat EndoHask (Const id) $ \_ -> Exists)
+  (\c (Exists fa) -> (c ! id) fa) -- (c ! id) . unExists
