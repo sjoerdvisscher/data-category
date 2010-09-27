@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeOperators, TypeFamilies, GADTs, EmptyDataDecls #-}
+{-# LANGUAGE TypeOperators, TypeFamilies, GADTs, Rank2Types #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category.Void
@@ -90,26 +90,13 @@ instance Category (~>) => TensorProduct (FunctorCompose (~>)) where
 
 
 
-type family AssociatedTensor a :: *
+data MonoidObject f a = MonoidObject
+  { point    :: (Cod f ~ (~>)) => Unit f        ~> a  
+  , multiply :: (Cod f ~ (~>)) => (f :% (a, a)) ~> a
+  }
 
-class Pointed a where
-  point   :: (Cod (AssociatedTensor a) ~ (~>)) => Unit (AssociatedTensor a) ~> a  
-  
-class Copointed a where
-  extract :: (Cod (AssociatedTensor a) ~ (~>)) => a ~> Unit (AssociatedTensor a)
-    
-class Pointed a => Monoid a where
-  multiply   :: (Cod (AssociatedTensor a) ~ (~>)) => (AssociatedTensor a :% (a, a)) ~> a
-  
-class Copointed a => Comonoid a where
-  comultiply :: (Cod (AssociatedTensor a) ~ (~>)) => a ~> (AssociatedTensor a :% (a, a))
-
-  
-type instance AssociatedTensor (EndoHask f) = FunctorCompose (->)
-
-instance (M.Functor f, M.Monad f) => Pointed (EndoHask f) where
-  point = Nat Id EndoHask $ \_ -> M.return
-
-instance (M.Functor f, M.Monad f) => Monoid (EndoHask f) where
-  multiply = Nat (EndoHask :.: EndoHask) EndoHask $ \_ -> M.join
-
+preludeMonad :: (M.Functor f, M.Monad f) => MonoidObject (FunctorCompose (->)) (EndoHask f)
+preludeMonad = MonoidObject
+  { point    = Nat Id                      EndoHask $ \_ -> M.return
+  , multiply = Nat (EndoHask :.: EndoHask) EndoHask $ \_ -> M.join
+  }  

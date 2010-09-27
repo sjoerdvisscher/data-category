@@ -9,7 +9,36 @@
 -- Stability   :  experimental
 -- Portability :  non-portable
 -----------------------------------------------------------------------------
-module Data.Category.Adjunction where
+module Data.Category.Adjunction (
+
+  -- * Adjunctions
+    Adjunction(..)
+  , mkAdjunction
+
+  , leftAdjunct
+  , rightAdjunct
+  
+  -- * Adjunctions from universal morphisms
+  , initialPropAdjunction
+  , terminalPropAdjunction
+  
+  -- * Adjunctions to universal morphisms
+  , adjunctionInitialProp
+  , adjunctionTerminalProp
+  
+  -- * Adjunctions as a category
+  , AdjArrow(..)
+  
+  -- * (Co)limitfunctor adjunction
+  , limitAdj
+  , colimitAdj
+  
+  -- * Monad of an adjunction
+  , adjunctionMonad
+  
+  -- * Examples
+  , curryAdj
+) where
   
 import Prelude hiding ((.), Functor)
 import Control.Monad.Instances()
@@ -18,10 +47,15 @@ import Data.Category
 import Data.Category.Functor
 import Data.Category.NaturalTransformation
 import Data.Category.Limit
+import Data.Category.Monoidal
 
-data Adjunction c d f g where
-  Adjunction :: (Functor f, Functor g, Category c, Category d, Dom f ~ d, Cod f ~ c, Dom g ~ c, Cod g ~ d) =>
-    f -> g -> Nat d d (Id d) (g :.: f) -> Nat c c (f :.: g) (Id c) -> Adjunction c d f g
+data Adjunction c d f g = (Functor f, Functor g, Category c, Category d, Dom f ~ d, Cod f ~ c, Dom g ~ c, Cod g ~ d)
+  => Adjunction
+  { leftAdjoint  :: f
+  , rightAdjoint :: g
+  , unit         :: Nat d d (Id d) (g :.: f)
+  , counit       :: Nat c c (f :.: g) (Id c)
+  }
 
 mkAdjunction :: (Functor f, Functor g, Category c, Category d, Dom f ~ d, Cod f ~ c, Dom g ~ c, Cod g ~ d)
   => f -> g 
@@ -29,11 +63,6 @@ mkAdjunction :: (Functor f, Functor g, Category c, Category d, Dom f ~ d, Cod f 
   -> (forall a. Obj c a -> Component (f :.: g) (Id c) a)
   -> Adjunction c d f g
 mkAdjunction f g un coun = Adjunction f g (Nat Id (g :.: f) un) (Nat (f :.: g) Id coun)
-
-unit :: Adjunction c d f g -> Id d :~> (g :.: f)
-unit (Adjunction _ _ u _) = u
-counit :: Adjunction c d f g -> (f :.: g) :~> Id c
-counit (Adjunction _ _ _ c) = c
 
 leftAdjunct :: Adjunction c d f g -> Obj d a -> c (f :% a) b -> d a (g :% b)
 leftAdjunct (Adjunction _ g un _) i h = (g % h) . (un ! i)
@@ -98,7 +127,7 @@ limitAdj :: forall j (~>). HasLimits j (~>)
 limitAdj LimitFunctor = terminalPropAdjunction Diag LimitFunctor univ
   where
     univ :: Obj (Nat j (~>)) f -> TerminalUniversal f (Diag j (~>)) (LimitFam j (~>) f)
-    univ f @ Nat{} = limitUniv f
+    univ f@Nat{} = limitUniv f
 
 -- | The colimit functor is left adjoint to the diagonal functor.
 colimitAdj :: forall j (~>). HasColimits j (~>) 
@@ -107,4 +136,11 @@ colimitAdj :: forall j (~>). HasColimits j (~>)
 colimitAdj ColimitFunctor = initialPropAdjunction ColimitFunctor Diag univ
   where
     univ :: Obj (Nat j (~>)) f -> InitialUniversal f (Diag j (~>)) (ColimitFam j (~>) f)
-    univ f @ Nat{} = colimitUniv f
+    univ f@Nat{} = colimitUniv f
+
+
+adjunctionMonad :: Adjunction c d f g -> MonoidObject (FunctorCompose d) (g :.: f)
+adjunctionMonad (Adjunction f g un coun) = MonoidObject
+  { point    = un
+  , multiply = Nat ((g :.: f) :.: (g :.: f)) (g :.: f) $ \i -> (Postcompose g % Precompose f % coun) ! i
+  }
