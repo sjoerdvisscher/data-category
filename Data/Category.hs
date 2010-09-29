@@ -47,8 +47,7 @@ instance Category (->) where
   (.)   = (Prelude..)    
 
 
-data Op :: (* -> * -> *) -> * -> * -> * where
-  Op :: (a ~> b) -> Op (~>) b a
+data Op (~>) a b = Op { unOp :: b ~> a }
 
 -- | @Op (~>)@ is opposite category of the category @(~>)@.
 instance Category (~>) => Category (Op (~>)) where

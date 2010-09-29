@@ -38,6 +38,7 @@ module Data.Category.Adjunction (
   , adjunctionComonad
   
   -- * Examples
+  -- ** The curry/uncurry adjunction
   , curryAdj
   , curry
   , uncurry
@@ -48,9 +49,12 @@ module Data.Category.Adjunction (
   , contextComonadExtract
   , contextComonadDuplicate
   
+  -- ** The continuation adjunction
+  , contAdj
+  
 ) where
   
-import Prelude (($), id, flip)
+import Prelude (($), id, flip, undefined)
 import Control.Monad.Instances ()
 
 import Data.Category
@@ -169,3 +173,23 @@ contextComonadExtract = M.counit (adjunctionComonad curryAdj) ! id
 
 contextComonadDuplicate :: Context e a -> Context e (Context e a)
 contextComonadDuplicate = M.comultiply (adjunctionComonad curryAdj) ! id
+
+
+data Cont1 r = Cont1
+type instance Dom (Cont1 r) = (->)
+type instance Cod (Cont1 r) = Op (->)
+type instance (Cont1 r) :% a = a -> r
+instance Functor (Cont1 r) where 
+  Cont1 % f = Op (. f)
+
+data Cont2 r = Cont2
+type instance Dom (Cont2 r) = Op (->)
+type instance Cod (Cont2 r) = (->)
+type instance (Cont2 r) :% a = a -> r
+instance Functor (Cont2 r) where 
+  Cont2 % (Op f) = (. f)
+
+contAdj :: Adjunction (Op (->)) (->) (Cont1 r) (Cont2 r)
+contAdj = mkAdjunction Cont1 Cont2 (\_ -> flip ($)) (\_ -> Op (flip ($)))
+
+-- leftAdjunct contAdj id . Op === unOp . rightAdjunct contAdj (Op id) === flip
