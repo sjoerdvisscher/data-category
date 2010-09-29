@@ -11,7 +11,7 @@
 -----------------------------------------------------------------------------
 module Data.Category.Monoidal where
 
-import Prelude hiding ((.), Functor)
+import Prelude (($))
 import qualified Control.Monad as M
 
 import Data.Category
@@ -23,23 +23,23 @@ import Data.Category.Limit
 class Functor f => HasUnit f where
   
   type Unit f :: *
-  unit :: Obj (Cod f) (Unit f)
+  unitObject :: Obj (Cod f) (Unit f)
 
 
 instance (HasTerminalObject (~>), HasBinaryProducts (~>)) => HasUnit (ProductFunctor (~>)) where
   
   type Unit (ProductFunctor (~>)) = TerminalObject (~>)
-  unit = terminalObject
+  unitObject = terminalObject
 
 instance (HasInitialObject (~>), HasBinaryCoproducts (~>)) => HasUnit (CoproductFunctor (~>)) where
   
   type Unit (CoproductFunctor (~>)) = InitialObject (~>)
-  unit = initialObject
+  unitObject = initialObject
 
 instance Category (~>) => HasUnit (FunctorCompose (~>)) where
   
   type Unit (FunctorCompose (~>)) = Id (~>)
-  unit = natId Id
+  unitObject = natId Id
   
 
 
@@ -91,12 +91,41 @@ instance Category (~>) => TensorProduct (FunctorCompose (~>)) where
 
 
 data MonoidObject f a = MonoidObject
-  { point    :: (Cod f ~ (~>)) => Unit f        ~> a  
+  { unit     :: (Cod f ~ (~>)) => Unit f        ~> a
   , multiply :: (Cod f ~ (~>)) => (f :% (a, a)) ~> a
   }
+  
+data ComonoidObject f a = ComonoidObject
+  { counit     :: (Cod f ~ (~>)) => a ~> Unit f
+  , comultiply :: (Cod f ~ (~>)) => a ~> (f :% (a, a))
+  }
 
-preludeMonad :: (M.Functor f, M.Monad f) => MonoidObject (FunctorCompose (->)) (EndoHask f)
-preludeMonad = MonoidObject
-  { point    = Nat Id                      EndoHask $ \_ -> M.return
-  , multiply = Nat (EndoHask :.: EndoHask) EndoHask $ \_ -> M.join
-  }  
+
+type Monad f = MonoidObject (FunctorCompose (Dom f)) f
+
+mkMonad :: (Functor f, Dom f ~ (~>), Cod f ~ (~>), Category (~>)) 
+  => f 
+  -> (forall a. Obj (~>) a -> Component (Id (~>)) f a) 
+  -> (forall a. Obj (~>) a -> Component (f :.: f) f a)
+  -> Monad f
+mkMonad f ret join = MonoidObject
+  { unit     = Nat Id        f ret
+  , multiply = Nat (f :.: f) f join
+  }
+
+preludeMonad :: (M.Functor f, M.Monad f) => Monad (EndoHask f)
+preludeMonad = mkMonad EndoHask (\_ -> M.return) (\_ -> M.join)
+
+
+type Comonad f = ComonoidObject (FunctorCompose (Dom f)) f
+
+mkComonad :: (Functor f, Dom f ~ (~>), Cod f ~ (~>), Category (~>)) 
+  => f 
+  -> (forall a. Obj (~>) a -> Component f (Id (~>)) a) 
+  -> (forall a. Obj (~>) a -> Component f (f :.: f) a)
+  -> Comonad f
+mkComonad f extr dupl = ComonoidObject
+  { counit     = Nat f Id        extr
+  , comultiply = Nat f (f :.: f) dupl
+  }
+

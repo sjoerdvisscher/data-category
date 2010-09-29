@@ -33,21 +33,31 @@ module Data.Category.Adjunction (
   , limitAdj
   , colimitAdj
   
-  -- * Monad of an adjunction
+  -- * (Co)monad of an adjunction
   , adjunctionMonad
+  , adjunctionComonad
   
   -- * Examples
   , curryAdj
+  , curry
+  , uncurry
+  , State
+  , stateMonadReturn
+  , stateMonadJoin
+  , Context
+  , contextComonadExtract
+  , contextComonadDuplicate
+  
 ) where
   
-import Prelude hiding ((.), Functor)
-import Control.Monad.Instances()
+import Prelude (($), id, flip)
+import Control.Monad.Instances ()
 
 import Data.Category
 import Data.Category.Functor
 import Data.Category.NaturalTransformation
 import Data.Category.Limit
-import Data.Category.Monoidal
+import qualified Data.Category.Monoidal as M
 
 data Adjunction c d f g = (Functor f, Functor g, Category c, Category d, Dom f ~ d, Cod f ~ c, Dom g ~ c, Cod g ~ d)
   => Adjunction
@@ -104,20 +114,9 @@ instance Category AdjArrow where
   tgt (AdjArrow (Adjunction _ _ _ _)) = AdjArrow $ mkAdjunction Id Id id id
   
   AdjArrow (Adjunction f g u c) . AdjArrow (Adjunction f' g' u' c') = AdjArrow $ 
-    Adjunction (f' :.: f) (g :.: g') (wrap g f u' . u) (c' . cowrap f' g' c)
-
-
-wrap :: (Functor g, Functor f, Dom g ~ Dom f', Dom g ~ Cod f) 
-  => g -> f -> Nat (Dom f') (Dom f') (Id (Dom f')) (g' :.: f') -> (g :.: f) :~> ((g :.: g') :.: (f' :.: f))
-wrap g f (Nat Id (g' :.: f') n) = Nat (g :.: f) ((g :.: g') :.: (f' :.: f)) $ (g %) . n . (f %)
-
-cowrap :: (Functor f', Functor g', Dom f' ~ Dom g, Dom f' ~ Cod g') 
-  => f' -> g' -> Nat (Dom g) (Dom g) (f :.: g) (Id (Dom g)) -> ((f' :.: f) :.: (g :.: g')) :~> (f' :.: g')
-cowrap f' g' (Nat (f :.: g) Id n) = Nat ((f' :.: f) :.: (g :.: g')) (f' :.: g') $ (f' %) . n . (g' %)
-
-
-curryAdj :: Adjunction (->) (->) (EndoHask ((,) e)) (EndoHask ((->) e))
-curryAdj = mkAdjunction EndoHask EndoHask (\_ -> \a e -> (e, a)) (\_ -> \(e, f) -> f e)
+    mkAdjunction (f' :.: f) (g :.: g') 
+      (\i -> ((Postcompose g % Precompose f % u') ! i) . (u ! i)) 
+      (\i -> (c' ! i) . ((Postcompose f' % Precompose g' % c) ! i))
 
 
 -- | The limit functor is right adjoint to the diagonal functor.
@@ -139,8 +138,34 @@ colimitAdj ColimitFunctor = initialPropAdjunction ColimitFunctor Diag univ
     univ f@Nat{} = colimitUniv f
 
 
-adjunctionMonad :: Adjunction c d f g -> MonoidObject (FunctorCompose d) (g :.: f)
-adjunctionMonad (Adjunction f g un coun) = MonoidObject
-  { point    = un
-  , multiply = Nat ((g :.: f) :.: (g :.: f)) (g :.: f) $ \i -> (Postcompose g % Precompose f % coun) ! i
-  }
+adjunctionMonad :: Adjunction c d f g -> M.Monad (g :.: f)
+adjunctionMonad (Adjunction f g un coun) = M.mkMonad (g :.: f) (un !) ((Postcompose g % Precompose f % coun) !)
+
+adjunctionComonad :: Adjunction c d f g -> M.Comonad (f :.: g)
+adjunctionComonad (Adjunction f g un coun) = M.mkComonad (f :.: g) (coun !) ((Postcompose f % Precompose g % un) !)
+
+
+curryAdj :: Adjunction (->) (->) (EndoHask ((,) e)) (EndoHask ((->) e))
+curryAdj = mkAdjunction EndoHask EndoHask (\_ -> \a e -> (e, a)) (\_ -> \(e, f) -> f e)
+
+curry :: ((a, b) -> c) -> a -> b -> c
+curry = flip . leftAdjunct curryAdj id
+
+uncurry :: (a -> b -> c) -> (a, b) -> c
+uncurry = rightAdjunct curryAdj id . flip
+
+type State e a = e -> (e, a)
+
+stateMonadReturn :: a -> State e a
+stateMonadReturn = M.unit (adjunctionMonad curryAdj) ! id
+
+stateMonadJoin :: State e (State e a) -> State e a
+stateMonadJoin = M.multiply (adjunctionMonad curryAdj) ! id
+
+type Context e a = (e, e -> a)
+
+contextComonadExtract :: Context e a -> a
+contextComonadExtract = M.counit (adjunctionComonad curryAdj) ! id
+
+contextComonadDuplicate :: Context e a -> Context e (Context e a)
+contextComonadDuplicate = M.comultiply (adjunctionComonad curryAdj) ! id

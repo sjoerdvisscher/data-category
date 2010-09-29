@@ -19,7 +19,7 @@ import Data.Monoid
 import Data.Category
 import Data.Category.Functor
 import Data.Category.NaturalTransformation
-import Data.Category.Adjunction
+import Data.Category.Adjunction (Adjunction, mkAdjunction, adjunctionMonad, adjunctionComonad)
 import Data.Category.Monoidal
 
 -- | The arrows are the values of the monoid.
@@ -62,10 +62,16 @@ instance Functor FreeMonoid where
   FreeMonoid % f = MonoidMorphism $ map f
 
 freeMonoidAdj :: Adjunction Mon (->) FreeMonoid ForgetMonoid
-freeMonoidAdj = mkAdjunction FreeMonoid ForgetMonoid (\_ -> \a -> [a]) (\(MonoidMorphism _) -> MonoidMorphism mconcat)
+freeMonoidAdj = mkAdjunction FreeMonoid ForgetMonoid (\_ -> (:[])) (\(MonoidMorphism _) -> MonoidMorphism mconcat)
 
 listMonadReturn :: a -> [a]
-listMonadReturn = point (adjunctionMonad freeMonoidAdj) ! id
+listMonadReturn = unit (adjunctionMonad freeMonoidAdj) ! id
 
 listMonadJoin :: [[a]] -> [a]
 listMonadJoin = multiply (adjunctionMonad freeMonoidAdj) ! id
+
+listComonadExtract :: Monoid m => [m] -> m
+listComonadExtract = let MonoidMorphism f = counit (adjunctionComonad freeMonoidAdj) ! MonoidMorphism id in f
+
+listComonadDuplicate :: Monoid m => [m] -> [[m]]
+listComonadDuplicate = let MonoidMorphism f = comultiply (adjunctionComonad freeMonoidAdj) ! MonoidMorphism id in f
