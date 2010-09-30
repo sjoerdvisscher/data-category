@@ -66,3 +66,18 @@ type instance Cod (DiagProd (~>)) = (~>) :**: (~>)
 type instance DiagProd (~>) :% a = (a, a)
 instance Category (~>) => Functor (DiagProd (~>)) where 
   DiagProd % f = f :**: f
+
+data Tuple1 (c1 :: * -> * -> *) (c2 :: * -> * -> *) a = Tuple1 (Obj c1 a)
+type instance Dom (Tuple1 c1 c2 a1) = c2
+type instance Cod (Tuple1 c1 c2 a1) = c1 :**: c2
+type instance Tuple1 c1 c2 a1 :% a2 = (a1, a2)
+instance (Category c1, Category c2) => Functor (Tuple1 c1 c2 a1) where
+  Tuple1 a % f = a :**: f
+
+data Tuple2 (c1 :: * -> * -> *) (c2 :: * -> * -> *) a = Tuple2 (Obj c2 a)
+type instance Dom (Tuple2 c1 c2 a2) = c1
+type instance Cod (Tuple2 c1 c2 a2) = c1 :**: c2
+type instance Tuple2 c1 c2 a2 :% a1 = (a1, a2)
+instance (Category c1, Category c2) => Functor (Tuple2 c1 c2 a2) where
+  Tuple2 a % f = f :**: a
+

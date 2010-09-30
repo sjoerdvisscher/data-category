@@ -38,18 +38,6 @@ module Data.Category.Adjunction (
   , adjunctionComonad
   
   -- * Examples
-  -- ** The curry/uncurry adjunction
-  , curryAdj
-  , curry
-  , uncurry
-  , State
-  , stateMonadReturn
-  , stateMonadJoin
-  , Context
-  , contextComonadExtract
-  , contextComonadDuplicate
-  
-  -- ** The continuation adjunction
   , contAdj
   
 ) where
@@ -118,9 +106,7 @@ instance Category AdjArrow where
   tgt (AdjArrow (Adjunction _ _ _ _)) = AdjArrow $ mkAdjunction Id Id id id
   
   AdjArrow (Adjunction f g u c) . AdjArrow (Adjunction f' g' u' c') = AdjArrow $ 
-    mkAdjunction (f' :.: f) (g :.: g') 
-      (\i -> ((Postcompose g % Precompose f % u') ! i) . (u ! i)) 
-      (\i -> (c' ! i) . ((Postcompose f' % Precompose g' % c) ! i))
+    mkAdjunction (f' :.: f) (g :.: g') (\i -> ((Wrap g f % u') ! i) . (u ! i)) (\i -> (c' ! i) . ((Wrap f' g' % c) ! i))
 
 
 -- | The limit functor is right adjoint to the diagonal functor.
@@ -148,31 +134,6 @@ adjunctionMonad (Adjunction f g un coun) = M.mkMonad (g :.: f) (un !) ((Postcomp
 adjunctionComonad :: Adjunction c d f g -> M.Comonad (f :.: g)
 adjunctionComonad (Adjunction f g un coun) = M.mkComonad (f :.: g) (coun !) ((Postcompose f % Precompose g % un) !)
 
-
-curryAdj :: Adjunction (->) (->) (EndoHask ((,) e)) (EndoHask ((->) e))
-curryAdj = mkAdjunction EndoHask EndoHask (\_ -> \a e -> (e, a)) (\_ -> \(e, f) -> f e)
-
-curry :: ((a, b) -> c) -> a -> b -> c
-curry = flip . leftAdjunct curryAdj id
-
-uncurry :: (a -> b -> c) -> (a, b) -> c
-uncurry = rightAdjunct curryAdj id . flip
-
-type State e a = e -> (e, a)
-
-stateMonadReturn :: a -> State e a
-stateMonadReturn = M.unit (adjunctionMonad curryAdj) ! id
-
-stateMonadJoin :: State e (State e a) -> State e a
-stateMonadJoin = M.multiply (adjunctionMonad curryAdj) ! id
-
-type Context e a = (e, e -> a)
-
-contextComonadExtract :: Context e a -> a
-contextComonadExtract = M.counit (adjunctionComonad curryAdj) ! id
-
-contextComonadDuplicate :: Context e a -> Context e (Context e a)
-contextComonadDuplicate = M.comultiply (adjunctionComonad curryAdj) ! id
 
 
 data Cont1 r = Cont1
