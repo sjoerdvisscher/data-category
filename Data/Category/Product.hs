@@ -53,13 +53,6 @@ type instance (f1 :***: f2) :% (a1, a2) = (f1 :% a1, f2 :% a2)
 instance (Functor f1, Functor f2) => Functor (f1 :***: f2) where 
   (g1 :***: g2) % (f1 :**: f2) = (g1 % f1) :**: (g2 % f2)
   
-data Hom ((~>) :: * -> * -> *) = Hom
-type instance Dom (Hom (~>)) = Op (~>) :**: (~>)
-type instance Cod (Hom (~>)) = (->)
-type instance Hom (~>) :% (a, b) = a ~> b
-instance Category (~>) => Functor (Hom (~>)) where 
-  Hom % (Op g1 :**: g2) = \f -> g2 . f . g1
-  
 data DiagProd ((~>) :: * -> * -> *) = DiagProd
 type instance Dom (DiagProd (~>)) = (~>)
 type instance Cod (DiagProd (~>)) = (~>) :**: (~>)

@@ -11,7 +11,7 @@
 -----------------------------------------------------------------------------
 module Data.Category.CartesianClosed where
   
-import Prelude (($), undefined)
+import Prelude (($))
 
 import Data.Category
 import Data.Category.Functor
@@ -22,13 +22,21 @@ import Data.Category.Adjunction
 import qualified Data.Category.Monoidal as M
 
 
+type family Exponential (~>) y z :: *
+
 class (HasTerminalObject (~>), HasBinaryProducts (~>)) => CartesianClosed (~>) where
   
-  type Exponential (~>) :: *
-  
-  eval  :: Obj (~>) y -> Obj (~>) z -> (ProductFunctor (~>) :% (Exponential (~>) :% (y, z), y)) ~> z
-  tuple :: Obj (~>) y -> Obj (~>) z -> z ~> (Exponential (~>) :% (y, ProductFunctor (~>) :% (z, y)))
+  (^^^) :: (z1 ~> z2) -> (y2 ~> y1) -> (Exponential (~>) y1 z1 ~> Exponential (~>) y2 z2)
+  eval  :: Obj (~>) y -> Obj (~>) z -> BinaryProduct (~>) (Exponential (~>) y z) y ~> z
+  tuple :: Obj (~>) y -> Obj (~>) z -> z ~> Exponential (~>) y (BinaryProduct (~>) z y)
 
+
+data ExpFunctor ((~>) :: * -> * -> *) = ExpFunctor
+type instance Dom (ExpFunctor (~>)) = Op (~>) :**: (~>)
+type instance Cod (ExpFunctor (~>)) = (~>)
+type instance (ExpFunctor (~>)) :% (y, z) = Exponential (~>) y z
+instance CartesianClosed (~>) => Functor (ExpFunctor (~>)) where
+  ExpFunctor % (Op y :**: z) = z ^^^ y
 
 data ProductWith (~>) y = ProductWith (Obj (~>) y)
 type instance Dom (ProductWith (~>) y) = (~>)
@@ -40,16 +48,17 @@ instance HasBinaryProducts (~>) => Functor (ProductWith (~>) y) where
 data ExponentialWith (~>) y = ExponentialWith (Obj (~>) y)
 type instance Dom (ExponentialWith (~>) y) = (~>)
 type instance Cod (ExponentialWith (~>) y) = (~>)
-type instance ExponentialWith (~>) y :% z = Exponential (~>) :% (y, z)
+type instance ExponentialWith (~>) y :% z = Exponential (~>) y z
 instance CartesianClosed (~>) => Functor (ExponentialWith (~>) y) where
-  ExponentialWith y % f = undefined
+  ExponentialWith y % f = f ^^^ y
   
 
+
+type instance Exponential (->) y z = y -> z
 
 instance (CartesianClosed (->)) where
   
-  type Exponential (->) = Hom (->)
-  
+  f ^^^ h = \g -> f . g . h
   eval  _ _ (f, y) = f y
   tuple _ _ z = \y -> (z, y)
 
@@ -73,12 +82,13 @@ instance (Category y, Category z) => Functor (CatTuple y z) where
   CatTuple % f = Nat (Tuple1 (src f)) (Tuple1 (tgt f)) $ \z -> f :**: z
 
 
+type instance Exponential Cat (CatW c) (CatW d) = CatW (Nat c d)
+
 instance (CartesianClosed Cat) where
   
-  type Exponential Cat = CatExponential
-  
-  eval  CatA{} CatA{} = CatA CatEval
-  tuple CatA{} CatA{} = CatA CatTuple
+  (CatA f) ^^^ (CatA h) = CatA (Wrap f h)
+  eval  CatA{} CatA{}   = CatA CatEval
+  tuple CatA{} CatA{}   = CatA CatTuple
 
 
 

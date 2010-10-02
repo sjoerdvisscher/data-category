@@ -28,7 +28,6 @@ module Data.Category.NaturalTransformation (
   , Precompose(..)
   , Postcompose(..)
   , Wrap(..)
-  , CatExponential(..)
   
   -- ** Yoneda
   , YonedaEmbedding(..)
@@ -139,19 +138,6 @@ type instance Wrap f h :% g = f :.: g :.: h
 
 instance (Functor f, Functor h) => Functor (Wrap f h) where
   Wrap f h % (Nat g1 g2 n) = Nat (f :.: g1 :.: h) (f :.: g2 :.: h) $ (f %) . n . (h %)
-
-
-data CatExponential = CatExponential
-
-type instance Dom CatExponential = Op Cat :**: Cat
-type instance Cod CatExponential = Cat
-type instance CatExponential :% (CatW c, CatW d) = CatW (Nat c d)
-
-instance Functor CatExponential where
-  CatExponential % (Op a :**: b) = wrap a b
-    where
-      wrap :: Cat a b -> Cat c d -> Cat (CatExponential :% (b, c)) (CatExponential :% (a, d))
-      wrap (CatA f) (CatA g) = CatA (Wrap g f)
 
 
 -- | A functor F: Op(C) -> Set is representable if it is naturally isomorphic to the contravariant hom-functor.
