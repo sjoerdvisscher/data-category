@@ -19,7 +19,7 @@ import Data.Monoid
 import Data.Category
 import Data.Category.Functor
 import Data.Category.NaturalTransformation
-import Data.Category.Adjunction (Adjunction, mkAdjunction, adjunctionMonad, adjunctionComonad)
+import Data.Category.Adjunction (Adjunction, mkAdjunction, adjunctionMonad, adjunctionComonad, leftAdjunct, rightAdjunct)
 import Data.Category.Monoidal
 
 -- | The arrows are the values of the monoid.
@@ -37,7 +37,10 @@ instance Monoid m => Category (MonoidA m) where
 
 data Mon :: * -> * -> * where
   MonoidMorphism :: (Monoid m1, Monoid m2) => (m1 -> m2) -> Mon m1 m2
-  
+
+unMonoidMorphism :: (Monoid m1, Monoid m2) => Mon m1 m2 -> m1 -> m2
+unMonoidMorphism (MonoidMorphism f) = f
+
 -- | The category of all monoids, with monoid morphisms as arrows.
 instance Category Mon where
   
@@ -63,6 +66,9 @@ instance Functor FreeMonoid where
 
 freeMonoidAdj :: Adjunction Mon (->) FreeMonoid ForgetMonoid
 freeMonoidAdj = mkAdjunction FreeMonoid ForgetMonoid (\_ -> (:[])) (\(MonoidMorphism _) -> MonoidMorphism mconcat)
+
+foldMap :: Monoid m => (a -> m) -> [a] -> m
+foldMap = unMonoidMorphism . rightAdjunct freeMonoidAdj (MonoidMorphism id)
 
 listMonadReturn :: a -> [a]
 listMonadReturn = unit (adjunctionMonad freeMonoidAdj) ! id

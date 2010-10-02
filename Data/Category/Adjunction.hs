@@ -129,10 +129,10 @@ colimitAdj ColimitFunctor = initialPropAdjunction ColimitFunctor Diag univ
 
 
 adjunctionMonad :: Adjunction c d f g -> M.Monad (g :.: f)
-adjunctionMonad (Adjunction f g un coun) = M.mkMonad (g :.: f) (un !) ((Postcompose g % Precompose f % coun) !)
+adjunctionMonad (Adjunction f g un coun) = M.mkMonad (g :.: f) (un !) ((Wrap g f % coun) !)
 
 adjunctionComonad :: Adjunction c d f g -> M.Comonad (f :.: g)
-adjunctionComonad (Adjunction f g un coun) = M.mkComonad (f :.: g) (coun !) ((Postcompose f % Precompose g % un) !)
+adjunctionComonad (Adjunction f g un coun) = M.mkComonad (f :.: g) (coun !) ((Wrap f g % un) !)
 
 
 
