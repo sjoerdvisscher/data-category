@@ -8,6 +8,7 @@
   ScopedTypeVariables,
   TypeOperators, 
   TypeFamilies,
+  TypeSynonymInstances,
   UndecidableInstances  #-}
 -----------------------------------------------------------------------------
 -- |
@@ -87,9 +88,6 @@ import qualified Control.Arrow as A ((&&&), (***), (|||), (+++))
 import Data.Category
 import Data.Category.Functor
 import Data.Category.NaturalTransformation
-import Data.Category.Void
-import Data.Category.Pair
-import Data.Category.Unit
 import Data.Category.Product
 import Data.Category.Discrete
 
@@ -267,7 +265,7 @@ instance HasTerminalObject Cat where
   
   terminalObject = CatA Id
   
-  terminate (CatA _) = CatA $ Const Unit
+  terminate (CatA _) = CatA $ Const Z
 
 
 -- | An initial object is the colimit of the functor from /0/ to (~>).
@@ -307,7 +305,7 @@ instance HasInitialObject Cat where
   
   initialObject = CatA Id
   
-  initialize (CatA _) = CatA VoidDiagram
+  initialize (CatA _) = CatA Nil
 
 
 
@@ -325,16 +323,16 @@ class Category (~>) => HasBinaryProducts (~>) where
   l *** r = (l . proj1 (src l) (src r)) &&& (r . proj2 (src l) (src r)) where
 
 
-type instance LimitFam Pair (~>) f = BinaryProduct (~>) (f :% P1) (f :% P2)
+type instance LimitFam Pair (~>) f = BinaryProduct (~>) (f :% Z) (f :% S Z)
 
 instance HasBinaryProducts (~>) => HasLimits Pair (~>) where
 
   limitUniv (Nat f _ _) = limitUniversal
     (pairNat (Const $ x *** y) f (Com $ proj1 x y) (Com $ proj2 x y))
-    (\c -> c ! P1 &&& c ! P2)
+    (\c -> c ! Z &&& c ! S Z)
     where
-      x = f % P1
-      y = f % P2
+      x = f % Z
+      y = f % S Z
 
 
 type instance BinaryProduct (->) x y = (x, y)
@@ -412,16 +410,16 @@ class Category (~>) => HasBinaryCoproducts (~>) where
   l +++ r = (inj1 (tgt l) (tgt r) . l) ||| (inj2 (tgt l) (tgt r) . r) where
     
 
-type instance ColimitFam Pair (~>) f = BinaryCoproduct (~>) (f :% P1) (f :% P2)
+type instance ColimitFam Pair (~>) f = BinaryCoproduct (~>) (f :% Z) (f :% S Z)
 
 instance HasBinaryCoproducts (~>) => HasColimits Pair (~>) where
   
   colimitUniv (Nat f _ _) = colimitUniversal
     (pairNat f (Const $ x +++ y) (Com $ inj1 x y) (Com $ inj2 x y))
-    (\c -> c ! P1 ||| c ! P2)
+    (\c -> c ! Z ||| c ! S Z)
     where
-      x = f % P1
-      y = f % P2
+      x = f % Z
+      y = f % S Z
 
 
 type instance BinaryCoproduct (->) x y = Either x y
