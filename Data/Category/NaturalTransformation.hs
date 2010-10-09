@@ -63,8 +63,9 @@ type Component f g z = Cod f (f :% z) (g :% z)
 newtype Com f g z = Com { unCom :: Component f g z }
 
 -- | 'n ! a' returns the component for the object @a@ of a natural transformation @n@.
-(!) :: (Cod f ~ d, Cod g ~ d) => Nat (~>) d f g -> Obj (~>) a -> d (f :% a) (g :% a)
-Nat _ _ n ! x = n x
+--   This can be generalized to any arrow (instead of just identity arrows).
+(!) :: (Category (~>), Category d, Cod f ~ d, Cod g ~ d) => Nat (~>) d f g -> a ~> b -> d (f :% a) (g :% b)
+Nat f _ n ! h = n (tgt h) . f % h -- or g % h . n (src h), or n h when h is an identity arrow
 
 
 -- | Horizontal composition of natural transformations.

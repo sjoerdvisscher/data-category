@@ -1,7 +1,7 @@
 {-# LANGUAGE TypeOperators, TypeFamilies, GADTs, Rank2Types #-}
 -----------------------------------------------------------------------------
 -- |
--- Module      :  Data.Category.Void
+-- Module      :  Data.Category.Monoidal
 -- Copyright   :  (c) Sjoerd Visscher 2010
 -- License     :  BSD-style (see the file LICENSE)
 --

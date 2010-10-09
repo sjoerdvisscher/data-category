@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeFamilies, MultiParamTypeClasses, GADTs, EmptyDataDecls, FlexibleInstances #-}
+{-# LANGUAGE TypeFamilies, GADTs, EmptyDataDecls, TypeOperators, ScopedTypeVariables, UndecidableInstances #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category.Boolean
@@ -18,6 +18,9 @@ module Data.Category.Boolean where
 import Prelude hiding ((.), id, Functor)
 
 import Data.Category
+import Data.Category.Functor
+import Data.Category.NaturalTransformation
+import Data.Category.Product
 import Data.Category.Limit
 
 
@@ -114,3 +117,19 @@ instance HasBinaryCoproducts Boolean where
   Tru ||| F2T = Tru
   Tru ||| Tru = Tru
   _   ||| _   = error "Other combinations should not type check"
+
+
+
+-- | A natural transformation @Nat c d@ is isomorphic to a functor from @c :**: 2@ to @d@.
+data NatAsFunctor f g = NatAsFunctor (Nat (Dom f) (Cod f) f g)
+type instance Dom (NatAsFunctor f g) = (Dom f) :**: Boolean
+type instance Cod (NatAsFunctor f g) = Cod f
+type instance NatAsFunctor f g :% (a, Fls) = f :% a
+type instance NatAsFunctor f g :% (a, Tru) = g :% a
+instance (Functor f, Functor g, Category c, Category d, Dom f ~ c, Cod f ~ d, Dom g ~ c, Cod g ~ d) => Functor (NatAsFunctor f g) where
+  NatAsFunctor n % (a :**: b) = natAsFunctor n a b
+    where
+      natAsFunctor :: Nat c d f g -> c a1 a2 -> Boolean b1 b2 -> d (NatAsFunctor f g :% (a1, b1)) (NatAsFunctor f g :% (a2, b2))
+      natAsFunctor (Nat f _ _) a Fls = f % a
+      natAsFunctor (Nat _ g _) a Tru = g % a
+      natAsFunctor n           a F2T = n ! a

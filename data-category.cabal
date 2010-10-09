@@ -9,6 +9,10 @@ description:         Data-category is a collection of categories, and some categ
                      The corresponding identity arrow of the object is used for that.
                      .
                      See the 'Monoid', 'Boolean' and 'Product' categories for some examples.
+                     .
+                     Note: Strictly speaking this package defines Hask-enriched categories, not ordinary categories (which are Set-enriched.)
+                     In practice this means we are allowed to ignore 'undefined' (f.e. when talking about uniqueness of morphisms),
+                     and we can treat the categories as normal categories.
 
 category:            Data
 license:             BSD3
