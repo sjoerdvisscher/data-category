@@ -64,13 +64,14 @@ newtype Com f g z = Com { unCom :: Component f g z }
 
 -- | 'n ! a' returns the component for the object @a@ of a natural transformation @n@.
 --   This can be generalized to any arrow (instead of just identity arrows).
-(!) :: (Category (~>), Category d, Cod f ~ d, Cod g ~ d) => Nat (~>) d f g -> a ~> b -> d (f :% a) (g :% b)
+(!) :: (Category c, Category d) => Nat c d f g -> c a b -> d (f :% a) (g :% b)
 Nat f _ n ! h = n (tgt h) . f % h -- or g % h . n (src h), or n h when h is an identity arrow
 
 
 -- | Horizontal composition of natural transformations.
-o :: Category e => Nat d e j k -> Nat c d f g -> Nat c e (j :.: f) (k :.: g)
-Nat j k njk `o` Nat f g nfg = Nat (j :.: f) (k :.: g) $ \x -> k % nfg x . njk (f % x)
+o :: (Category c, Category d, Category e) => Nat d e j k -> Nat c d f g -> Nat c e (j :.: f) (k :.: g)
+njk@(Nat j k _) `o` nfg@(Nat f g _) = Nat (j :.: f) (k :.: g) $ (njk !) . (nfg !)
+-- Nat j k njk `o` Nat f g nfg = Nat (j :.: f) (k :.: g) $ \x -> njk (g % x) . j % nfg x -- or k % nfg x . njk (f % x)
 
 -- | The identity natural transformation of a functor.
 natId :: Functor f => f -> Nat (Dom f) (Cod f) f f
