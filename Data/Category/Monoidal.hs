@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeOperators, TypeFamilies, GADTs, Rank2Types #-}
+{-# LANGUAGE TypeOperators, TypeFamilies, GADTs, Rank2Types, ScopedTypeVariables #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category.Monoidal
@@ -111,6 +111,12 @@ mkMonad f ret join = MonoidObject
 
 preludeMonad :: (M.Functor f, M.Monad f) => Monad (EndoHask f)
 preludeMonad = mkMonad EndoHask (\_ -> M.return) (\_ -> M.join)
+
+monadFunctor :: forall f. Monad f -> f
+monadFunctor m = f
+  where
+    u :: Nat (Dom f) (Dom f) (Id (Dom f)) f
+    u@(Nat _ f _) = unit m
 
 
 type Comonad f = ComonoidObject (FunctorCompose (Dom f)) f

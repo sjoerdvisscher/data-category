@@ -42,7 +42,7 @@ module Data.Category.Adjunction (
   
 ) where
   
-import Prelude (($), id, flip, undefined)
+import Prelude (($), id, flip)
 import Control.Monad.Instances ()
 
 import Data.Category
