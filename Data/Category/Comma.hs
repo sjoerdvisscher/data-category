@@ -21,7 +21,7 @@ import Data.Category.Functor
 
 data CommaO :: * -> * -> * -> * where
   CommaO :: (Cod t ~ (~>), Cod s ~ (~>))
-    => Obj (Dom t) a -> (t :% a ~> s :% b) -> Obj (Dom s) b -> CommaO t s (a, b)
+    => Obj (Dom t) a -> ((t :% a) ~> (s :% b)) -> Obj (Dom s) b -> CommaO t s (a, b)
     
 data (:/\:) :: * -> * -> * -> * -> * where 
   CommaA :: 
