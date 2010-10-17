@@ -22,7 +22,7 @@
 -----------------------------------------------------------------------------
 module Data.Category.Limit (
 
-  -- * Prelimiairies
+  -- * Preliminairies
   
   -- ** Diagonal Functor
     Diag(..)
@@ -67,11 +67,11 @@ module Data.Category.Limit (
   , BinaryProduct
   , HasBinaryProducts(..)
   , ProductFunctor(..)
-  , (:*:)
+  , (:*:)(..)
   , BinaryCoproduct
   , HasBinaryCoproducts(..)
   , CoproductFunctor(..)
-  , (:+:)
+  , (:+:)(..)
   
   -- ** Limits of type Hask
   , ForAll(..)
@@ -267,6 +267,15 @@ instance HasTerminalObject Cat where
   
   terminate (CatA _) = CatA $ Const Z
 
+-- | The constant functor to the terminal object is itself the terminal object in its functor category.
+instance (Category c, HasTerminalObject d) => HasTerminalObject (Nat c d) where
+  
+  type TerminalObject (Nat c d) = Const c d (TerminalObject d)
+  
+  terminalObject = natId $ Const terminalObject
+  
+  terminate (Nat f _ _) = Nat f (Const terminalObject) $ terminate . (f %)
+
 
 -- | An initial object is the colimit of the functor from /0/ to (~>).
 class Category (~>) => HasInitialObject (~>) where
@@ -287,9 +296,9 @@ instance HasInitialObject (~>) => HasColimits Void (~>) where
     (initialize . coconeVertex)
 
 
--- | Any empty data type is an initial object in Hask.
 data Zero
 
+-- | Any empty data type is an initial object in @Hask@.
 instance HasInitialObject (->) where
   
   type InitialObject (->) = Zero
@@ -299,6 +308,7 @@ instance HasInitialObject (->) where
   -- With thanks to Conor McBride
   initialize _ x = x `seq` error "we never get this far"
 
+-- | The empty category is the initial object in @Cat@.
 instance HasInitialObject Cat where
   
   type InitialObject Cat = CatW Void
@@ -306,6 +316,15 @@ instance HasInitialObject Cat where
   initialObject = CatA Id
   
   initialize (CatA _) = CatA Nil
+
+-- | The constant functor to the initial object is itself the initial object in its functor category.
+instance (Category c, HasInitialObject d) => HasInitialObject (Nat c d) where
+  
+  type InitialObject (Nat c d) = Const c d (InitialObject d)
+  
+  initialObject = natId $ Const initialObject
+  
+  initialize (Nat f _ _) = Nat (Const initialObject) f $ initialize . (f %)
 
 
 
