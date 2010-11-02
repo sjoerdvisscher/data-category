@@ -114,7 +114,7 @@ type instance Cod (Precompose f d) = Nat (Dom f) d
 type instance Precompose f d :% g = g :.: f
 
 instance (Functor f, Category d) => Functor (Precompose f d) where
-  Precompose f % (Nat g h n) = Nat (g :.: f) (h :.: f) $ n . (f %)
+  Precompose f % n = n `o` natId f
 
 
 -- | @Postcompose f c@ is the functor such that @Postcompose f c :% g = f :.: g@, 
@@ -127,7 +127,7 @@ type instance Cod (Postcompose f c) = Nat c (Cod f)
 type instance Postcompose f c :% g = f :.: g
 
 instance (Functor f, Category c) => Functor (Postcompose f c) where
-  Postcompose f % (Nat g h n) = Nat (f :.: g) (f :.: h) $ (f %) . n
+  Postcompose f % n = natId f `o` n
 
 
 -- | @Wrap f h@ is the functor such that @Wrap f h :% g = f :.: g :.: h@, 
@@ -139,7 +139,7 @@ type instance Cod (Wrap f h) = Nat (Dom h) (Cod f)
 type instance Wrap f h :% g = f :.: g :.: h
 
 instance (Functor f, Functor h) => Functor (Wrap f h) where
-  Wrap f h % (Nat g1 g2 n) = Nat (f :.: g1 :.: h) (f :.: g2 :.: h) $ (f %) . n . (h %)
+  Wrap f h % n = natId f `o` n `o` natId h
 
 
 -- | A functor F: Op(C) -> Set is representable if it is naturally isomorphic to the contravariant hom-functor.
