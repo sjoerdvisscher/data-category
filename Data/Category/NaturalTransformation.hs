@@ -29,6 +29,10 @@ module Data.Category.NaturalTransformation (
   , Postcompose(..)
   , Wrap(..)
   
+  -- ** Presheaves
+  , Presheaves
+  , Representable(..)
+  
   -- ** Yoneda
   , YonedaEmbedding(..)
   , Yoneda(..)
@@ -142,6 +146,8 @@ instance (Functor f, Functor h) => Functor (Wrap f h) where
   Wrap f h % n = natId f `o` n `o` natId h
 
 
+type Presheaves (~>) = Nat (Op (~>)) (->)
+
 -- | A functor F: Op(C) -> Set is representable if it is naturally isomorphic to the contravariant hom-functor.
 class Functor f => Representable f where
   type RepresentingObject f :: *
@@ -158,12 +164,12 @@ instance Category (~>) => Representable ((~>) :-*: x) where
 data YonedaEmbedding :: (* -> * -> *) -> * where
   YonedaEmbedding :: Category (~>) => YonedaEmbedding (~>)
   
-type instance Dom (YonedaEmbedding (~>)) = Op (~>)
-type instance Cod (YonedaEmbedding (~>)) = Nat (~>) (->)
-type instance YonedaEmbedding (~>) :% a = a :*-: (~>)
+type instance Dom (YonedaEmbedding (~>)) = (~>)
+type instance Cod (YonedaEmbedding (~>)) = Nat (Op (~>)) (->)
+type instance YonedaEmbedding (~>) :% a = (~>) :-*: a
 
 instance Category (~>) => Functor (YonedaEmbedding (~>)) where
-  YonedaEmbedding % (Op f) = Nat (HomX_ $ tgt f) (HomX_ $ src f) $ \_ -> (. f)
+  YonedaEmbedding % f = Nat (Hom_X $ src f) (Hom_X $ tgt f) $ \_ -> (f .)
 
 
 data Yoneda f = Yoneda

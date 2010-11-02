@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeOperators, TypeFamilies, GADTs, Rank2Types, ScopedTypeVariables, UndecidableInstances #-}
+{-# LANGUAGE TypeOperators, TypeFamilies, GADTs, Rank2Types, ScopedTypeVariables, UndecidableInstances, TypeSynonymInstances #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category.CartesianClosed
@@ -42,7 +42,7 @@ instance CartesianClosed (~>) => Functor (ExpFunctor (~>)) where
 
 type instance Exponential (->) y z = y -> z
 
-instance (CartesianClosed (->)) where
+instance CartesianClosed (->) where
   
   apply _ _ (f, y) = f y
   tuple _ _ z      = \y -> (z, y)
@@ -70,18 +70,36 @@ instance (Category y, Category z) => Functor (CatTuple y z) where
 
 type instance Exponential Cat (CatW c) (CatW d) = CatW (Nat c d)
 
-instance (CartesianClosed Cat) where
+instance CartesianClosed Cat where
   
   apply CatA{} CatA{}   = CatA CatApply
   tuple CatA{} CatA{}   = CatA CatTuple
   (CatA f) ^^^ (CatA h) = CatA (Wrap f h)
 
 
+data PShExponential ((~>) :: * -> * -> *) p q = PShExponential
+type instance Dom (PShExponential (~>) p q) = Op (~>)
+type instance Cod (PShExponential (~>) p q) = (->)
+type instance PShExponential (~>) p q :% a = Presheaves (~>) ((YonedaEmbedding (~>) :% a) :*: p) q
+instance (Category (~>), Dom p ~ Op (~>), Dom q ~ Op (~>), Cod p ~ (->), Cod q ~ (->), Functor p, Functor q)
+  => Functor (PShExponential (~>) p q) where
+  PShExponential % Op f = h f where
+    h :: a ~> b -> PShExponential (~>) p q :% b -> PShExponential (~>) p q :% a
+    h g (Nat (_ :*: p) q n) = Nat (Hom_X (src g) :*: p) q $ \i (i2a, pi) -> n i (g . i2a, pi)
 
+type instance Exponential (Presheaves (~>)) y z = PShExponential (~>) y z
+
+instance Category (~>) => CartesianClosed (Presheaves (~>)) where
+  
+  apply (Nat y _ _) (Nat z _ _) = Nat (PShExponential :*: y) z $ \(Op i) (n, yi) -> (n ! Op i) (i, yi)
+  tuple (Nat y _ _) (Nat z _ _) = Nat z PShExponential $ \(Op i) zi -> (Nat (Hom_X i) z $ \_ j2i -> (z % Op j2i) zi) *** natId y
+  zn@Nat{} ^^^ yn@Nat{} = Nat PShExponential PShExponential $ \(Op i) n -> zn . n . (natId (Hom_X i) *** yn)
+
+    
 data ProductWith (~>) y = ProductWith (Obj (~>) y)
 type instance Dom (ProductWith (~>) y) = (~>)
 type instance Cod (ProductWith (~>) y) = (~>)
-type instance ProductWith (~>) y :% z = ProductFunctor (~>) :% (z, y)
+type instance ProductWith (~>) y :% z = BinaryProduct (~>) z y
 instance HasBinaryProducts (~>) => Functor (ProductWith (~>) y) where
   ProductWith y % f = f *** y
   
@@ -117,3 +135,4 @@ contextComonadExtract s a = M.counit (adjunctionComonad $ curryAdj s) ! a
 
 contextComonadDuplicate :: CartesianClosed (~>) => Obj (~>) s -> Obj (~>) a -> Context (~>) s a ~> Context (~>) s (Context (~>) s a)
 contextComonadDuplicate s a = M.comultiply (adjunctionComonad $ curryAdj s) ! a
+
