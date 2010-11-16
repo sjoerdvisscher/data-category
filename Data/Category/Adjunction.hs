@@ -81,18 +81,22 @@ adjunctionTerminalProp adj@(Adjunction _ g _ coun) x = TerminalUniversal (g % x)
 
 
 
-initialPropAdjunction :: (Functor f, Functor g, Category c, Category d, Dom f ~ d, Cod f ~ c, Dom g ~ c, Cod g ~ d)
+initialPropAdjunction :: forall f g c d. (Functor f, Functor g, Category c, Category d, Dom f ~ d, Cod f ~ c, Dom g ~ c, Cod g ~ d)
   => f -> g -> (forall y. Obj d y -> InitialUniversal y g (f :% y)) -> Adjunction c d f g
 initialPropAdjunction f g univ = mkAdjunction f g un coun
   where
+    coun :: forall a. Obj c a -> c (f :% (g :% a)) a
     coun a = initialFactorizer (univ (g % a)) a (g % a)
+    un   :: forall a. Obj d a -> d a (g :% (f :% a))
     un   a = initialMorphism (univ a)
-    
-terminalPropAdjunction :: (Functor f, Functor g, Category c, Category d, Dom f ~ d, Cod f ~ c, Dom g ~ c, Cod g ~ d)
+   
+terminalPropAdjunction :: forall f g c d. (Functor f, Functor g, Category c, Category d, Dom f ~ d, Cod f ~ c, Dom g ~ c, Cod g ~ d)
   => f -> g -> (forall x. Obj c x -> TerminalUniversal x f (g :% x)) -> Adjunction c d f g
 terminalPropAdjunction f g univ = mkAdjunction f g un coun
   where
+    un   :: forall a. Obj d a -> d a (g :% (f :% a))
     un   a = terminalFactorizer (univ (f % a)) a (f % a)
+    coun :: forall a. Obj c a -> c (f :% (g :% a)) a
     coun a = terminalMorphism (univ a)
     
 

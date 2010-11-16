@@ -1,5 +1,5 @@
 name:                data-category
-version:             0.3.0.1
+version:             0.3.0.2
 synopsis:            Restricted categories
 
 description:         Data-category is a collection of categories, and some categorical constructions on them.
