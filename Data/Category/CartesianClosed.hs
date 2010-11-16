@@ -55,10 +55,7 @@ type instance Dom (CatApply y z) = Nat y z :**: y
 type instance Cod (CatApply y z) = z
 type instance CatApply y z :% (f, a) = f :% a
 instance (Category y, Category z) => Functor (CatApply y z) where
-  CatApply % (l :**: r) = catApply l r
-    where
-      catApply :: Nat y z f g -> y a b -> z (f :% a) (g :% b)
-      catApply n@Nat{} h = n ! h
+  CatApply % (l :**: r) = l ! r
 
 data CatTuple (y :: * -> * -> *) (z :: * -> * -> *) = CatTuple
 type instance Dom (CatTuple y z) = z
@@ -83,9 +80,7 @@ type instance Cod (PShExponential (~>) p q) = (->)
 type instance PShExponential (~>) p q :% a = Presheaves (~>) ((YonedaEmbedding (~>) :% a) :*: p) q
 instance (Category (~>), Dom p ~ Op (~>), Dom q ~ Op (~>), Cod p ~ (->), Cod q ~ (->), Functor p, Functor q)
   => Functor (PShExponential (~>) p q) where
-  PShExponential % Op f = h f where
-    h :: a ~> b -> PShExponential (~>) p q :% b -> PShExponential (~>) p q :% a
-    h g (Nat (_ :*: p) q n) = Nat (Hom_X (src g) :*: p) q $ \i (i2a, pi) -> n i (g . i2a, pi)
+  PShExponential % Op f = \(Nat (_ :*: p) q n) -> Nat (Hom_X (src f) :*: p) q $ \i (i2a, pi) -> n i (f . i2a, pi)
 
 type instance Exponential (Presheaves (~>)) y z = PShExponential (~>) y z
 

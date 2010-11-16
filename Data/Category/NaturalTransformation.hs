@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeOperators, TypeFamilies, MultiParamTypeClasses, ScopedTypeVariables, FlexibleInstances, FlexibleContexts, UndecidableInstances, RankNTypes, GADTs #-}
+{-# LANGUAGE TypeOperators, TypeFamilies, FlexibleInstances, FlexibleContexts, UndecidableInstances, RankNTypes, GADTs #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category.NaturalTransformation
@@ -177,10 +177,7 @@ type instance Dom (Yoneda f) = Dom f
 type instance Cod (Yoneda f) = (->)
 type instance Yoneda f :% a = Nat (Dom f) (->) (a :*-: Dom f) f
 instance Functor f => Functor (Yoneda f) where
-  Yoneda % g = h g
-    where
-      h :: Dom f a b -> Yoneda f :% a -> Yoneda f :% b
-      h ab (Nat _ f n) = Nat (HomX_ $ tgt ab) f $ \z bz -> n z (bz . ab)
+  Yoneda % ab = \(Nat _ f n) -> Nat (HomX_ $ tgt ab) f $ \z bz -> n z (bz . ab)
       
   
 fromYoneda :: (Functor f, Cod f ~ (->)) => f -> Nat (Dom f) (->) (Yoneda f) f

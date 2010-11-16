@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeFamilies, TypeOperators, GADTs, RankNTypes, EmptyDataDecls, ScopedTypeVariables, FlexibleContexts, FlexibleInstances, UndecidableInstances #-}
+{-# LANGUAGE TypeFamilies, TypeOperators, GADTs, RankNTypes, ScopedTypeVariables, FlexibleContexts, FlexibleInstances, UndecidableInstances #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category.Discrete

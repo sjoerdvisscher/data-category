@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeFamilies, GADTs, EmptyDataDecls, TypeOperators, ScopedTypeVariables, UndecidableInstances #-}
+{-# LANGUAGE TypeFamilies, GADTs, TypeOperators, ScopedTypeVariables, UndecidableInstances #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category.Boolean
@@ -127,9 +127,6 @@ type instance Cod (NatAsFunctor f g) = Cod f
 type instance NatAsFunctor f g :% (a, Fls) = f :% a
 type instance NatAsFunctor f g :% (a, Tru) = g :% a
 instance (Functor f, Functor g, Category c, Category d, Dom f ~ c, Cod f ~ d, Dom g ~ c, Cod g ~ d) => Functor (NatAsFunctor f g) where
-  NatAsFunctor n % (a :**: b) = natAsFunctor n a b
-    where
-      natAsFunctor :: Nat c d f g -> c a1 a2 -> Boolean b1 b2 -> d (NatAsFunctor f g :% (a1, b1)) (NatAsFunctor f g :% (a2, b2))
-      natAsFunctor (Nat f _ _) a Fls = f % a
-      natAsFunctor (Nat _ g _) a Tru = g % a
-      natAsFunctor n           a F2T = n ! a
+  NatAsFunctor (Nat f _ _) % (a :**: Fls) = f % a
+  NatAsFunctor (Nat _ g _) % (a :**: Tru) = g % a
+  NatAsFunctor n           % (a :**: F2T) = n ! a

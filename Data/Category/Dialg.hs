@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeOperators, TypeFamilies, GADTs, FlexibleInstances, FlexibleContexts #-}
+{-# LANGUAGE TypeOperators, TypeFamilies, GADTs, FlexibleInstances, FlexibleContexts, ViewPatterns #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category.Dialg
@@ -116,7 +116,5 @@ instance HasInitialObject (Dialg (NatF (->)) (DiagProd (->))) where
     
   initialObject = dialgId $ Dialgebra id (Z :**: S)
   
-  initialize a = DialgA (dialgebra initialObject) (dialgebra a) $ f undefined where
-    f :: ((->) :**: (->)) ((), t) (t, t) -> NatNum -> t
-    f (z :**: s) = primRec z s
+  initialize (dialgebra -> d@(Dialgebra _ (z :**: s))) = DialgA (dialgebra initialObject) d $ primRec z s
     

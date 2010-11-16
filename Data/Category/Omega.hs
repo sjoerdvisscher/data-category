@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeOperators, TypeFamilies, GADTs, EmptyDataDecls, FlexibleInstances #-}
+{-# LANGUAGE TypeOperators, TypeFamilies, GADTs, FlexibleInstances #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category.Omega
@@ -76,11 +76,11 @@ instance HasBinaryProducts Omega where
   proj2 (S a) (S b) = S $ proj2 a b
   proj2 _     _     = error "Other combinations should not type check"
   
-  Z   &&& _     = Z
-  _     &&& Z   = Z
+  Z     &&& _     = Z
+  _     &&& Z     = Z
   Z2S a &&& Z2S b = Z2S (a &&& b)
-  S a &&& S b = S (a &&& b)
-  _     &&& _      = error "Other combinations should not type check"
+  S a   &&& S b   = S (a &&& b)
+  _     &&& _     = error "Other combinations should not type check"
 
 
 type instance BinaryCoproduct Omega Z     n     = n
@@ -101,8 +101,8 @@ instance HasBinaryCoproducts Omega where
   inj2 (S a) (S b) = S $ inj2 a b
   inj2 _     _     = error "Other combinations should not type check"
   
-  Z   ||| Z   = Z
+  Z     ||| Z     = Z
   Z2S _ ||| a     = a
   a     ||| Z2S _ = a
-  S a ||| S b = S (a ||| b)
-  _     ||| _      = error "Other combinations should not type check"
+  S a   ||| S b   = S (a ||| b)
+  _     ||| _     = error "Other combinations should not type check"

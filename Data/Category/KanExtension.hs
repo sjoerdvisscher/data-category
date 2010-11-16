@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeOperators, TypeFamilies, EmptyDataDecls, FlexibleContexts, UndecidableInstances, GADTs, RankNTypes, ScopedTypeVariables #-}
+{-# LANGUAGE TypeOperators, TypeFamilies, FlexibleContexts, UndecidableInstances, GADTs, RankNTypes, ScopedTypeVariables #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category.KanExtension

@@ -117,19 +117,13 @@ instance Category AdjArrow where
 limitAdj :: forall j (~>). HasLimits j (~>) 
   => LimitFunctor j (~>) 
   -> Adjunction (Nat j (~>)) (~>) (Diag j (~>)) (LimitFunctor j (~>))
-limitAdj LimitFunctor = terminalPropAdjunction Diag LimitFunctor univ
-  where
-    univ :: Obj (Nat j (~>)) f -> TerminalUniversal f (Diag j (~>)) (LimitFam j (~>) f)
-    univ f@Nat{} = limitUniv f
+limitAdj LimitFunctor = terminalPropAdjunction Diag LimitFunctor (\f @ Nat{} -> limitUniv f)
 
 -- | The colimit functor is left adjoint to the diagonal functor.
 colimitAdj :: forall j (~>). HasColimits j (~>) 
   => ColimitFunctor j (~>) 
   -> Adjunction (~>) (Nat j (~>)) (ColimitFunctor j (~>)) (Diag j (~>))
-colimitAdj ColimitFunctor = initialPropAdjunction ColimitFunctor Diag univ
-  where
-    univ :: Obj (Nat j (~>)) f -> InitialUniversal f (Diag j (~>)) (ColimitFam j (~>) f)
-    univ f@Nat{} = colimitUniv f
+colimitAdj ColimitFunctor = initialPropAdjunction ColimitFunctor Diag (\f @ Nat{} -> colimitUniv f)
 
 
 adjunctionMonad :: Adjunction c d f g -> M.Monad (g :.: f)

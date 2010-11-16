@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeOperators, TypeFamilies, EmptyDataDecls, FlexibleContexts, UndecidableInstances, GADTs, RankNTypes #-}
+{-# LANGUAGE TypeOperators, TypeFamilies, FlexibleContexts, UndecidableInstances, GADTs, RankNTypes #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category.Functor

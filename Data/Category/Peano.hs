@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeOperators, TypeFamilies, GADTs, FlexibleInstances #-}
+{-# LANGUAGE TypeOperators, TypeFamilies, GADTs, FlexibleInstances, ViewPatterns #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category.Peano
@@ -54,6 +54,4 @@ instance HasInitialObject (Peano (->)) where
   
   initialObject = peanoId $ PeanoO Z S
   
-  initialize a = PeanoA (peanoO initialObject) o $ primRec z s
-    where
-      o@(PeanoO z s) = peanoO a
+  initialize (peanoO -> o@(PeanoO z s)) = PeanoA (peanoO initialObject) o $ primRec z s
