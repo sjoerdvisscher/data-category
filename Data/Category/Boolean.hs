@@ -22,6 +22,7 @@ import Data.Category.Functor
 import Data.Category.NaturalTransformation
 import Data.Category.Product
 import Data.Category.Limit
+import Data.Category.CartesianClosed
 
 
 data Fls
@@ -117,6 +118,36 @@ instance HasBinaryCoproducts Boolean where
   Tru ||| F2T = Tru
   Tru ||| Tru = Tru
   _   ||| _   = error "Other combinations should not type check"
+
+
+type instance Exponential Boolean Fls Fls = Tru
+type instance Exponential Boolean Fls Tru = Tru
+type instance Exponential Boolean Tru Fls = Fls
+type instance Exponential Boolean Tru Tru = Tru
+
+instance CartesianClosed Boolean where
+  
+  apply Fls Fls = Fls
+  apply Fls Tru = F2T
+  apply Tru Fls = Fls
+  apply Tru Tru = Tru
+  apply _   _   = error "Other combinations should not type check"
+  
+  tuple Fls Fls = F2T
+  tuple Fls Tru = Tru
+  tuple Tru Fls = Fls
+  tuple Tru Tru = Tru
+  tuple _   _   = error "Other combinations should not type check"
+  
+  Fls ^^^ Fls = Tru
+  Fls ^^^ F2T = F2T
+  Fls ^^^ Tru = Fls
+  F2T ^^^ Fls = Tru
+  F2T ^^^ F2T = F2T
+  F2T ^^^ Tru = F2T
+  Tru ^^^ Fls = Tru
+  Tru ^^^ F2T = Tru
+  Tru ^^^ Tru = Tru
 
 
 
