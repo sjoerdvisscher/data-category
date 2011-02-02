@@ -22,6 +22,7 @@ import Data.Category.Functor
 import Data.Category.NaturalTransformation
 import Data.Category.Product
 import Data.Category.Limit
+import Data.Category.Monoidal
 import Data.Category.CartesianClosed
 
 
@@ -149,6 +150,24 @@ instance CartesianClosed Boolean where
   Tru ^^^ F2T = Tru
   Tru ^^^ Tru = Tru
 
+
+trueProductMonoid :: MonoidObject (ProductFunctor Boolean) Tru
+trueProductMonoid = MonoidObject Tru Tru
+
+falseCoproductComonoid :: ComonoidObject (CoproductFunctor Boolean) Fls
+falseCoproductComonoid = ComonoidObject Fls Fls
+
+trueProductComonoid :: ComonoidObject (ProductFunctor Boolean) Tru
+trueProductComonoid = ComonoidObject Tru Tru
+
+falseCoproductMonoid :: MonoidObject (CoproductFunctor Boolean) Fls
+falseCoproductMonoid = MonoidObject Fls Fls
+
+trueCoproductMonoid :: MonoidObject (CoproductFunctor Boolean) Tru
+trueCoproductMonoid = MonoidObject F2T Tru
+
+falseProductComonoid :: ComonoidObject (ProductFunctor Boolean) Fls
+falseProductComonoid = ComonoidObject F2T Fls
 
 
 -- | A natural transformation @Nat c d@ is isomorphic to a functor from @c :**: 2@ to @d@.
