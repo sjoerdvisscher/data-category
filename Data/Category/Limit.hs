@@ -88,6 +88,7 @@ import Data.Category
 import Data.Category.Functor
 import Data.Category.NaturalTransformation
 import Data.Category.Product
+import Data.Category.Coproduct
 import Data.Category.Discrete
 
 infixl 3 ***
@@ -373,7 +374,6 @@ instance HasBinaryProducts Cat where
   CatA f1 &&& CatA f2 = CatA ((f1 :***: f2) :.: DiagProd)
   CatA f1 *** CatA f2 = CatA (f1 :***: f2)
 
-
 type instance BinaryProduct (c1 :**: c2) (x1, x2) (y1, y2) = (BinaryProduct c1 x1 y1, BinaryProduct c2 x2 y2)
 
 instance (HasBinaryProducts c1, HasBinaryProducts c2) => HasBinaryProducts (c1 :**: c2) where
@@ -449,8 +449,17 @@ instance HasBinaryCoproducts (->) where
   
   (|||) = (A.|||)
   (+++) = (A.+++)
+
+type instance BinaryCoproduct Cat (CatW c1) (CatW c2) = CatW (c1 :++: c2)
+
+instance HasBinaryCoproducts Cat where
   
+  inj1 (CatA _) (CatA _) = CatA Inj1
+  inj2 (CatA _) (CatA _) = CatA Inj2
   
+  CatA f1 ||| CatA f2 = CatA (CodiagCoprod :.: (f1 :+++: f2))
+  CatA f1 +++ CatA f2 = CatA (f1 :+++: f2)
+
 type instance BinaryCoproduct (c1 :**: c2) (x1, x2) (y1, y2) = (BinaryCoproduct c1 x1 y1, BinaryCoproduct c2 x2 y2)
 
 instance (HasBinaryCoproducts c1, HasBinaryCoproducts c2) => HasBinaryCoproducts (c1 :**: c2) where
