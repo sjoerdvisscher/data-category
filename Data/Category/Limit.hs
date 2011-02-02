@@ -276,6 +276,16 @@ instance (Category c, HasTerminalObject d) => HasTerminalObject (Nat c d) where
   
   terminate (Nat f _ _) = Nat f (Const terminalObject) $ terminate . (f %)
 
+-- | The terminal object of the product of 2 categories is the product of their terminal objects.
+instance (HasTerminalObject c1, HasTerminalObject c2) => HasTerminalObject (c1 :**: c2) where
+  
+  type TerminalObject (c1 :**: c2) = (TerminalObject c1, TerminalObject c2)
+  
+  terminalObject = terminalObject :**: terminalObject
+  
+  terminate (a1 :**: a2) = terminate a1 :**: terminate a2
+  
+  
 
 -- | An initial object is the colimit of the functor from /0/ to (~>).
 class Category (~>) => HasInitialObject (~>) where
@@ -325,6 +335,15 @@ instance (Category c, HasInitialObject d) => HasInitialObject (Nat c d) where
   initialObject = natId $ Const initialObject
   
   initialize (Nat f _ _) = Nat (Const initialObject) f $ initialize . (f %)
+
+-- | The initial object of the product of 2 categories is the product of their initial objects.
+instance (HasInitialObject c1, HasInitialObject c2) => HasInitialObject (c1 :**: c2) where
+  
+  type InitialObject (c1 :**: c2) = (InitialObject c1, InitialObject c2)
+  
+  initialObject = initialObject :**: initialObject
+  
+  initialize (a1 :**: a2) = initialize a1 :**: initialize a2
 
 
 
