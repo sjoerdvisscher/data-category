@@ -18,6 +18,7 @@ import Prelude hiding ((.), id, Functor, product)
 
 import Data.Category
 import Data.Category.Limit
+import Data.Category.Monoidal
 
 
 data Z
@@ -87,7 +88,7 @@ type instance BinaryCoproduct Omega Z     n     = n
 type instance BinaryCoproduct Omega n     Z     = n
 type instance BinaryCoproduct Omega (S a) (S b) = S (BinaryCoproduct Omega a b)
 
--- -- The coproduct in omega is the maximum.
+-- The coproduct in omega is the maximum.
 instance HasBinaryCoproducts Omega where 
   
   inj1 Z     Z     = Z
@@ -106,3 +107,12 @@ instance HasBinaryCoproducts Omega where
   a     ||| Z2S _ = a
   S a   ||| S b   = S (a ||| b)
   _     ||| _     = error "Other combinations should not type check"
+
+
+-- Zero is a monoid object wrt the maximum.
+zeroMonoid :: MonoidObject (CoproductFunctor Omega) Z
+zeroMonoid = MonoidObject Z Z
+
+-- Zero is also a comonoid object wrt the maximum.
+zeroComonoid :: ComonoidObject (CoproductFunctor Omega) Z
+zeroComonoid = ComonoidObject Z Z
