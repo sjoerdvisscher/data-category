@@ -11,35 +11,37 @@
 -----------------------------------------------------------------------------
 module Data.Category.Monoidal where
 
-import Prelude (($))
+import Prelude (($), uncurry)
 import qualified Control.Monad as M
+import qualified Data.Monoid as M
 
 import Data.Category
 import Data.Category.Functor
 import Data.Category.NaturalTransformation
+import Data.Category.Product
 import Data.Category.Limit
 
 
 class Functor f => HasUnit f where
   
   type Unit f :: *
-  unitObject :: Obj (Cod f) (Unit f)
+  unitObject :: f -> Obj (Cod f) (Unit f)
 
 
 instance (HasTerminalObject (~>), HasBinaryProducts (~>)) => HasUnit (ProductFunctor (~>)) where
   
   type Unit (ProductFunctor (~>)) = TerminalObject (~>)
-  unitObject = terminalObject
+  unitObject _ = terminalObject
 
 instance (HasInitialObject (~>), HasBinaryCoproducts (~>)) => HasUnit (CoproductFunctor (~>)) where
   
   type Unit (CoproductFunctor (~>)) = InitialObject (~>)
-  unitObject = initialObject
+  unitObject _ = initialObject
 
 instance Category (~>) => HasUnit (FunctorCompose (~>)) where
   
   type Unit (FunctorCompose (~>)) = Id (~>)
-  unitObject = natId Id
+  unitObject _ = natId Id
   
 
 
@@ -95,6 +97,23 @@ data ComonoidObject f a = ComonoidObject
   { counit     :: (Cod f ~ (~>)) => a ~> Unit f
   , comultiply :: (Cod f ~ (~>)) => a ~> (f :% (a, a))
   }
+
+
+preludeMonoid :: M.Monoid m => MonoidObject (ProductFunctor (->)) m
+preludeMonoid = MonoidObject M.mempty (uncurry M.mappend)
+
+
+data MonoidAsCategory f m a b where
+  MonoidValue :: (TensorProduct f , Dom f ~ ((~>) :**: (~>)), Cod f ~ (~>))
+              => f -> MonoidObject f m -> Unit f ~> m -> MonoidAsCategory f m m m
+
+instance Category (MonoidAsCategory f m) where
+  
+  src (MonoidValue f m _) = MonoidValue f m $ unit m
+  tgt (MonoidValue f m _) = MonoidValue f m $ unit m
+  
+  MonoidValue f m a . MonoidValue _ _ b = MonoidValue f m $ multiply m . f % (a :**: b) . leftUnitorInv f (unitObject f)
+
 
 
 type Monad f = MonoidObject (FunctorCompose (Dom f)) f
