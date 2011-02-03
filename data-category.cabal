@@ -1,5 +1,5 @@
 name:                data-category
-version:             0.3.1
+version:             0.3.1.1
 synopsis:            Restricted categories
 
 description:         Data-category is a collection of categories, and some categorical constructions on them.
@@ -24,7 +24,7 @@ homepage:            http://github.com/sjoerdvisscher/data-category
 bug-reports:         http://github.com/sjoerdvisscher/data-category/issues
 
 build-type:          Simple
-cabal-version:       >= 1.6
+cabal-version:       >= 1.10
 
 Library
   exposed-modules:     
@@ -47,7 +47,7 @@ Library
     Data.Category.Comma
     
   build-depends:       base >= 3 && < 5
-  
+  default-language:    Haskell2010
 
 source-repository head
   type:     git
