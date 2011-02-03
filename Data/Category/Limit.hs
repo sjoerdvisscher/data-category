@@ -361,16 +361,25 @@ class Category (~>) => HasBinaryProducts (~>) where
   l *** r = (l . proj1 (src l) (src r)) &&& (r . proj2 (src l) (src r)) where
 
 
-type instance LimitFam Pair (~>) f = BinaryProduct (~>) (f :% Z) (f :% S Z)
+type instance LimitFam (Discrete (S n)) (~>) f = BinaryProduct (~>) (f :% Z) (LimitFam (Discrete n) (~>) (Next f))
 
-instance HasBinaryProducts (~>) => HasLimits Pair (~>) where
-
-  limitUniv (Nat f _ _) = limitUniversal
-    (pairNat (Const $ x *** y) f (Com $ proj1 x y) (Com $ proj2 x y))
-    (\c -> c ! Z &&& c ! S Z)
+instance (HasLimits (Discrete n) (~>), HasBinaryProducts (~>)) => HasLimits (Discrete (S n)) (~>) where
+  
+  limitUniv (Nat l _ _) = limitUniv' l
     where
-      x = f % Z
-      y = f % S Z
+      limitUniv' :: forall f. (Functor f, Dom f ~ Discrete (S n), Cod f ~ (~>), HasLimits (Discrete n) (~>), HasBinaryProducts (~>)) 
+                 => f -> LimitUniversal f
+      limitUniv' f = limitUniversal
+        (Nat (Const $ x *** y) f (\z -> unCom $ h z))
+        (\c -> c ! Z &&& limitFactorizer luNext (Nat (Const $ coneVertex c) (Next f) $ \n -> c ! S n))
+        where
+          x = f % Z
+          y = coneVertex limNext
+          limNext = limit luNext
+          luNext = limitUniv (natId (Next f))
+          h :: Obj (Discrete (S n)) z -> Com (ConstF f (LimitFam (Discrete (S n)) (~>) f)) f z
+          h Z     = Com $               proj1 x y
+          h (S n) = Com $ limNext ! n . proj2 x y
 
 
 type instance BinaryProduct (->) x y = (x, y)
@@ -447,16 +456,25 @@ class Category (~>) => HasBinaryCoproducts (~>) where
   l +++ r = (inj1 (tgt l) (tgt r) . l) ||| (inj2 (tgt l) (tgt r) . r) where
     
 
-type instance ColimitFam Pair (~>) f = BinaryCoproduct (~>) (f :% Z) (f :% S Z)
+type instance ColimitFam (Discrete (S n)) (~>) f = BinaryCoproduct (~>) (f :% Z) (ColimitFam (Discrete n) (~>) (Next f))
 
-instance HasBinaryCoproducts (~>) => HasColimits Pair (~>) where
+instance (HasColimits (Discrete n) (~>), HasBinaryCoproducts (~>)) => HasColimits (Discrete (S n)) (~>) where
   
-  colimitUniv (Nat f _ _) = colimitUniversal
-    (pairNat f (Const $ x +++ y) (Com $ inj1 x y) (Com $ inj2 x y))
-    (\c -> c ! Z ||| c ! S Z)
+  colimitUniv (Nat l _ _) = colimitUniv' l
     where
-      x = f % Z
-      y = f % S Z
+      colimitUniv' :: forall f. (Functor f, Dom f ~ Discrete (S n), Cod f ~ (~>), HasColimits (Discrete n) (~>), HasBinaryCoproducts (~>)) 
+                   => f -> ColimitUniversal f
+      colimitUniv' f = colimitUniversal
+        (Nat f (Const $ x +++ y) (\z -> unCom $ h z))
+        (\c -> c ! Z ||| colimitFactorizer cluNext (Nat (Next f) (Const $ coconeVertex c) $ \n -> c ! S n))
+        where
+          x = f % Z
+          y = coconeVertex colNext
+          colNext = colimit cluNext
+          cluNext = colimitUniv (natId (Next f))
+          h :: Obj (Discrete (S n)) z -> Com f (ConstF f (ColimitFam (Discrete (S n)) (~>) f)) z
+          h Z     = Com $ inj1 x y
+          h (S n) = Com $ inj2 x y . colNext ! n
 
 
 type instance BinaryCoproduct (->) x y = Either x y
@@ -516,7 +534,6 @@ instance (Category c, HasBinaryCoproducts d) => HasBinaryCoproducts (Nat c d) wh
   
   Nat f a fa ||| Nat g _ ga = Nat (f :+: g) a $ \z -> fa z ||| ga z
   Nat f1 f2 f +++ Nat g1 g2 g = Nat (f1 :+: g1) (f2 :+: g2) $ \z -> f z +++ g z
-
 
 
 newtype ForAll f = ForAll { unForAll :: forall a. f a }

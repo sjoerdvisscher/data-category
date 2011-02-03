@@ -20,16 +20,12 @@ module Data.Category.Discrete (
   , Unit
   , Pair
   
-  -- * Diagrams
+  -- * Functors
+  , Next(..)
   , DiscreteDiagram(..)
-  , PairDiagram
-  , arrowPair
     
   -- * Natural Transformations
-  , discreteNat
-  , ComList(..)
   , voidNat
-  , pairNat
     
 ) where
 
@@ -121,41 +117,6 @@ instance (Category (~>), Category (Discrete n), Functor (DiscreteDiagram (~>) n 
   (_ ::: xs) % S n = xs % n
 
 
-infixr 7 ::::
-
-data ComList f g n z where
-  ComNil :: ComList f g Z z
-  (::::) :: Com f g z -> ComList f g n (S z) -> ComList f g (S n) z
-
-class DiscreteNat n where
-  discreteNat :: (Functor f, Functor g, Category d, Dom f ~ Discrete n, Dom g ~ Discrete n, Cod f ~ d, Cod g ~ d)
-    => f -> g -> ComList f g n Z -> Nat (Discrete n) d f g
-  shiftComList :: ComList f g n (S z) -> ComList (Next f) (Next g) n z
-  
-instance DiscreteNat Z where
-  discreteNat f g ComNil = Nat f g magicZ
-  shiftComList ComNil = ComNil
-
-instance (Category (Discrete n), DiscreteNat n) => DiscreteNat (S n) where
-  discreteNat f g comlist = Nat f g (\x -> unCom $ h f g comlist x) where
-    h :: (Functor f, Functor g, Category d, Dom f ~ Discrete (S n), Dom g ~ Discrete (S n), Cod f ~ d, Cod g ~ d)
-      => f -> g -> ComList f g (S n) Z -> Obj (Discrete (S n)) a -> Com f g a
-    h _  _  (c :::: _ ) Z     = c
-    h f' g' (_ :::: cs) (S n) = Com $ (discreteNat (Next f') (Next g') (shiftComList cs)) ! n
-  shiftComList (Com c :::: cs) = Com c :::: shiftComList cs
-
 voidNat :: (Functor f, Functor g, Category d, Dom f ~ Void, Dom g ~ Void, Cod f ~ d, Cod g ~ d)
   => f -> g -> Nat Void d f g
-voidNat f g       = discreteNat f g ComNil
-
-pairNat :: (Functor f, Functor g, Category d, Dom f ~ Pair, Cod f ~ d, Dom g ~ Pair, Cod g ~ d) 
-  => f -> g -> Com f g Z -> Com f g (S Z) -> Nat Pair d f g
-pairNat f g c1 c2 = discreteNat f g (c1 :::: c2 :::: ComNil)
-
-
--- | The functor from @Pair@ to @(~>)@, a diagram of 2 objects in @(~>)@. 
-type PairDiagram (~>) x y = DiscreteDiagram (~>) (S (S Z)) (x, (y, ()))
-
-arrowPair :: Category (~>) => (x1 ~> x2) -> (y1 ~> y2) -> Nat Pair (~>) (PairDiagram (~>) x1 y1) (PairDiagram (~>) x2 y2)
-arrowPair l r = pairNat (src l ::: src r ::: Nil) (tgt l ::: tgt r ::: Nil) (Com l) (Com r)
-
+voidNat f g = Nat f g magicZ
