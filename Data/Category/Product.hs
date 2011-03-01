@@ -74,3 +74,9 @@ type instance Tuple2 c1 c2 a2 :% a1 = (a1, a2)
 instance (Category c1, Category c2) => Functor (Tuple2 c1 c2 a2) where
   Tuple2 a % f = f :**: a
 
+data Hom ((~>) :: * -> * -> *) = Hom  
+type instance Dom (Hom (~>)) = Op (~>) :**: (~>)
+type instance Cod (Hom (~>)) = (->)
+type instance (Hom (~>)) :% (a1, a2) = a1 ~> a2
+instance Category (~>) => Functor (Hom (~>)) where 
+  Hom % (Op f1 :**: f2) = \g -> f2 . g . f1

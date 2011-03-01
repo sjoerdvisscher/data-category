@@ -114,6 +114,9 @@ curry x y _ = leftAdjunct (curryAdj y) x
 uncurry :: CartesianClosed (~>) => Obj (~>) x -> Obj (~>) y -> Obj (~>) z -> x ~> (ExponentialWith (~>) y :% z) -> (ProductWith (~>) y :% x) ~> z
 uncurry _ y z = rightAdjunct (curryAdj y) z
 
+-- The Yoneda emedding is just the Hom functor in curried form.
+yonedaEmbedding :: Category (~>) => Cat (CatW (Op (~>))) (CatW (Nat (~>) (->)))
+yonedaEmbedding = curry (CatA Id) (CatA Id) (CatA Id) (CatA Hom)
 
 type State (~>) s a = ExponentialWith (~>) s :% ProductWith (~>) s :% a
 
