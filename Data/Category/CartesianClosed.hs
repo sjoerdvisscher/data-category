@@ -19,7 +19,7 @@ import Data.Category.NaturalTransformation
 import Data.Category.Product
 import Data.Category.Limit
 import Data.Category.Adjunction
-import qualified Data.Category.Monoidal as M
+import Data.Category.Monoidal as M
 
 
 type family Exponential (~>) y z :: *
@@ -74,10 +74,12 @@ instance CartesianClosed Cat where
   (CatA f) ^^^ (CatA h) = CatA (Wrap f h)
 
 
+type Presheaves (~>) = Nat (Op (~>)) (->)
+
 data PShExponential ((~>) :: * -> * -> *) p q = PShExponential
 type instance Dom (PShExponential (~>) p q) = Op (~>)
 type instance Cod (PShExponential (~>) p q) = (->)
-type instance PShExponential (~>) p q :% a = Presheaves (~>) ((YonedaEmbedding (~>) :% a) :*: p) q
+type instance PShExponential (~>) p q :% a = Presheaves (~>) (((~>) :-*: a) :*: p) q
 instance (Category (~>), Dom p ~ Op (~>), Dom q ~ Op (~>), Cod p ~ (->), Cod q ~ (->), Functor p, Functor q)
   => Functor (PShExponential (~>) p q) where
   PShExponential % Op f = \(Nat (_ :*: p) q n) -> Nat (Hom_X (src f) :*: p) q $ \i (i2a, pi) -> n i (f . i2a, pi)

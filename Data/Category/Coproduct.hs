@@ -24,7 +24,7 @@ data (:++:) :: (* -> * -> *) -> (* -> * -> *) -> * -> * -> * where
   I1 :: c1 a1 b1 -> (:++:) c1 c2 (I1 a1) (I1 b1)
   I2 :: c2 a2 b2 -> (:++:) c1 c2 (I2 a2) (I2 b2)
 
--- | The product category of category @c1@ and @c2@.
+-- | The coproduct category of category @c1@ and @c2@.
 instance (Category c1, Category c2) => Category (c1 :++: c2) where
   
   src (I1 a)      = I1 (src a)

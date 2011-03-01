@@ -25,7 +25,7 @@ module Data.Category.Adjunction (
   , initialPropAdjunction
   , terminalPropAdjunction
   
-  -- * Adjunctions to universal morphisms
+  -- * Universal morphisms from adjunctions
   , adjunctionInitialProp
   , adjunctionTerminalProp
   

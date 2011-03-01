@@ -19,8 +19,8 @@ import Data.Monoid
 import Data.Category
 import Data.Category.Functor
 import Data.Category.NaturalTransformation
-import Data.Category.Adjunction (Adjunction, mkAdjunction, adjunctionMonad, adjunctionComonad, leftAdjunct, rightAdjunct)
-import Data.Category.Monoidal
+import Data.Category.Adjunction
+import Data.Category.Monoidal as M
 
 -- | The arrows are the values of the monoid.
 data MonoidA m a b where
@@ -71,13 +71,13 @@ foldMap :: Monoid m => (a -> m) -> [a] -> m
 foldMap = unMonoidMorphism . rightAdjunct freeMonoidAdj (MonoidMorphism id)
 
 listMonadReturn :: a -> [a]
-listMonadReturn = unit (adjunctionMonad freeMonoidAdj) ! id
+listMonadReturn = M.unit (adjunctionMonad freeMonoidAdj) ! id
 
 listMonadJoin :: [[a]] -> [a]
-listMonadJoin = multiply (adjunctionMonad freeMonoidAdj) ! id
+listMonadJoin = M.multiply (adjunctionMonad freeMonoidAdj) ! id
 
 listComonadExtract :: Monoid m => [m] -> m
-listComonadExtract = let MonoidMorphism f = counit (adjunctionComonad freeMonoidAdj) ! MonoidMorphism id in f
+listComonadExtract = let MonoidMorphism f = M.counit (adjunctionComonad freeMonoidAdj) ! MonoidMorphism id in f
 
 listComonadDuplicate :: Monoid m => [m] -> [[m]]
-listComonadDuplicate = let MonoidMorphism f = comultiply (adjunctionComonad freeMonoidAdj) ! MonoidMorphism id in f
+listComonadDuplicate = let MonoidMorphism f = M.comultiply (adjunctionComonad freeMonoidAdj) ! MonoidMorphism id in f

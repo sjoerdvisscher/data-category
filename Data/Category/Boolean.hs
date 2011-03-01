@@ -172,7 +172,7 @@ falseProductComonoid = ComonoidObject F2T Fls
 
 -- | A natural transformation @Nat c d@ is isomorphic to a functor from @c :**: 2@ to @d@.
 data NatAsFunctor f g = NatAsFunctor (Nat (Dom f) (Cod f) f g)
-type instance Dom (NatAsFunctor f g) = (Dom f) :**: Boolean
+type instance Dom (NatAsFunctor f g) = Dom f :**: Boolean
 type instance Cod (NatAsFunctor f g) = Cod f
 type instance NatAsFunctor f g :% (a, Fls) = f :% a
 type instance NatAsFunctor f g :% (a, Tru) = g :% a
