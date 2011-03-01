@@ -18,6 +18,9 @@ module Data.Category.Adjunction (
   , leftAdjunct
   , rightAdjunct
   
+  -- * Adjunctions as a category
+  , AdjArrow(..)
+  
   -- * Adjunctions from universal morphisms
   , initialPropAdjunction
   , terminalPropAdjunction
@@ -25,17 +28,6 @@ module Data.Category.Adjunction (
   -- * Adjunctions to universal morphisms
   , adjunctionInitialProp
   , adjunctionTerminalProp
-  
-  -- * Adjunctions as a category
-  , AdjArrow(..)
-  
-  -- * (Co)limitfunctor adjunction
-  , limitAdj
-  , colimitAdj
-  
-  -- * (Co)monad of an adjunction
-  , adjunctionMonad
-  , adjunctionComonad
   
   -- * Examples
   , contAdj
@@ -48,8 +40,6 @@ import Control.Monad.Instances ()
 import Data.Category
 import Data.Category.Functor
 import Data.Category.NaturalTransformation
-import Data.Category.Limit
-import qualified Data.Category.Monoidal as M
 
 data Adjunction c d f g = (Functor f, Functor g, Category c, Category d, Dom f ~ d, Cod f ~ c, Dom g ~ c, Cod g ~ d)
   => Adjunction
@@ -73,11 +63,11 @@ rightAdjunct (Adjunction f _ _ coun) i h = (coun ! i) . (f % h)
 
 -- Each pair (FY, unit_Y) is an initial morphism from Y to G.
 adjunctionInitialProp :: Adjunction c d f g -> Obj d y -> InitialUniversal y g (f :% y)
-adjunctionInitialProp adj@(Adjunction f _ un _) y = InitialUniversal (f % y) (un ! y) (rightAdjunct adj)
+adjunctionInitialProp adj@(Adjunction f g un _) y = initialUniversal g (f % y) (un ! y) (rightAdjunct adj)
 
 -- Each pair (GX, counit_X) is a terminal morphism from F to X.
 adjunctionTerminalProp :: Adjunction c d f g -> Obj c x -> TerminalUniversal x f (g :% x)
-adjunctionTerminalProp adj@(Adjunction _ g _ coun) x = TerminalUniversal (g % x) (coun ! x) (leftAdjunct adj)
+adjunctionTerminalProp adj@(Adjunction f g _ coun) x = terminalUniversal f (g % x) (coun ! x) (leftAdjunct adj)
 
 
 
@@ -86,18 +76,18 @@ initialPropAdjunction :: forall f g c d. (Functor f, Functor g, Category c, Cate
 initialPropAdjunction f g univ = mkAdjunction f g un coun
   where
     coun :: forall a. Obj c a -> c (f :% (g :% a)) a
-    coun a = initialFactorizer (univ (g % a)) a (g % a)
+    coun a = represent (univ (g % a)) a (g % a)
     un   :: forall a. Obj d a -> d a (g :% (f :% a))
-    un   a = initialMorphism (univ a)
+    un   a = universalElement (univ a)
    
 terminalPropAdjunction :: forall f g c d. (Functor f, Functor g, Category c, Category d, Dom f ~ d, Cod f ~ c, Dom g ~ c, Cod g ~ d)
   => f -> g -> (forall x. Obj c x -> TerminalUniversal x f (g :% x)) -> Adjunction c d f g
 terminalPropAdjunction f g univ = mkAdjunction f g un coun
   where
     un   :: forall a. Obj d a -> d a (g :% (f :% a))
-    un   a = terminalFactorizer (univ (f % a)) a (f % a)
+    un   a = unOp $ represent (univ (f % a)) (Op a) (f % a)
     coun :: forall a. Obj c a -> c (f :% (g :% a)) a
-    coun a = terminalMorphism (univ a)
+    coun a = universalElement (univ a)
     
 
 data AdjArrow c d where
@@ -111,26 +101,6 @@ instance Category AdjArrow where
   
   AdjArrow (Adjunction f g u c) . AdjArrow (Adjunction f' g' u' c') = AdjArrow $ 
     mkAdjunction (f' :.: f) (g :.: g') (\i -> ((Wrap g f % u') ! i) . (u ! i)) (\i -> (c' ! i) . ((Wrap f' g' % c) ! i))
-
-
--- | The limit functor is right adjoint to the diagonal functor.
-limitAdj :: forall j (~>). HasLimits j (~>) 
-  => LimitFunctor j (~>) 
-  -> Adjunction (Nat j (~>)) (~>) (Diag j (~>)) (LimitFunctor j (~>))
-limitAdj LimitFunctor = terminalPropAdjunction Diag LimitFunctor (\f @ Nat{} -> limitUniv f)
-
--- | The colimit functor is left adjoint to the diagonal functor.
-colimitAdj :: forall j (~>). HasColimits j (~>) 
-  => ColimitFunctor j (~>) 
-  -> Adjunction (~>) (Nat j (~>)) (ColimitFunctor j (~>)) (Diag j (~>))
-colimitAdj ColimitFunctor = initialPropAdjunction ColimitFunctor Diag (\f @ Nat{} -> colimitUniv f)
-
-
-adjunctionMonad :: Adjunction c d f g -> M.Monad (g :.: f)
-adjunctionMonad (Adjunction f g un coun) = M.mkMonad (g :.: f) (un !) ((Wrap g f % coun) !)
-
-adjunctionComonad :: Adjunction c d f g -> M.Comonad (f :.: g)
-adjunctionComonad (Adjunction f g un coun) = M.mkComonad (f :.: g) (coun !) ((Wrap f g % un) !)
 
 
 

@@ -36,26 +36,16 @@ module Data.Category.Limit (
   -- * Limits
   , LimitFam
   , Limit
-  , LimitUniversal
-  , limitUniversal
-  , limit
-  , limitFactorizer
+  , HasLimits(..)
+  , LimitFunctor(..)
+  , limitAdj
   
   -- * Colimits
   , ColimitFam
   , Colimit
-  , ColimitUniversal
-  , colimitUniversal
-  , colimit
-  , colimitFactorizer
-  
-  -- * Limits of a certain type
-  , HasLimits(..)
   , HasColimits(..)
-  
-  -- ** As a functor
-  , LimitFunctor(..)
   , ColimitFunctor(..)
+  , colimitAdj
   
   -- ** Limits of type Void
   , HasTerminalObject(..)
@@ -72,21 +62,20 @@ module Data.Category.Limit (
   , CoproductFunctor(..)
   , (:+:)(..)
   
-  -- ** Limits of type Hask
-  , ForAll(..)
-  , endoHaskLimit
-  , Exists(..)
-  , endoHaskColimit
+  -- -- ** Limits of type Hask
+  -- , ForAll(..)
+  -- , Exists(..)
   
 ) where
 
 import Prelude hiding ((.), Functor, product)
-import qualified Prelude (Functor)
 import qualified Control.Arrow as A ((&&&), (***), (|||), (+++))
 
 import Data.Category
 import Data.Category.Functor
 import Data.Category.NaturalTransformation
+import Data.Category.Adjunction
+
 import Data.Category.Product
 import Data.Category.Coproduct
 import Data.Category.Discrete
@@ -135,27 +124,27 @@ type family LimitFam j (~>) f :: *
 
 type Limit f = LimitFam (Dom f) (Cod f) f
 
--- | A limit of @f@ is a universal morphism from the diagonal functor to @f@.
-type LimitUniversal f = TerminalUniversal f (DiagF f) (Limit f)
+-- | An instance of @HasLimits j (~>)@ says that @(~>)@ has all limits of type @j@.
+class (Category j, Category (~>)) => HasLimits j (~>) where
+  limit           :: Obj (Nat j (~>)) f -> Cone f (Limit f)
+  limitFactorizer :: Obj (Nat j (~>)) f -> (forall n. Cone f n -> n ~> Limit f)
 
--- | @limitUniversal@ is a helper function to create the universal property from the limit and the limit factorizer.
-limitUniversal :: (Cod f ~ (~>)) 
-  => Cone f (Limit f)
-  -> (forall n. Cone f n -> n ~> Limit f)
-  -> LimitUniversal f
-limitUniversal l lf = TerminalUniversal
-  { tuObject           = coneVertex l
-  , terminalMorphism   = l
-  , terminalFactorizer = const lf
-  }
+-- | If every diagram of type @j@ has a limit in @(~>)@ there exists a limit functor.
+--
+--   Applied to a natural transformation it is a generalisation of @(***)@:
+--
+--   @l@ '***' @r =@ 'LimitFunctor' '%' 'arrowPair' @l r@
+data LimitFunctor (j :: * -> * -> *) ((~>)  :: * -> * -> *) = LimitFunctor
+type instance Dom (LimitFunctor j (~>)) = Nat j (~>)
+type instance Cod (LimitFunctor j (~>)) = (~>)
+type instance LimitFunctor j (~>) :% f = LimitFam j (~>) f
+instance HasLimits j (~>) => Functor (LimitFunctor j (~>)) where
+  LimitFunctor % n @ Nat{}  = limitFactorizer (tgt n) (n . limit (src n))
 
--- | A limit of the diagram @f@ is a cone of @f@.
-limit :: LimitUniversal f -> Cone f (Limit f)
-limit = terminalMorphism
-
--- | For any other cone of @f@ with vertex @n@ there exists a unique morphism from @n@ to the limit of @f@.
-limitFactorizer :: (Cod f ~ (~>)) => LimitUniversal f -> (forall n. Cone f n -> n ~> Limit f)
-limitFactorizer lu c = terminalFactorizer lu (coneVertex c) c
+-- | The limit functor is right adjoint to the diagonal functor.
+limitAdj :: HasLimits j (~>) => Adjunction (Nat j (~>)) (~>) (Diag j (~>)) (LimitFunctor j (~>))
+limitAdj = mkAdjunction diag LimitFunctor (\a -> limitFactorizer (diag % a) (diag % a)) (\f @ Nat{} -> limit f)
+  where diag = Diag -- Forces the type of all Diags to be the same.
 
 
 
@@ -164,70 +153,28 @@ type family ColimitFam j (~>) f :: *
 
 type Colimit f = ColimitFam (Dom f) (Cod f) f
 
--- | A colimit of @f@ is a universal morphism from @f@ to the diagonal functor.
-type ColimitUniversal f = InitialUniversal f (DiagF f) (Colimit f)
-
--- | @colimitUniversal@ is a helper function to create the universal property from the colimit and the colimit factorizer.
-colimitUniversal :: (Cod f ~ (~>)) 
-  => Cocone f (Colimit f)
-  -> (forall n. Cocone f n -> Colimit f ~> n)
-  -> ColimitUniversal f
-colimitUniversal l lf = InitialUniversal
-  { iuObject          = coconeVertex l
-  , initialMorphism   = l
-  , initialFactorizer = const lf
-  }
-
--- | A colimit of the diagram @f@ is a co-cone of @f@.
-colimit :: ColimitUniversal f -> Cocone f (Colimit f)
-colimit = initialMorphism
-
--- | For any other co-cone of @f@ with vertex @n@ there exists a unique morphism from the colimit of @f@ to @n@.
-colimitFactorizer :: (Cod f ~ (~>)) => ColimitUniversal f -> (forall n. Cocone f n -> Colimit f ~> n)
-colimitFactorizer cu c = initialFactorizer cu (coconeVertex c) c
-
-
-
--- | An instance of @HasLimits j (~>)@ says that @(~>)@ has all limits of type @j@.
-class (Category j, Category (~>)) => HasLimits j (~>) where
-  limitUniv :: Obj (Nat j (~>)) f -> LimitUniversal f
-
--- | If every diagram of type @j@ has a limit in @(~>)@ there exists a limit functor.
---
---   Applied to a natural transformation it is a generalisation of @(***)@:
---
---   @l@ '***' @r =@ 'LimitFunctor' '%' 'arrowPair' @l r@
-data LimitFunctor :: (* -> * -> *) -> (* -> * -> *) -> * where
-  LimitFunctor :: HasLimits j (~>) => LimitFunctor j (~>)
-
-type instance Dom (LimitFunctor j (~>)) = Nat j (~>)
-type instance Cod (LimitFunctor j (~>)) = (~>)
-type instance LimitFunctor j (~>) :% f = LimitFam j (~>) f
-
-instance (Category j, Category (~>)) => Functor (LimitFunctor j (~>)) where
-  LimitFunctor % n @ Nat{}  = limitFactorizer (limitUniv (tgt n)) (n . limit (limitUniv (src n)))
-
-
-
 -- | An instance of @HasColimits j (~>)@ says that @(~>)@ has all colimits of type @j@.
 class (Category j, Category (~>)) => HasColimits j (~>) where
-  colimitUniv :: Obj (Nat j (~>)) f -> ColimitUniversal f
+  colimit           :: Obj (Nat j (~>)) f -> Cocone f (Colimit f)
+  colimitFactorizer :: Obj (Nat j (~>)) f -> (forall n. Cocone f n -> Colimit f ~> n)
 
 -- | If every diagram of type @j@ has a colimit in @(~>)@ there exists a colimit functor.
 --
 --   Applied to a natural transformation it is a generalisation of @(+++)@:
 --
 --   @l@ '+++' @r =@ 'ColimitFunctor' '%' 'arrowPair' @l r@
-data ColimitFunctor :: (* -> * -> *) -> (* -> * -> *) -> * where
-  ColimitFunctor :: HasColimits j (~>) => ColimitFunctor j (~>)
-  
+data ColimitFunctor (j :: * -> * -> *) ((~>)  :: * -> * -> *) = ColimitFunctor
 type instance Dom (ColimitFunctor j (~>)) = Nat j (~>)
 type instance Cod (ColimitFunctor j (~>)) = (~>)
 type instance ColimitFunctor j (~>) :% f = ColimitFam j (~>) f
+instance HasColimits j (~>) => Functor (ColimitFunctor j (~>)) where
+  ColimitFunctor % n @ Nat{}  = colimitFactorizer (src n) (colimit (tgt n) . n)
 
-instance (Category j, Category (~>)) => Functor (ColimitFunctor j (~>)) where
-  ColimitFunctor % n @ Nat{}  = colimitFactorizer (colimitUniv (src n)) (colimit (colimitUniv (tgt n)) . n)
-
+-- | The colimit functor is left adjoint to the diagonal functor.
+colimitAdj :: HasColimits j (~>) => Adjunction (~>) (Nat j (~>)) (ColimitFunctor j (~>)) (Diag j (~>))
+colimitAdj = mkAdjunction ColimitFunctor diag (\f @ Nat{} -> colimit f) (\a -> colimitFactorizer (diag % a) (diag % a)) 
+  where diag = Diag -- Forces the type of all Diags to be the same.
+  
 
 
 -- | A terminal object is the limit of the functor from /0/ to (~>).
@@ -244,9 +191,8 @@ type instance LimitFam Void (~>) f = TerminalObject (~>)
 
 instance (HasTerminalObject (~>)) => HasLimits Void (~>) where
   
-  limitUniv (Nat f _ _) = limitUniversal
-    (voidNat (Const terminalObject) f)
-    (terminate . coneVertex)
+  limit (Nat f _ _) = voidNat (Const terminalObject) f
+  limitFactorizer Nat{} = terminate . coneVertex
 
 
 -- | @()@ is the terminal object in @Hask@.
@@ -301,9 +247,8 @@ type instance ColimitFam Void (~>) f = InitialObject (~>)
 
 instance HasInitialObject (~>) => HasColimits Void (~>) where
   
-  colimitUniv (Nat f _ _) = colimitUniversal
-    (voidNat f (Const initialObject))
-    (initialize . coconeVertex)
+  colimit (Nat f _ _) = voidNat f (Const initialObject)
+  colimitFactorizer Nat{} = initialize . coconeVertex
 
 
 data Zero
@@ -358,28 +303,28 @@ class Category (~>) => HasBinaryProducts (~>) where
   (&&&) :: (a ~> x) -> (a ~> y) -> (a ~> BinaryProduct (~>) x y)
 
   (***) :: (a1 ~> b1) -> (a2 ~> b2) -> (BinaryProduct (~>) a1 a2 ~> BinaryProduct (~>) b1 b2)
-  l *** r = (l . proj1 (src l) (src r)) &&& (r . proj2 (src l) (src r)) where
+  l *** r = (l . proj1 (src l) (src r)) &&& (r . proj2 (src l) (src r))
 
+test :: Functor f => Const (Cod f) c2 x -> f -> Nat (Dom f) c2 (Const (Dom f) c2 x) (Const (Cod f) c2 x :.: f)
+test (Const x) f = Nat (Const x) (Const x :.: f) $ const x
 
-type instance LimitFam (Discrete (S n)) (~>) f = BinaryProduct (~>) (f :% Z) (LimitFam (Discrete n) (~>) (Next f))
+type instance LimitFam (Discrete (S n)) (~>) f = BinaryProduct (~>) (f :% Z) (LimitFam (Discrete n) (~>) (f :.: Succ n))
 
 instance (HasLimits (Discrete n) (~>), HasBinaryProducts (~>)) => HasLimits (Discrete (S n)) (~>) where
   
-  limitUniv (Nat l _ _) = limitUniv' l
+  limit = limit'
     where
-      limitUniv' :: forall f. (Functor f, Dom f ~ Discrete (S n), Cod f ~ (~>), HasLimits (Discrete n) (~>), HasBinaryProducts (~>)) 
-                 => f -> LimitUniversal f
-      limitUniv' f = limitUniversal
-        (Nat (Const $ x *** y) f (\z -> unCom $ h z))
-        (\c -> c ! Z &&& limitFactorizer luNext (Nat (Const $ coneVertex c) (Next f) $ \n -> c ! S n))
+      limit' :: forall f. Obj (Nat (Discrete (S n)) (~>)) f -> Cone f (Limit f)
+      limit' l@Nat{} = Nat (Const $ x *** y) (srcF l) (\z -> unCom $ h z)
         where
-          x = f % Z
+          x = l ! Z
           y = coneVertex limNext
-          limNext = limit luNext
-          luNext = limitUniv (natId (Next f))
+          limNext = limit (l `o` natId Succ)
           h :: Obj (Discrete (S n)) z -> Com (ConstF f (LimitFam (Discrete (S n)) (~>) f)) f z
           h Z     = Com $               proj1 x y
           h (S n) = Com $ limNext ! n . proj2 x y
+
+  limitFactorizer l@Nat{} c = c ! Z &&& limitFactorizer (l `o` natId Succ) ((c `o` natId Succ) . test (srcF c) Succ)
 
 
 type instance BinaryProduct (->) x y = (x, y)
@@ -453,28 +398,27 @@ class Category (~>) => HasBinaryCoproducts (~>) where
   (|||) :: (x ~> a) -> (y ~> a) -> (BinaryCoproduct (~>) x y ~> a)
     
   (+++) :: (a1 ~> b1) -> (a2 ~> b2) -> (BinaryCoproduct (~>) a1 a2 ~> BinaryCoproduct (~>) b1 b2)
-  l +++ r = (inj1 (tgt l) (tgt r) . l) ||| (inj2 (tgt l) (tgt r) . r) where
+  l +++ r = (inj1 (tgt l) (tgt r) . l) ||| (inj2 (tgt l) (tgt r) . r)
     
 
-type instance ColimitFam (Discrete (S n)) (~>) f = BinaryCoproduct (~>) (f :% Z) (ColimitFam (Discrete n) (~>) (Next f))
+type instance ColimitFam (Discrete (S n)) (~>) f = BinaryCoproduct (~>) (f :% Z) (ColimitFam (Discrete n) (~>) (f :.: Succ n))
 
 instance (HasColimits (Discrete n) (~>), HasBinaryCoproducts (~>)) => HasColimits (Discrete (S n)) (~>) where
   
-  colimitUniv (Nat l _ _) = colimitUniv' l
+  colimit (Nat l _ _) = colimit' l
     where
-      colimitUniv' :: forall f. (Functor f, Dom f ~ Discrete (S n), Cod f ~ (~>), HasColimits (Discrete n) (~>), HasBinaryCoproducts (~>)) 
-                   => f -> ColimitUniversal f
-      colimitUniv' f = colimitUniversal
-        (Nat f (Const $ x +++ y) (\z -> unCom $ h z))
-        (\c -> c ! Z ||| colimitFactorizer cluNext (Nat (Next f) (Const $ coconeVertex c) $ \n -> c ! S n))
+      colimit' :: forall f. (Functor f, Dom f ~ Discrete (S n), Cod f ~ (~>), HasColimits (Discrete n) (~>), HasBinaryCoproducts (~>)) 
+                   => f -> Cocone f (Colimit f)
+      colimit' f = Nat f (Const $ x +++ y) (\z -> unCom $ h z)
         where
           x = f % Z
           y = coconeVertex colNext
-          colNext = colimit cluNext
-          cluNext = colimitUniv (natId (Next f))
+          colNext = colimit (natId (f :.: Succ))
           h :: Obj (Discrete (S n)) z -> Com f (ConstF f (ColimitFam (Discrete (S n)) (~>) f)) z
           h Z     = Com $ inj1 x y
           h (S n) = Com $ inj2 x y . colNext ! n
+  
+  colimitFactorizer (Nat f _ _) c = c ! Z ||| colimitFactorizer (natId (f :.: Succ)) (Nat (f :.: Succ) (Const $ coconeVertex c) $ \n -> c ! S n)
 
 
 type instance BinaryCoproduct (->) x y = Either x y
@@ -536,21 +480,21 @@ instance (Category c, HasBinaryCoproducts d) => HasBinaryCoproducts (Nat c d) wh
   Nat f1 f2 f +++ Nat g1 g2 g = Nat (f1 :+: g1) (f2 :+: g2) $ \z -> f z +++ g z
 
 
-newtype ForAll f = ForAll { unForAll :: forall a. f a }
-
-type instance LimitFam (->) (->) (EndoHask f) = ForAll f
-
-endoHaskLimit :: Prelude.Functor f => LimitUniversal (EndoHask f)
-endoHaskLimit = limitUniversal
-  (Nat (Const id) EndoHask $ \_ -> unForAll)
-  (\c n -> ForAll ((c ! id) n)) -- ForAll . (c ! id)
-
-
-data Exists f = forall a. Exists (f a)
-
-type instance ColimitFam (->) (->) (EndoHask f) = Exists f
-
-endoHaskColimit :: Prelude.Functor f => ColimitUniversal (EndoHask f)
-endoHaskColimit = colimitUniversal
-  (Nat EndoHask (Const id) $ \_ -> Exists)
-  (\c (Exists fa) -> (c ! id) fa) -- (c ! id) . unExists
+-- newtype ForAll f = ForAll { unForAll :: forall a. f :% a }
+-- 
+-- type instance LimitFam (->) (->) f = ForAll f
+-- 
+-- instance HasLimits (->) (->) where
+--   
+--   limit (Nat f _ _) = Nat (Const id) f $ \_ -> unForAll
+--   limitFactorizer Nat{} c n = ForAll $ (c ! id) n -- ForAll . (c ! id)
+-- 
+-- 
+-- data Exists f = forall a. Exists (f :% a)
+-- 
+-- type instance ColimitFam (->) (->) f = Exists f
+-- 
+-- instance HasColimits (->) (->) where
+--   
+--   colimit (Nat f _ _) = Nat f (Const id) $ \_ -> Exists
+--   colimitFactorizer Nat{} c (Exists fa) = (c ! id) fa -- (c ! id) . unExists

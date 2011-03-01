@@ -18,6 +18,8 @@ module Data.Category.NaturalTransformation (
   , (!)
   , o
   , natId
+  , srcF
+  , tgtF
 
   -- * Functor category
   , Nat(..)
@@ -29,10 +31,6 @@ module Data.Category.NaturalTransformation (
   , Postcompose(..)
   , Wrap(..)
   
-  -- ** Presheaves
-  , Presheaves
-  , Representable(..)
-  
   -- ** Yoneda
   , YonedaEmbedding(..)
   , Yoneda(..)
@@ -41,7 +39,7 @@ module Data.Category.NaturalTransformation (
   
 ) where
   
-import Prelude hiding ((.), id, Functor)
+import Prelude hiding ((.), Functor)
 
 import Data.Category
 import Data.Category.Functor
@@ -81,6 +79,11 @@ njk@(Nat j k _) `o` nfg@(Nat f g _) = Nat (j :.: f) (k :.: g) $ (njk !) . (nfg !
 natId :: Functor f => f -> Nat (Dom f) (Cod f) f f
 natId f = Nat f f $ \i -> f % i
 
+srcF :: Nat c d f g -> f
+srcF (Nat f _ _) = f
+
+tgtF :: Nat c d f g -> g
+tgtF (Nat _ g _) = g
 
 -- | Functor category D^C.
 -- Objects of D^C are functors from C to D.
@@ -146,30 +149,17 @@ instance (Functor f, Functor h) => Functor (Wrap f h) where
   Wrap f h % n = natId f `o` n `o` natId h
 
 
-type Presheaves (~>) = Nat (Op (~>)) (->)
-
--- | A functor F: Op(C) -> Set is representable if it is naturally isomorphic to the contravariant hom-functor.
-class Functor f => Representable f where
-  type RepresentingObject f :: *
-  represent   :: (Dom f ~ Op c) => f -> (c :-*: RepresentingObject f) :~> f
-  unrepresent :: (Dom f ~ Op c) => f -> f :~> (c :-*: RepresentingObject f)
-
-instance Category (~>) => Representable ((~>) :-*: x) where
-  type RepresentingObject ((~>) :-*: x) = x
-  represent   f = natId f
-  unrepresent f = natId f
-
 
 -- | The Yoneda embedding functor.
-data YonedaEmbedding :: (* -> * -> *) -> * where
-  YonedaEmbedding :: Category (~>) => YonedaEmbedding (~>)
+data YonedaEmbedding ((~>) :: * -> * -> *) = YonedaEmbedding
   
-type instance Dom (YonedaEmbedding (~>)) = (~>)
-type instance Cod (YonedaEmbedding (~>)) = Nat (Op (~>)) (->)
-type instance YonedaEmbedding (~>) :% a = (~>) :-*: a
+type instance Dom (YonedaEmbedding (~>)) = Op (~>)
+type instance Cod (YonedaEmbedding (~>)) = Nat (~>) (->)
+type instance YonedaEmbedding (~>) :% a = a :*-: (~>)
 
 instance Category (~>) => Functor (YonedaEmbedding (~>)) where
-  YonedaEmbedding % f = Nat (Hom_X $ src f) (Hom_X $ tgt f) $ \_ -> (f .)
+  YonedaEmbedding % Op f = Nat (HomX_ $ tgt f) h $ \_ g -> (h % g) f
+    where h = HomX_ (src f)
 
 
 data Yoneda f = Yoneda
@@ -177,13 +167,13 @@ type instance Dom (Yoneda f) = Dom f
 type instance Cod (Yoneda f) = (->)
 type instance Yoneda f :% a = Nat (Dom f) (->) (a :*-: Dom f) f
 instance Functor f => Functor (Yoneda f) where
-  Yoneda % ab = \(Nat _ f n) -> Nat (HomX_ $ tgt ab) f $ \z bz -> n z (bz . ab)
+  Yoneda % ab = \n -> n . YonedaEmbedding % Op ab
       
   
-fromYoneda :: (Functor f, Cod f ~ (->)) => f -> Nat (Dom f) (->) (Yoneda f) f
+fromYoneda :: (Functor f, Cod f ~ (->)) => f -> Yoneda f :~> f
 fromYoneda f = Nat Yoneda f $ \a n -> (n ! a) a
 
-toYoneda :: (Functor f, Cod f ~ (->)) => f -> Nat (Dom f) (->) f (Yoneda f)
+toYoneda :: (Functor f, Cod f ~ (->)) => f -> f :~> Yoneda f
 toYoneda f = Nat f Yoneda $ \a fa -> Nat (HomX_ a) f $ \_ h -> (f % h) fa
 
 -- Contravariant Yoneda:

@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeOperators, TypeFamilies, FlexibleContexts, UndecidableInstances, GADTs, RankNTypes #-}
+{-# LANGUAGE TypeOperators, TypeFamilies, FlexibleContexts, FlexibleInstances, UndecidableInstances, GADTs, RankNTypes #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category.Functor
@@ -31,12 +31,18 @@ module Data.Category.Functor (
   , EndoHask(..)
   
   -- * Universal properties
-  , InitialUniversal(..)
-  , TerminalUniversal(..)
-
+  , Representation(..)
+  , unrepresent
+  , covariantHomRepr
+  , contravariantHomRepr
+  , InitialUniversal
+  , initialUniversal
+  , TerminalUniversal
+  , terminalUniversal
+  
 ) where
   
-import Prelude hiding (id, (.), Functor)
+import Prelude hiding ((.), Functor)
 import qualified Prelude
   
 import Data.Category
@@ -161,14 +167,58 @@ instance Functor (EndoHask f) where
   EndoHask % f = fmap f
 
 
+data Representation f repObj = Representation
+  { representedFunctor :: f
+  , representingObject :: Obj (Dom f) repObj
+  , represent          :: (Dom f ~ (~>), Cod f ~ (->)) => Obj (~>) z -> f :% z -> repObj ~> z
+  , universalElement   :: (Dom f ~ (~>), Cod f ~ (->)) => f :% repObj
+  }
+
+unrepresent :: (Functor f, Dom f ~ (~>), Cod f ~ (->)) => Representation f repObj -> repObj ~> z -> f :% z
+unrepresent rep h = representedFunctor rep % h $ universalElement rep
+
+covariantHomRepr :: Category (~>) => Obj (~>) x -> Representation (x :*-: (~>)) x
+covariantHomRepr x = Representation
+  { representedFunctor = HomX_ x
+  , representingObject = x
+  , represent          = \_ -> id
+  , universalElement   = x
+  }
+
+contravariantHomRepr :: Category (~>) => Obj (~>) x -> Representation ((~>) :-*: x) x
+contravariantHomRepr x = Representation
+  { representedFunctor = Hom_X x
+  , representingObject = Op x
+  , represent          = \_ h -> Op h
+  , universalElement   = x
+  }
+
 -- | An initial universal property, a universal morphism from x to u.
-data InitialUniversal  x u a = InitialUniversal
-  { iuObject :: Obj (Dom u) a
-  , initialMorphism :: Cod u x (u :% a)
-  , initialFactorizer :: forall y. Obj (Dom u) y -> Cod u x (u :% y) -> Dom u a y }
+type InitialUniversal x u a = Representation ((x :*-: Cod u) :.: u) a
+initialUniversal :: Functor u
+                 => u 
+                 -> Obj (Dom u) a 
+                 -> Cod u x (u :% a) 
+                 -> (forall y. Obj (Dom u) y -> Cod u x (u :% y) -> Dom u a y) 
+                 -> InitialUniversal x u a
+initialUniversal u obj mor factorizer = Representation
+  { representedFunctor = HomX_ (src mor) :.: u
+  , representingObject = obj
+  , represent          = factorizer
+  , universalElement   = mor
+  }
   
 -- | A terminal universal property, a universal morphism from u to x.
-data TerminalUniversal x u a = TerminalUniversal 
-  { tuObject :: Obj (Dom u) a
-  , terminalMorphism :: Cod u (u :% a) x
-  , terminalFactorizer :: forall y. Obj (Dom u) y -> Cod u (u :% y) x -> Dom u y a }
+type TerminalUniversal x u a = Representation ((Cod u :-*: x) :.: Opposite u) a
+terminalUniversal :: Functor u
+                  => u 
+                  -> Obj (Dom u) a
+                  -> Cod u (u :% a) x
+                  -> (forall y. Obj (Dom u) y -> Cod u (u :% y) x -> Dom u y a) 
+                  -> TerminalUniversal x u a
+terminalUniversal u obj mor factorizer = Representation
+  { representedFunctor = Hom_X (tgt mor) :.: Opposite u
+  , representingObject = Op obj
+  , represent          = \(Op y) f -> Op (factorizer y f)
+  , universalElement   = mor
+  }
