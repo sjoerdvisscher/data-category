@@ -305,9 +305,6 @@ class Category (~>) => HasBinaryProducts (~>) where
   (***) :: (a1 ~> b1) -> (a2 ~> b2) -> (BinaryProduct (~>) a1 a2 ~> BinaryProduct (~>) b1 b2)
   l *** r = (l . proj1 (src l) (src r)) &&& (r . proj2 (src l) (src r))
 
-test :: Functor f => Const (Cod f) c2 x -> f -> Nat (Dom f) c2 (Const (Dom f) c2 x) (Const (Cod f) c2 x :.: f)
-test (Const x) f = Nat (Const x) (Const x :.: f) $ const x
-
 type instance LimitFam (Discrete (S n)) (~>) f = BinaryProduct (~>) (f :% Z) (LimitFam (Discrete n) (~>) (f :.: Succ n))
 
 instance (HasLimits (Discrete n) (~>), HasBinaryProducts (~>)) => HasLimits (Discrete (S n)) (~>) where
@@ -324,7 +321,7 @@ instance (HasLimits (Discrete n) (~>), HasBinaryProducts (~>)) => HasLimits (Dis
           h Z     = Com $               proj1 x y
           h (S n) = Com $ limNext ! n . proj2 x y
 
-  limitFactorizer l@Nat{} c = c ! Z &&& limitFactorizer (l `o` natId Succ) ((c `o` natId Succ) . test (srcF c) Succ)
+  limitFactorizer l@Nat{} c = c ! Z &&& limitFactorizer (l `o` natId Succ) ((c `o` natId Succ) . constPostcompInv (srcF c) Succ)
 
 
 type instance BinaryProduct (->) x y = (x, y)

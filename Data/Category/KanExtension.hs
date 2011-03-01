@@ -11,7 +11,7 @@
 -----------------------------------------------------------------------------
 module Data.Category.KanExtension where
 
-import Prelude (($), undefined)
+import Prelude (($))
 
 import Data.Category
 import Data.Category.Functor
@@ -26,11 +26,7 @@ type RanUniversal k t = TerminalUniversal t (Precompose k (Cod t)) (Ran k t)
 
 mkRanUniversal :: (Dom k ~ m, Cod k ~ c, Dom t ~ m, Cod t ~ a, Dom r ~ c, Cod r ~ a, r ~ Ran k t) 
   => Nat m a (r :.: k) t -> (forall s. Obj (Nat c a) s -> Nat m a (s :.: k) t -> Nat c a s r) -> RanUniversal k t
-mkRanUniversal eps@(Nat (r :.: _) _ _) f = TerminalUniversal
-  { tuObject = natId r
-  , terminalMorphism = eps
-  , terminalFactorizer = f
-  }
+mkRanUniversal eps@(Nat (r :.: k) _ _) f = terminalUniversal (Precompose k) (natId r) eps f
   
 
 e :: Const m Unit Z
@@ -38,15 +34,17 @@ e = Const Z
 
 type instance Ran (Const m Unit Z) f = Const Unit (Cod f) (Limit f)
 
-rightKanUniversalForLimits :: (Functor f, Category m, Dom f ~ m) => LimitUniversal f -> RanUniversal (Const m Unit Z) f
-rightKanUniversalForLimits (TerminalUniversal v n@(Nat _ f _) lf) = mkRanUniversal 
-  (Nat (Const v :.: e) f (n !)) undefined
-  
+rightKanUniversalForLimits :: (HasLimits j (~>), Functor f, Dom f ~ j, Cod f ~ (~>)) => Obj (Nat j (~>)) f -> RanUniversal (Const j Unit Z) f
+rightKanUniversalForLimits f = mkRanUniversal 
+    (limit f . constPostcomp (Const v) e)
+    (\(Nat s _ _) n -> Nat s (Const v) $ \Z -> limitFactorizer f (n . constPrecompInv e s))
+  where
+    v = coneVertex (limit f)
+
 
 type instance Ran (Id m) t = Yoneda t
 
-yonedaToRanUniversal :: forall t m . (Functor t, Category m, Dom t ~ m, Cod t ~ (->)) => t -> RanUniversal (Id m) t
-yonedaToRanUniversal t = mkRanUniversal (Nat (Yoneda :.: Id) t (fromYoneda t !)) f
-  where
-    f :: forall s. Obj (Nat m (->)) s -> Nat m (->) (s :.: Id m) t -> Nat m (->) s (Yoneda t)
-    f (Nat s _ _) st = Nat s Yoneda ((toYoneda t . st) !)
+yonedaToRanUniversal :: forall t m. (Functor t, Category m, Dom t ~ m, Cod t ~ (->)) => t -> RanUniversal (Id m) t
+yonedaToRanUniversal t = mkRanUniversal 
+    (fromYoneda t . idPrecomp Yoneda)
+    (\(Nat s _ _) st -> toYoneda t . st . idPrecompInv s)

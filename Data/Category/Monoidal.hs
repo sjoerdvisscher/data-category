@@ -18,9 +18,9 @@ import qualified Data.Monoid as M
 import Data.Category
 import Data.Category.Functor
 import Data.Category.NaturalTransformation
-import Data.Category.Product
+import Data.Category.Adjunction (Adjunction(Adjunction))
 import Data.Category.Limit
-
+import Data.Category.Product
 
 class Functor f => HasUnit f where
   
@@ -47,13 +47,13 @@ instance Category (~>) => HasUnit (FunctorCompose (~>)) where
 
 class HasUnit f => TensorProduct f where
   
-  leftUnitor     :: Cod f ~ (~>) => f -> Obj (Cod f) a -> (f :% (Unit f, a)) ~> a
-  leftUnitorInv  :: Cod f ~ (~>) => f -> Obj (Cod f) a -> a ~> (f :% (Unit f, a))
-  rightUnitor    :: Cod f ~ (~>) => f -> Obj (Cod f) a -> (f :% (a, Unit f)) ~> a
-  rightUnitorInv :: Cod f ~ (~>) => f -> Obj (Cod f) a -> a ~> (f :% (a, Unit f))
+  leftUnitor     :: Cod f ~ (~>) => f -> Obj (~>) a -> (f :% (Unit f, a)) ~> a
+  leftUnitorInv  :: Cod f ~ (~>) => f -> Obj (~>) a -> a ~> (f :% (Unit f, a))
+  rightUnitor    :: Cod f ~ (~>) => f -> Obj (~>) a -> (f :% (a, Unit f)) ~> a
+  rightUnitorInv :: Cod f ~ (~>) => f -> Obj (~>) a -> a ~> (f :% (a, Unit f))
   
-  associator     :: Cod f ~ (~>) => f -> Obj (Cod f) a -> Obj (Cod f) b -> Obj (Cod f) c -> (f :% (f :% (a, b), c)) ~> (f :% (a, f :% (b, c)))
-  associatorInv  :: Cod f ~ (~>) => f -> Obj (Cod f) a -> Obj (Cod f) b -> Obj (Cod f) c -> (f :% (a, f :% (b, c))) ~> (f :% (f :% (a, b), c))
+  associator     :: Cod f ~ (~>) => f -> Obj (~>) a -> Obj (~>) b -> Obj (~>) c -> (f :% (f :% (a, b), c)) ~> (f :% (a, f :% (b, c)))
+  associatorInv  :: Cod f ~ (~>) => f -> Obj (~>) a -> Obj (~>) b -> Obj (~>) c -> (f :% (a, f :% (b, c))) ~> (f :% (f :% (a, b), c))
 
 
 instance (HasTerminalObject (~>), HasBinaryProducts (~>)) => TensorProduct (ProductFunctor (~>)) where
@@ -78,10 +78,10 @@ instance (HasInitialObject (~>), HasBinaryCoproducts (~>)) => TensorProduct (Cop
   
 instance Category (~>) => TensorProduct (FunctorCompose (~>)) where
   
-  leftUnitor     _ (Nat g _ _) = Nat (Id :.: g) g $ \i -> g % i
-  leftUnitorInv  _ (Nat g _ _) = Nat g (Id :.: g) $ \i -> g % i
-  rightUnitor    _ (Nat g _ _) = Nat (g :.: Id) g $ \i -> g % i
-  rightUnitorInv _ (Nat g _ _) = Nat g (g :.: Id) $ \i -> g % i
+  leftUnitor     _ (Nat g _ _) = idPostcomp g
+  leftUnitorInv  _ (Nat g _ _) = idPostcompInv g
+  rightUnitor    _ (Nat g _ _) = idPrecomp g
+  rightUnitorInv _ (Nat g _ _) = idPrecompInv g
 
   associator    _ (Nat f _ _) (Nat g _ _) (Nat h _ _) = Nat ((f :.: g) :.: h) (f :.: (g :.: h)) $ \i -> f % g % h % i
   associatorInv _ (Nat f _ _) (Nat g _ _) (Nat h _ _) = Nat (f :.: (g :.: h)) ((f :.: g) :.: h) $ \i -> f % g % h % i
@@ -147,3 +147,9 @@ mkComonad f extr dupl = ComonoidObject
   , comultiply = Nat f (f :.: f) dupl
   }
 
+
+adjunctionMonad :: Adjunction c d f g -> Monad (g :.: f)
+adjunctionMonad (Adjunction f g un coun) = mkMonad (g :.: f) (un !) ((Wrap g f % coun) !)
+
+adjunctionComonad :: Adjunction c d f g -> Comonad (f :.: g)
+adjunctionComonad (Adjunction f g un coun) = mkComonad (f :.: g) (coun !) ((Wrap f g % un) !)

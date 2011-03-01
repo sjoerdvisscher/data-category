@@ -24,6 +24,16 @@ module Data.Category.NaturalTransformation (
   -- * Functor category
   , Nat(..)
   , Endo
+  
+  -- * Functor isomorphisms
+  , idPrecomp
+  , idPrecompInv
+  , idPostcomp
+  , idPostcompInv
+  , constPrecomp
+  , constPrecompInv
+  , constPostcomp
+  , constPostcompInv
     
   -- * Related functors
   , FunctorCompose(..)
@@ -94,6 +104,33 @@ instance (Category c, Category d) => Category (Nat c d) where
   tgt (Nat _ g _)           = natId g
   
   Nat _ h ngh . Nat f _ nfg = Nat f h $ \i -> ngh i . nfg i
+
+
+idPrecomp :: Functor f => f -> Nat (Dom f) (Cod f) (f :.: Id (Dom f)) f
+idPrecomp f = Nat (f :.: Id) f (f %)
+
+idPrecompInv :: Functor f => f -> Nat (Dom f) (Cod f) f (f :.: Id (Dom f))
+idPrecompInv f = Nat f (f :.: Id) (f %)
+
+idPostcomp :: Functor f => f -> Nat (Dom f) (Cod f) (Id (Cod f) :.: f) f
+idPostcomp f = Nat (Id :.: f) f (f %)
+
+idPostcompInv :: Functor f => f -> Nat (Dom f) (Cod f) f (Id (Cod f) :.: f)
+idPostcompInv f = Nat f (Id :.: f) (f %)
+
+
+constPrecomp :: (Category c1, Functor f) => Const c1 (Dom f) x -> f -> Nat c1 (Cod f) (f :.: Const c1 (Dom f) x) (Const c1 (Cod f) (f :% x))
+constPrecomp (Const x) f = let fx = f % x in Nat (f :.: Const x) (Const fx) $ const fx
+
+constPrecompInv :: (Category c1, Functor f) => Const c1 (Dom f) x -> f -> Nat c1 (Cod f) (Const c1 (Cod f) (f :% x)) (f :.: Const c1 (Dom f) x)
+constPrecompInv (Const x) f = let fx = f % x in Nat (Const fx) (f :.: Const x) $ const fx
+
+constPostcomp :: Functor f => Const (Cod f) c2 x -> f -> Nat (Dom f) c2 (Const (Cod f) c2 x :.: f) (Const (Dom f) c2 x)
+constPostcomp (Const x) f = Nat (Const x :.: f) (Const x) $ const x
+
+constPostcompInv :: Functor f => Const (Cod f) c2 x -> f -> Nat (Dom f) c2 (Const (Dom f) c2 x) (Const (Cod f) c2 x :.: f)
+constPostcompInv (Const x) f = Nat (Const x) (Const x :.: f) $ const x
+
 
 
 -- | The category of endofunctors.
