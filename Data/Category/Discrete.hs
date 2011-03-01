@@ -19,9 +19,10 @@ module Data.Category.Discrete (
   , Void
   , Unit
   , Pair
+  , magicZ
   
   -- * Functors
-  , Next(..)
+  , Succ(..)
   , DiscreteDiagram(..)
     
   -- * Natural Transformations
@@ -80,19 +81,13 @@ type Unit = Discrete (S Z)
 type Pair = Discrete (S (S Z))
 
 
-type family PredDiscrete (c :: * -> * -> *) :: * -> * -> *
-type instance PredDiscrete (Discrete (S n)) = Discrete n
-
-data Next :: * -> * where
-  Next :: (Functor f, Dom f ~ Discrete (S n)) => f -> Next f
-  
-type instance Dom (Next f) = PredDiscrete (Dom f)
-type instance Cod (Next f) = Cod f
-type instance Next f :% a = f :% S a
-
-instance (Functor f, Category (PredDiscrete (Dom f))) => Functor (Next f) where
-  Next f % Z     = f % S Z
-  Next f % (S a) = f % S (S a)
+data Succ n = Succ
+type instance Dom (Succ n) = Discrete n
+type instance Cod (Succ n) = Discrete (S n)
+type instance Succ n :% a = S a
+instance (Category (Discrete n)) => Functor (Succ n) where
+  Succ % Z     = S Z
+  Succ % (S a) = S (S a)
 
 
 infixr 7 :::
