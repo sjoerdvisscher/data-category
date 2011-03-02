@@ -26,6 +26,8 @@ module Data.Category.NaturalTransformation (
   , Endo
   
   -- * Functor isomorphisms
+  , compAssoc
+  , compAssocInv
   , idPrecomp
   , idPrecompInv
   , idPostcomp
@@ -105,6 +107,14 @@ instance (Category c, Category d) => Category (Nat c d) where
   
   Nat _ h ngh . Nat f _ nfg = Nat f h $ \i -> ngh i . nfg i
 
+
+compAssoc :: (Functor f, Functor g, Functor h, Dom f ~ Cod g, Dom g ~ Cod h) 
+          => f -> g -> h -> Nat (Dom h) (Cod f) ((f :.: g) :.: h) (f :.: (g :.: h))
+compAssoc f g h = Nat ((f :.: g) :.: h) (f :.: (g :.: h)) $ \i -> f % g % h % i
+
+compAssocInv :: (Functor f, Functor g, Functor h, Dom f ~ Cod g, Dom g ~ Cod h) 
+             => f -> g -> h -> Nat (Dom h) (Cod f) (f :.: (g :.: h)) ((f :.: g) :.: h)
+compAssocInv f g h = Nat (f :.: (g :.: h)) ((f :.: g) :.: h) $ \i -> f % g % h % i
 
 idPrecomp :: Functor f => f -> Nat (Dom f) (Cod f) (f :.: Id (Dom f)) f
 idPrecomp f = Nat (f :.: Id) f (f %)

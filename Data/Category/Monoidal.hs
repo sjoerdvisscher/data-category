@@ -83,8 +83,8 @@ instance Category (~>) => TensorProduct (FunctorCompose (~>)) where
   rightUnitor    _ (Nat g _ _) = idPrecomp g
   rightUnitorInv _ (Nat g _ _) = idPrecompInv g
 
-  associator    _ (Nat f _ _) (Nat g _ _) (Nat h _ _) = Nat ((f :.: g) :.: h) (f :.: (g :.: h)) $ \i -> f % g % h % i
-  associatorInv _ (Nat f _ _) (Nat g _ _) (Nat h _ _) = Nat (f :.: (g :.: h)) ((f :.: g) :.: h) $ \i -> f % g % h % i
+  associator    _ (Nat f _ _) (Nat g _ _) (Nat h _ _) = compAssoc f g h
+  associatorInv _ (Nat f _ _) (Nat g _ _) (Nat h _ _) = compAssocInv f g h
 
 
 

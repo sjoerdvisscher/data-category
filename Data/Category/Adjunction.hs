@@ -73,21 +73,15 @@ adjunctionTerminalProp adj@(Adjunction f g _ coun) x = terminalUniversal f (g % 
 
 initialPropAdjunction :: forall f g c d. (Functor f, Functor g, Category c, Category d, Dom f ~ d, Cod f ~ c, Dom g ~ c, Cod g ~ d)
   => f -> g -> (forall y. Obj d y -> InitialUniversal y g (f :% y)) -> Adjunction c d f g
-initialPropAdjunction f g univ = mkAdjunction f g un coun
-  where
-    coun :: forall a. Obj c a -> c (f :% (g :% a)) a
-    coun a = represent (univ (g % a)) a (g % a)
-    un   :: forall a. Obj d a -> d a (g :% (f :% a))
-    un   a = universalElement (univ a)
+initialPropAdjunction f g univ = mkAdjunction f g 
+  (universalElement . univ)
+  (\a -> represent (univ (g % a)) a (g % a))
    
 terminalPropAdjunction :: forall f g c d. (Functor f, Functor g, Category c, Category d, Dom f ~ d, Cod f ~ c, Dom g ~ c, Cod g ~ d)
   => f -> g -> (forall x. Obj c x -> TerminalUniversal x f (g :% x)) -> Adjunction c d f g
-terminalPropAdjunction f g univ = mkAdjunction f g un coun
-  where
-    un   :: forall a. Obj d a -> d a (g :% (f :% a))
-    un   a = unOp $ represent (univ (f % a)) (Op a) (f % a)
-    coun :: forall a. Obj c a -> c (f :% (g :% a)) a
-    coun a = universalElement (univ a)
+terminalPropAdjunction f g univ = mkAdjunction f g 
+  (\a -> unOp $ represent (univ (f % a)) (Op a) (f % a)) 
+  (universalElement . univ)
     
 
 data AdjArrow c d where
@@ -100,7 +94,9 @@ instance Category AdjArrow where
   tgt (AdjArrow (Adjunction _ _ _ _)) = AdjArrow $ mkAdjunction Id Id id id
   
   AdjArrow (Adjunction f g u c) . AdjArrow (Adjunction f' g' u' c') = AdjArrow $ 
-    mkAdjunction (f' :.: f) (g :.: g') (\i -> ((Wrap g f % u') ! i) . (u ! i)) (\i -> (c' ! i) . ((Wrap f' g' % c) ! i))
+    Adjunction (f' :.: f) (g :.: g') 
+      (compAssoc (g :.: g') f' f . Precompose f % (compAssocInv g g' f' . Postcompose g % u' . idPrecompInv g) . u)
+      (c' . Precompose g' % (idPrecomp f' . Postcompose f' % c . compAssoc f' f g) . compAssocInv (f' :.: f) g g')
 
 
 
