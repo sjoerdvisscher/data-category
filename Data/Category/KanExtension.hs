@@ -16,8 +16,10 @@ import Prelude (($))
 import Data.Category
 import Data.Category.Functor
 import Data.Category.NaturalTransformation
+import Data.Category.RepresentableFunctor
 import Data.Category.Limit
 import Data.Category.Discrete
+import Data.Category.Yoneda
 
 
 type family Ran k t :: *

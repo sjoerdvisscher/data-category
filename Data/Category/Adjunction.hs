@@ -40,6 +40,7 @@ import Control.Monad.Instances ()
 import Data.Category
 import Data.Category.Functor
 import Data.Category.NaturalTransformation
+import Data.Category.RepresentableFunctor
 
 data Adjunction c d f g = (Functor f, Functor g, Category c, Category d, Dom f ~ d, Cod f ~ c, Dom g ~ c, Cod g ~ d)
   => Adjunction

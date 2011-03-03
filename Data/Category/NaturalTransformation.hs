@@ -43,12 +43,6 @@ module Data.Category.NaturalTransformation (
   , Postcompose(..)
   , Wrap(..)
   
-  -- ** Yoneda
-  , YonedaEmbedding(..)
-  , Yoneda(..)
-  , fromYoneda
-  , toYoneda
-  
 ) where
   
 import Prelude hiding ((.), Functor)
@@ -194,34 +188,3 @@ type instance Wrap f h :% g = f :.: g :.: h
 
 instance (Functor f, Functor h) => Functor (Wrap f h) where
   Wrap f h % n = natId f `o` n `o` natId h
-
-
-
--- | The Yoneda embedding functor.
-data YonedaEmbedding ((~>) :: * -> * -> *) = YonedaEmbedding
-  
-type instance Dom (YonedaEmbedding (~>)) = Op (~>)
-type instance Cod (YonedaEmbedding (~>)) = Nat (~>) (->)
-type instance YonedaEmbedding (~>) :% a = a :*-: (~>)
-
-instance Category (~>) => Functor (YonedaEmbedding (~>)) where
-  YonedaEmbedding % Op f = Nat (HomX_ $ tgt f) h $ \_ g -> (h % g) f
-    where h = HomX_ (src f)
-
-
-data Yoneda f = Yoneda
-type instance Dom (Yoneda f) = Dom f
-type instance Cod (Yoneda f) = (->)
-type instance Yoneda f :% a = Nat (Dom f) (->) (a :*-: Dom f) f
-instance Functor f => Functor (Yoneda f) where
-  Yoneda % ab = \n -> n . YonedaEmbedding % Op ab
-      
-  
-fromYoneda :: (Functor f, Cod f ~ (->)) => f -> Yoneda f :~> f
-fromYoneda f = Nat Yoneda f $ \a n -> (n ! a) a
-
-toYoneda :: (Functor f, Cod f ~ (->)) => f -> f :~> Yoneda f
-toYoneda f = Nat f Yoneda $ \a fa -> Nat (HomX_ a) f $ \_ h -> (f % h) fa
-
--- Contravariant Yoneda:
--- type instance Yoneda f :% a = Nat (Op (Dom f)) (->) (Dom f :-*: a) f

@@ -25,20 +25,23 @@ module Data.Category.Functor (
   , Id(..)
   , (:.:)(..)
   , Const(..), ConstF
-  , (:*-:)(..)
-  , (:-*:)(..)
   , Opposite(..)
   , EndoHask(..)
   
-  -- * Universal properties
-  , Representation(..)
-  , unrepresent
-  , covariantHomRepr
-  , contravariantHomRepr
-  , InitialUniversal
-  , initialUniversal
-  , TerminalUniversal
-  , terminalUniversal
+  -- *** Related to the product category
+  , Proj1(..)
+  , Proj2(..)
+  , (:***:)(..)
+  , DiagProd(..)
+  , Tuple1(..)
+  , Tuple2(..)
+  
+  -- *** Hom functors
+  , Hom(..)
+  , (:*-:)
+  , homX_
+  , (:-*:)
+  , hom_X
   
 ) where
   
@@ -46,6 +49,7 @@ import Prelude hiding ((.), Functor)
 import qualified Prelude
   
 import Data.Category
+import Data.Category.Product
 
 infixr 9 %
 infixr 9 :%
@@ -118,30 +122,6 @@ instance (Category c1, Category c2) => Functor (Const c1 c2 x) where
 
 type ConstF f = Const (Dom f) (Cod f)
 
-  
--- | The covariant functor Hom(X,--)
-data (:*-:) :: * -> (* -> * -> *) -> * where
-  HomX_ :: Category (~>) => Obj (~>) x -> x :*-: (~>)
-  
-type instance Dom (x :*-: (~>)) = (~>)
-type instance Cod (x :*-: (~>)) = (->)
-type instance (x :*-: (~>)) :% a = x ~> a
-
-instance Category (~>) => Functor (x :*-: (~>)) where 
-  HomX_ _ % f = (f .)
-
-
--- | The contravariant functor Hom(--,X)
-data (:-*:) :: (* -> * -> *) -> * -> * where
-  Hom_X :: Category (~>) => Obj (~>) x -> (~>) :-*: x
-
-type instance Dom ((~>) :-*: x) = Op (~>)
-type instance Cod ((~>) :-*: x) = (->)
-type instance ((~>) :-*: x) :% a = a ~> x
-
-instance Category (~>) => Functor ((~>) :-*: x) where 
-  Hom_X _ % Op f = (. f)
-
 
 -- | The dual of a functor
 data Opposite f where
@@ -167,58 +147,89 @@ instance Functor (EndoHask f) where
   EndoHask % f = fmap f
 
 
-data Representation f repObj = Representation
-  { representedFunctor :: f
-  , representingObject :: Obj (Dom f) repObj
-  , represent          :: (Dom f ~ (~>), Cod f ~ (->)) => Obj (~>) z -> f :% z -> repObj ~> z
-  , universalElement   :: (Dom f ~ (~>), Cod f ~ (->)) => f :% repObj
-  }
+-- | 'Proj1' is a bifunctor that projects out the first component of a product.
+data Proj1 (c1 :: * -> * -> *) (c2 :: * -> * -> *) = Proj1
 
-unrepresent :: (Functor f, Dom f ~ (~>), Cod f ~ (->)) => Representation f repObj -> repObj ~> z -> f :% z
-unrepresent rep h = representedFunctor rep % h $ universalElement rep
+type instance Dom (Proj1 c1 c2) = c1 :**: c2
+type instance Cod (Proj1 c1 c2) = c1
+type instance Proj1 c1 c2 :% (a1, a2) = a1
 
-covariantHomRepr :: Category (~>) => Obj (~>) x -> Representation (x :*-: (~>)) x
-covariantHomRepr x = Representation
-  { representedFunctor = HomX_ x
-  , representingObject = x
-  , represent          = \_ -> id
-  , universalElement   = x
-  }
+instance (Category c1, Category c2) => Functor (Proj1 c1 c2) where 
+  Proj1 % (f1 :**: _) = f1
 
-contravariantHomRepr :: Category (~>) => Obj (~>) x -> Representation ((~>) :-*: x) x
-contravariantHomRepr x = Representation
-  { representedFunctor = Hom_X x
-  , representingObject = Op x
-  , represent          = \_ h -> Op h
-  , universalElement   = x
-  }
 
--- | An initial universal property, a universal morphism from x to u.
-type InitialUniversal x u a = Representation ((x :*-: Cod u) :.: u) a
-initialUniversal :: Functor u
-                 => u 
-                 -> Obj (Dom u) a 
-                 -> Cod u x (u :% a) 
-                 -> (forall y. Obj (Dom u) y -> Cod u x (u :% y) -> Dom u a y) 
-                 -> InitialUniversal x u a
-initialUniversal u obj mor factorizer = Representation
-  { representedFunctor = HomX_ (src mor) :.: u
-  , representingObject = obj
-  , represent          = factorizer
-  , universalElement   = mor
-  }
+-- | 'Proj2' is a bifunctor that projects out the second component of a product.
+data Proj2 (c1 :: * -> * -> *) (c2 :: * -> * -> *) = Proj2
+
+type instance Dom (Proj2 c1 c2) = c1 :**: c2
+type instance Cod (Proj2 c1 c2) = c2
+type instance Proj2 c1 c2 :% (a1, a2) = a2
+
+instance (Category c1, Category c2) => Functor (Proj2 c1 c2) where 
+  Proj2 % (_ :**: f2) = f2
+
+
+-- | @f1 :***: f2@ is the product of the functors @f1@ and @f2@.
+data f1 :***: f2 = f1 :***: f2
+
+type instance Dom (f1 :***: f2) = Dom f1 :**: Dom f2
+type instance Cod (f1 :***: f2) = Cod f1 :**: Cod f2
+type instance (f1 :***: f2) :% (a1, a2) = (f1 :% a1, f2 :% a2)
+
+instance (Functor f1, Functor f2) => Functor (f1 :***: f2) where 
+  (g1 :***: g2) % (f1 :**: f2) = (g1 % f1) :**: (g2 % f2)
   
--- | A terminal universal property, a universal morphism from u to x.
-type TerminalUniversal x u a = Representation ((Cod u :-*: x) :.: Opposite u) a
-terminalUniversal :: Functor u
-                  => u 
-                  -> Obj (Dom u) a
-                  -> Cod u (u :% a) x
-                  -> (forall y. Obj (Dom u) y -> Cod u (u :% y) x -> Dom u y a) 
-                  -> TerminalUniversal x u a
-terminalUniversal u obj mor factorizer = Representation
-  { representedFunctor = Hom_X (tgt mor) :.: Opposite u
-  , representingObject = Op obj
-  , represent          = \(Op y) f -> Op (factorizer y f)
-  , universalElement   = mor
-  }
+  
+-- | 'DiagProd' is the diagonal functor for products.
+data DiagProd ((~>) :: * -> * -> *) = DiagProd
+
+type instance Dom (DiagProd (~>)) = (~>)
+type instance Cod (DiagProd (~>)) = (~>) :**: (~>)
+type instance DiagProd (~>) :% a = (a, a)
+
+instance Category (~>) => Functor (DiagProd (~>)) where 
+  DiagProd % f = f :**: f
+
+
+-- | 'Tuple1' tuples with a fixed object on the left.
+data Tuple1 (c1 :: * -> * -> *) (c2 :: * -> * -> *) a = Tuple1 (Obj c1 a)
+
+type instance Dom (Tuple1 c1 c2 a1) = c2
+type instance Cod (Tuple1 c1 c2 a1) = c1 :**: c2
+type instance Tuple1 c1 c2 a1 :% a2 = (a1, a2)
+
+instance (Category c1, Category c2) => Functor (Tuple1 c1 c2 a1) where
+  Tuple1 a % f = a :**: f
+
+
+-- | 'Tuple2' tuples with a fixed object on the right.
+data Tuple2 (c1 :: * -> * -> *) (c2 :: * -> * -> *) a = Tuple2 (Obj c2 a)
+
+type instance Dom (Tuple2 c1 c2 a2) = c1
+type instance Cod (Tuple2 c1 c2 a2) = c1 :**: c2
+type instance Tuple2 c1 c2 a2 :% a1 = (a1, a2)
+
+instance (Category c1, Category c2) => Functor (Tuple2 c1 c2 a2) where
+  Tuple2 a % f = f :**: a
+
+
+-- | The Hom functor, Hom(–,–), a bifunctor contravariant in its first argument and covariant in its second argument.
+data Hom ((~>) :: * -> * -> *) = Hom  
+
+type instance Dom (Hom (~>)) = Op (~>) :**: (~>)
+type instance Cod (Hom (~>)) = (->)
+type instance (Hom (~>)) :% (a1, a2) = a1 ~> a2
+
+instance Category (~>) => Functor (Hom (~>)) where 
+  Hom % (Op f1 :**: f2) = \g -> f2 . g . f1
+
+
+type x :*-: (~>) = Hom (~>) :.: Tuple1 (Op (~>)) (~>) x
+-- | The covariant functor Hom(X,–)
+homX_ :: Category (~>) => Obj (~>) x -> x :*-: (~>)
+homX_ x = Hom :.: Tuple1 (Op x)
+
+type (~>) :-*: x = Hom (~>) :.: Tuple2 (Op (~>)) (~>) x
+-- | The contravariant functor Hom(–,X)
+hom_X :: Category (~>) => Obj (~>) x -> (~>) :-*: x
+hom_X x = Hom :.: Tuple2 x

@@ -82,15 +82,15 @@ type instance Cod (PShExponential (~>) p q) = (->)
 type instance PShExponential (~>) p q :% a = Presheaves (~>) (((~>) :-*: a) :*: p) q
 instance (Category (~>), Dom p ~ Op (~>), Dom q ~ Op (~>), Cod p ~ (->), Cod q ~ (->), Functor p, Functor q)
   => Functor (PShExponential (~>) p q) where
-  PShExponential % Op f = \(Nat (_ :*: p) q n) -> Nat (Hom_X (src f) :*: p) q $ \i (i2a, pi) -> n i (f . i2a, pi)
+  PShExponential % Op f = \(Nat (_ :*: p) q n) -> Nat (hom_X (src f) :*: p) q $ \i (i2a, pi) -> n i (f . i2a, pi)
 
 type instance Exponential (Presheaves (~>)) y z = PShExponential (~>) y z
 
 instance Category (~>) => CartesianClosed (Presheaves (~>)) where
   
   apply (Nat y _ _) (Nat z _ _) = Nat (PShExponential :*: y) z $ \(Op i) (n, yi) -> (n ! Op i) (i, yi)
-  tuple (Nat y _ _) (Nat z _ _) = Nat z PShExponential $ \(Op i) zi -> (Nat (Hom_X i) z $ \_ j2i -> (z % Op j2i) zi) *** natId y
-  zn@Nat{} ^^^ yn@Nat{} = Nat PShExponential PShExponential $ \(Op i) n -> zn . n . (natId (Hom_X i) *** yn)
+  tuple (Nat y _ _) (Nat z _ _) = Nat z PShExponential $ \(Op i) zi -> (Nat (hom_X i) z $ \_ j2i -> (z % Op j2i) zi) *** natId y
+  zn@Nat{} ^^^ yn@Nat{} = Nat PShExponential PShExponential $ \(Op i) n -> zn . n . (natId (hom_X i) *** yn)
 
     
 data ProductWith (~>) y = ProductWith (Obj (~>) y)
@@ -115,10 +115,6 @@ curry x y _ = leftAdjunct (curryAdj y) x
 
 uncurry :: CartesianClosed (~>) => Obj (~>) x -> Obj (~>) y -> Obj (~>) z -> x ~> (ExponentialWith (~>) y :% z) -> (ProductWith (~>) y :% x) ~> z
 uncurry _ y z = rightAdjunct (curryAdj y) z
-
--- The Yoneda emedding is just the Hom functor in curried form.
-yonedaEmbedding :: Category (~>) => Cat (CatW (Op (~>))) (CatW (Nat (~>) (->)))
-yonedaEmbedding = curry (CatA Id) (CatA Id) (CatA Id) (CatA Hom)
 
 type State (~>) s a = ExponentialWith (~>) s :% ProductWith (~>) s :% a
 
