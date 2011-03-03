@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeOperators, TypeFamilies, GADTs, FlexibleInstances, FlexibleContexts, ViewPatterns #-}
+{-# LANGUAGE TypeOperators, TypeFamilies, GADTs, FlexibleInstances, FlexibleContexts, ViewPatterns, ScopedTypeVariables, UndecidableInstances #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category.Dialg
@@ -13,13 +13,16 @@
 -----------------------------------------------------------------------------
 module Data.Category.Dialg where
 
-import Prelude hiding ((.), Functor)
+import Prelude (($), id)
 import qualified Prelude
 
 import Data.Category
 import Data.Category.Functor
+import Data.Category.NaturalTransformation
 import Data.Category.Limit
 import Data.Category.Product
+import Data.Category.Monoidal
+import qualified Data.Category.Adjunction as A
 
 
 -- | Objects of Dialg(F,G) are (F,G)-dialgebras.
@@ -117,4 +120,28 @@ instance HasInitialObject (Dialg (NatF (->)) (DiagProd (->))) where
   initialObject = dialgId $ Dialgebra id (Z :**: S)
   
   initialize (dialgebra -> d@(Dialgebra _ (z :**: s))) = DialgA (dialgebra initialObject) d $ primRec z s
-    
+
+
+
+data EMAdjF m = EMAdjF (Monad m)
+type instance Dom (EMAdjF m) = Dom m
+type instance Cod (EMAdjF m) = Alg m
+type instance EMAdjF m :% a = m :% a
+instance (Functor m, Dom m ~ (~>), Cod m ~ (~>)) => Functor (EMAdjF m) where
+  EMAdjF m % f = DialgA (alg (src f)) (alg (tgt f)) $ monadFunctor m % f
+    where
+      alg :: Obj (~>) x -> Algebra m (m :% x)
+      alg x = Dialgebra (monadFunctor m % x) (multiply m ! x)
+
+data EMAdjG m = EMAdjG
+type instance Dom (EMAdjG m) = Alg m
+type instance Cod (EMAdjG m) = Dom m
+type instance EMAdjG m :% a = a
+instance (Functor m, Dom m ~ (~>), Cod m ~ (~>)) => Functor (EMAdjG m) where
+  EMAdjG % DialgA _ _ f = f
+
+eilenbergMooreAdj :: (Functor m, Dom m ~ (~>), Cod m ~ (~>)) 
+  => Monad m -> A.Adjunction (Alg m) (~>) (EMAdjF m) (EMAdjG m)
+eilenbergMooreAdj m = A.mkAdjunction (EMAdjF m) EMAdjG
+  (\x -> unit m ! x)
+  (\(DialgA (Dialgebra _ h) _ _) -> DialgA (Dialgebra (src h) (monadFunctor m % h)) (Dialgebra (tgt h) h) h)
