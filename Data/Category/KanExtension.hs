@@ -2,7 +2,6 @@
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category.KanExtension
--- Copyright   :  (c) Sjoerd Visscher 2010
 -- License     :  BSD-style (see the file LICENSE)
 --
 -- Maintainer  :  sjoerd@w3future.com
