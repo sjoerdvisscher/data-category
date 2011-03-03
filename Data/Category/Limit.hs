@@ -402,20 +402,19 @@ type instance ColimitFam (Discrete (S n)) (~>) f = BinaryCoproduct (~>) (f :% Z)
 
 instance (HasColimits (Discrete n) (~>), HasBinaryCoproducts (~>)) => HasColimits (Discrete (S n)) (~>) where
   
-  colimit (Nat l _ _) = colimit' l
+  colimit = colimit'
     where
-      colimit' :: forall f. (Functor f, Dom f ~ Discrete (S n), Cod f ~ (~>), HasColimits (Discrete n) (~>), HasBinaryCoproducts (~>)) 
-                   => f -> Cocone f (Colimit f)
-      colimit' f = Nat f (Const $ x +++ y) (\z -> unCom $ h z)
+      colimit' :: forall f. Obj (Nat (Discrete (S n)) (~>)) f -> Cocone f (Colimit f)
+      colimit' l@Nat{} = Nat (srcF l) (Const $ x +++ y) (\z -> unCom $ h z)
         where
-          x = f % Z
+          x = l ! Z
           y = coconeVertex colNext
-          colNext = colimit (natId (f :.: Succ))
+          colNext = colimit (l `o` natId Succ)
           h :: Obj (Discrete (S n)) z -> Com f (ConstF f (ColimitFam (Discrete (S n)) (~>) f)) z
           h Z     = Com $ inj1 x y
           h (S n) = Com $ inj2 x y . colNext ! n
   
-  colimitFactorizer (Nat f _ _) c = c ! Z ||| colimitFactorizer (natId (f :.: Succ)) (Nat (f :.: Succ) (Const $ coconeVertex c) $ \n -> c ! S n)
+  colimitFactorizer l@Nat{} c = c ! Z ||| colimitFactorizer (l `o` natId Succ) (constPostcomp (tgtF c) Succ . (c `o` natId Succ))
 
 
 type instance BinaryCoproduct (->) x y = Either x y
