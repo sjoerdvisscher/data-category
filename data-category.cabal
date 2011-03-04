@@ -14,7 +14,7 @@ description:         Data-category is a collection of categories, and some categ
                      In practice this means we are allowed to ignore 'undefined' (f.e. when talking about uniqueness of morphisms),
                      and we can treat the categories as normal categories.
 
-category:            Data
+category:            Math
 license:             BSD3
 license-file:        LICENSE
 author:              Sjoerd Visscher
