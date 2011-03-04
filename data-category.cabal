@@ -1,6 +1,6 @@
 name:                data-category
 version:             0.4
-synopsis:            Restricted categories
+synopsis:            Category theory
 
 description:         Data-category is a collection of categories, and some categorical constructions on them.
                      .
