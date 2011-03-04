@@ -92,30 +92,20 @@ instance Category (~>) => CartesianClosed (Presheaves (~>)) where
   zn@Nat{} ^^^ yn@Nat{} = Nat PShExponential PShExponential $ \(Op i) n -> zn . n . (natId (hom_X i) *** yn)
 
     
-data ProductWith (~>) y = ProductWith (Obj (~>) y)
-type instance Dom (ProductWith (~>) y) = (~>)
-type instance Cod (ProductWith (~>) y) = (~>)
-type instance ProductWith (~>) y :% z = BinaryProduct (~>) z y
-instance HasBinaryProducts (~>) => Functor (ProductWith (~>) y) where
-  ProductWith y % f = f *** y
-  
-data ExponentialWith (~>) y = ExponentialWith (Obj (~>) y)
-type instance Dom (ExponentialWith (~>) y) = (~>)
-type instance Cod (ExponentialWith (~>) y) = (~>)
-type instance ExponentialWith (~>) y :% z = Exponential (~>) y z
-instance CartesianClosed (~>) => Functor (ExponentialWith (~>) y) where
-  ExponentialWith y % f = f ^^^ y
+curryAdj :: CartesianClosed (~>) 
+         => Obj (~>) y 
+         -> Adjunction (~>) (~>) 
+              (ProductFunctor (~>) :.: Tuple2 (~>) (~>) y) 
+              (ExpFunctor (~>) :.: Tuple1 (Op (~>)) (~>) y)
+curryAdj y = mkAdjunction (ProductFunctor :.: Tuple2 y) (ExpFunctor :.: Tuple1 (Op y)) (tuple y) (apply y)
 
-curryAdj :: CartesianClosed (~>) => Obj (~>) y -> Adjunction (~>) (~>) (ProductWith (~>) y) (ExponentialWith (~>) y)
-curryAdj y = mkAdjunction (ProductWith y) (ExponentialWith y) (tuple y) (apply y)
-
-curry :: CartesianClosed (~>) => Obj (~>) x -> Obj (~>) y -> Obj (~>) z -> (ProductWith (~>) y :% x) ~> z -> x ~> (ExponentialWith (~>) y :% z)
+curry :: CartesianClosed (~>) => Obj (~>) x -> Obj (~>) y -> Obj (~>) z -> BinaryProduct (~>) x y ~> z -> x ~> Exponential (~>) y z
 curry x y _ = leftAdjunct (curryAdj y) x
 
-uncurry :: CartesianClosed (~>) => Obj (~>) x -> Obj (~>) y -> Obj (~>) z -> x ~> (ExponentialWith (~>) y :% z) -> (ProductWith (~>) y :% x) ~> z
+uncurry :: CartesianClosed (~>) => Obj (~>) x -> Obj (~>) y -> Obj (~>) z -> x ~> Exponential (~>) y z -> BinaryProduct (~>) x y ~> z
 uncurry _ y z = rightAdjunct (curryAdj y) z
 
-type State (~>) s a = ExponentialWith (~>) s :% ProductWith (~>) s :% a
+type State (~>) s a = Exponential (~>) s (BinaryProduct (~>) a s)
 
 stateMonadReturn :: CartesianClosed (~>) => Obj (~>) s -> Obj (~>) a -> a ~> State (~>) s a
 stateMonadReturn s a = M.unit (adjunctionMonad $ curryAdj s) ! a
@@ -123,7 +113,7 @@ stateMonadReturn s a = M.unit (adjunctionMonad $ curryAdj s) ! a
 stateMonadJoin :: CartesianClosed (~>) => Obj (~>) s -> Obj (~>) a -> State (~>) s (State (~>) s a) ~> State (~>) s a
 stateMonadJoin s a = M.multiply (adjunctionMonad $ curryAdj s) ! a
 
-type Context (~>) s a = ProductWith (~>) s :% ExponentialWith (~>) s :% a
+type Context (~>) s a = BinaryProduct (~>) (Exponential (~>) s a) s
 
 contextComonadExtract :: CartesianClosed (~>) => Obj (~>) s -> Obj (~>) a -> Context (~>) s a ~> a
 contextComonadExtract s a = M.counit (adjunctionComonad $ curryAdj s) ! a
