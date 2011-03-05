@@ -25,6 +25,8 @@ module Data.Category.Functor (
   , (:.:)(..)
   , Const(..), ConstF
   , Opposite(..)
+  , OpOp(..)
+  , OpOpInv(..)
   , EndoHask(..)
   
   -- *** Related to the product category
@@ -133,6 +135,28 @@ type instance Opposite f :% a = f :% a
 -- | The dual of a functor
 instance (Category (Dom f), Category (Cod f)) => Functor (Opposite f) where
   Opposite f % Op a = Op $ f % a
+
+
+data OpOp ((~>) :: * -> * -> *) = OpOp
+
+type instance Dom (OpOp (~>)) = Op (Op (~>))
+type instance Cod (OpOp (~>)) = (~>)
+type instance OpOp (~>) :% a = a
+
+-- | The @Op (Op x) = x@ functor.
+instance Category (~>) => Functor (OpOp (~>)) where
+  OpOp % Op (Op f) = f
+
+
+data OpOpInv ((~>) :: * -> * -> *) = OpOpInv
+
+type instance Dom (OpOpInv (~>)) = (~>)
+type instance Cod (OpOpInv (~>)) = Op (Op (~>))
+type instance OpOpInv (~>) :% a = a
+
+-- | The @x = Op (Op x)@ functor.
+instance Category (~>) => Functor (OpOpInv (~>)) where
+  OpOpInv % f = Op (Op f)
 
 
 data EndoHask :: (* -> *) -> * where
