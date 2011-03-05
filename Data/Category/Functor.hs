@@ -219,17 +219,17 @@ type instance Dom (Hom (~>)) = Op (~>) :**: (~>)
 type instance Cod (Hom (~>)) = (->)
 type instance (Hom (~>)) :% (a1, a2) = a1 ~> a2
 
--- | The Hom functor, Hom(–,–), a bifunctor contravariant in its first argument and covariant in its second argument.
+-- | The Hom functor, Hom(--,--), a bifunctor contravariant in its first argument and covariant in its second argument.
 instance Category (~>) => Functor (Hom (~>)) where 
   Hom % (Op f1 :**: f2) = \g -> f2 . g . f1
 
 
 type x :*-: (~>) = Hom (~>) :.: Tuple1 (Op (~>)) (~>) x
--- | The covariant functor Hom(X,–)
+-- | The covariant functor Hom(X,--)
 homX_ :: Category (~>) => Obj (~>) x -> x :*-: (~>)
 homX_ x = Hom :.: Tuple1 (Op x)
 
 type (~>) :-*: x = Hom (~>) :.: Tuple2 (Op (~>)) (~>) x
--- | The contravariant functor Hom(–,X)
+-- | The contravariant functor Hom(--,X)
 hom_X :: Category (~>) => Obj (~>) x -> (~>) :-*: x
 hom_X x = Hom :.: Tuple2 x
