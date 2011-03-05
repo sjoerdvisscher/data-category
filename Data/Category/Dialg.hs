@@ -40,6 +40,7 @@ dialgId d@(Dialgebra a _) = DialgA d d a
 dialgebra :: Obj (Dialg f g) a -> Dialgebra f g a
 dialgebra (DialgA d _ _) = d
 
+-- | The category of (F,G)-dialgebras.
 instance Category (Dialg f g) where
   
   src (DialgA s _ _) = dialgId s
@@ -69,7 +70,6 @@ type Ana f a = Coalgebra f a -> Coalg f a (TerminalFAlgebra f)
 
 
 
--- | 'FixF' provides the initial F-algebra for endofunctors in Hask.
 newtype FixF f = InF { outF :: f :% FixF f }
 
 -- | Catamorphisms for endofunctors in Hask.
@@ -81,6 +81,7 @@ anaHask :: Prelude.Functor f => Ana (EndoHask f) a
 anaHask a@(Dialgebra _ f) = DialgA a (dialgebra terminalObject) $ ana_f where ana_f = InF . (EndoHask % ana_f) . f 
 
 
+-- | 'FixF' provides the initial F-algebra for endofunctors in Hask.
 instance Prelude.Functor f => HasInitialObject (Dialg (EndoHask f) (Id (->))) where
   
   type InitialObject (Dialg (EndoHask f) (Id (->))) = FixF (EndoHask f)
@@ -88,7 +89,8 @@ instance Prelude.Functor f => HasInitialObject (Dialg (EndoHask f) (Id (->))) wh
   initialObject = dialgId $ Dialgebra id InF
   initialize a = cataHask (dialgebra a)
   
-instance  Prelude.Functor f => HasTerminalObject (Dialg (Id (->)) (EndoHask f)) where
+-- | 'FixF' also provides the terminal F-coalgebra for endofunctors in Hask.
+instance Prelude.Functor f => HasTerminalObject (Dialg (Id (->)) (EndoHask f)) where
 
   type TerminalObject (Dialg (Id (->)) (EndoHask f)) = FixF (EndoHask f)
   
@@ -97,24 +99,16 @@ instance  Prelude.Functor f => HasTerminalObject (Dialg (Id (->)) (EndoHask f)) 
   
 
 
--- | The category for defining the natural numbers and primitive recursion can be described as
--- @Dialg(F,G)@, with @F(A)=\<1,A>@ and @G(A)=\<A,A>@.
-data NatF ((~>) :: * -> * -> *) where
-  NatF :: NatF (~>)
-type instance Dom (NatF (~>)) = (~>)
-type instance Cod (NatF (~>)) = (~>) :**: (~>)
-type instance NatF (~>) :% a = (TerminalObject (~>),  a)
-instance HasTerminalObject (~>) => Functor (NatF (~>)) where
-  NatF % f = terminalObject :**: f
-
 data NatNum = Z () | S NatNum
 primRec :: (() -> t) -> (t -> t) -> NatNum -> t
 primRec z _ (Z ()) = z ()
 primRec z s (S  n) = s (primRec z s n)
 
-instance HasInitialObject (Dialg (NatF (->)) (DiagProd (->))) where
+-- | The category for defining the natural numbers and primitive recursion can be described as
+-- @Dialg(F,G)@, with @F(A)=\<1,A>@ and @G(A)=\<A,A>@.
+instance HasInitialObject (Dialg (Tuple1 (->) (->) ()) (DiagProd (->))) where
   
-  type InitialObject (Dialg (NatF (->)) (DiagProd (->))) = NatNum
+  type InitialObject (Dialg (Tuple1 (->) (->) ()) (DiagProd (->))) = NatNum
     
   initialObject = dialgId $ Dialgebra id (Z :**: S)
   
@@ -122,25 +116,27 @@ instance HasInitialObject (Dialg (NatF (->)) (DiagProd (->))) where
 
 
 
-data EMAdjF m = EMAdjF (Monad m)
-type instance Dom (EMAdjF m) = Dom m
-type instance Cod (EMAdjF m) = Alg m
-type instance EMAdjF m :% a = m :% a
-instance (Functor m, Dom m ~ (~>), Cod m ~ (~>)) => Functor (EMAdjF m) where
-  EMAdjF m % f = DialgA (alg (src f)) (alg (tgt f)) $ monadFunctor m % f
+data FreeAlg m = FreeAlg (Monad m)
+type instance Dom (FreeAlg m) = Dom m
+type instance Cod (FreeAlg m) = Alg m
+type instance FreeAlg m :% a = m :% a
+-- | @FreeAlg@ M takes @x@ to the free algebra @(M x, mu_x)@ of the monad @M@.
+instance (Functor m, Dom m ~ (~>), Cod m ~ (~>)) => Functor (FreeAlg m) where
+  FreeAlg m % f = DialgA (alg (src f)) (alg (tgt f)) $ monadFunctor m % f
     where
       alg :: Obj (~>) x -> Algebra m (m :% x)
       alg x = Dialgebra (monadFunctor m % x) (multiply m ! x)
 
-data EMAdjG m = EMAdjG
-type instance Dom (EMAdjG m) = Alg m
-type instance Cod (EMAdjG m) = Dom m
-type instance EMAdjG m :% a = a
-instance (Functor m, Dom m ~ (~>), Cod m ~ (~>)) => Functor (EMAdjG m) where
-  EMAdjG % DialgA _ _ f = f
+data ForgetAlg m = ForgetAlg
+type instance Dom (ForgetAlg m) = Alg m
+type instance Cod (ForgetAlg m) = Dom m
+type instance ForgetAlg m :% a = a
+-- | @ForgetAlg m@ is the forgetful functor for @Alg m@.
+instance (Functor m, Dom m ~ (~>), Cod m ~ (~>)) => Functor (ForgetAlg m) where
+  ForgetAlg % DialgA _ _ f = f
 
 eilenbergMooreAdj :: (Functor m, Dom m ~ (~>), Cod m ~ (~>)) 
-  => Monad m -> A.Adjunction (Alg m) (~>) (EMAdjF m) (EMAdjG m)
-eilenbergMooreAdj m = A.mkAdjunction (EMAdjF m) EMAdjG
+  => Monad m -> A.Adjunction (Alg m) (~>) (FreeAlg m) (ForgetAlg m)
+eilenbergMooreAdj m = A.mkAdjunction (FreeAlg m) ForgetAlg
   (\x -> unit m ! x)
   (\(DialgA (Dialgebra _ h) _ _) -> DialgA (Dialgebra (src h) (monadFunctor m % h)) (Dialgebra (tgt h) h) h)

@@ -30,6 +30,7 @@ data (:/\:) :: * -> * -> * -> * -> * where
     CommaO t s (a', b') ->
     (t :/\: s) (a, b) (a', b')
 
+-- | The comma category T \\downarrow S
 instance (Category (Dom t), Category (Dom s)) => Category (t :/\: s) where
     
   src (CommaA so@(CommaO a _ b) _ _ _)    = CommaA so a        b        so

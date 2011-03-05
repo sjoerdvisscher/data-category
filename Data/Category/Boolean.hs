@@ -100,7 +100,7 @@ type instance BinaryCoproduct Boolean Fls Tru = Tru
 type instance BinaryCoproduct Boolean Tru Fls = Tru
 type instance BinaryCoproduct Boolean Tru Tru = Tru
 
--- | Disjunction is the binary product in the Boolean category.
+-- | Disjunction is the binary coproduct in the Boolean category.
 instance HasBinaryCoproducts Boolean where 
   
   inj1 Fls Fls = Fls

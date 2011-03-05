@@ -28,6 +28,7 @@ data Kleisli m a b where
 kleisliId :: (Functor m, Dom m ~ (~>), Cod m ~ (~>)) => Monad m -> Obj (~>) a -> Kleisli m a a
 kleisliId m a = Kleisli m a $ unit m ! a
 
+-- | The category of Kleisli arrows.
 instance Category (Kleisli m) where
   
   src (Kleisli m _ f) = kleisliId m (src f)

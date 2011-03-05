@@ -31,6 +31,7 @@ peanoId o@(PeanoO z _) = PeanoA o o $ tgt z
 peanoO :: Category (~>) => Obj (Peano (~>)) a -> PeanoO (~>) a
 peanoO (PeanoA o _ _) = o
 
+-- | The 'Peano' category.
 instance HasTerminalObject (~>) => Category (Peano (~>)) where
   
   src (PeanoA s _ _) = peanoId s

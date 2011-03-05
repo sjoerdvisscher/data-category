@@ -56,6 +56,7 @@ data CatApply (y :: * -> * -> *) (z :: * -> * -> *) = CatApply
 type instance Dom (CatApply y z) = Nat y z :**: y
 type instance Cod (CatApply y z) = z
 type instance CatApply y z :% (f, a) = f :% a
+-- | 'CatApply' is a bifunctor, @CatApply :% (f, a)@ applies @f@ to @a@, i.e. @f :% a@.
 instance (Category y, Category z) => Functor (CatApply y z) where
   CatApply % (l :**: r) = l ! r
 
@@ -63,6 +64,7 @@ data CatTuple (y :: * -> * -> *) (z :: * -> * -> *) = CatTuple
 type instance Dom (CatTuple y z) = z
 type instance Cod (CatTuple y z) = Nat y (z :**: y)
 type instance CatTuple y z :% a = Tuple1 z y a
+-- | 'CatTuple' converts an object @a@ to the functor 'Tuple1' @a@.
 instance (Category y, Category z) => Functor (CatTuple y z) where
   CatTuple % f = Nat (Tuple1 (src f)) (Tuple1 (tgt f)) $ \z -> f :**: z
 

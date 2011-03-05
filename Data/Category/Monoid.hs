@@ -25,7 +25,7 @@ import Data.Category.Monoidal as M
 data MonoidA m a b where
   MonoidA :: Monoid m => m -> MonoidA m m m
 
--- | A monoid as a category with one object.
+-- | A (prelude) monoid as a category with one object.
 instance Monoid m => Category (MonoidA m) where
   
   src (MonoidA _) = MonoidA mempty
@@ -36,9 +36,6 @@ instance Monoid m => Category (MonoidA m) where
 
 data Mon :: * -> * -> * where
   MonoidMorphism :: (Monoid m1, Monoid m2) => (m1 -> m2) -> Mon m1 m2
-
-unMonoidMorphism :: (Monoid m1, Monoid m2) => Mon m1 m2 -> m1 -> m2
-unMonoidMorphism (MonoidMorphism f) = f
 
 -- | The category of all monoids, with monoid morphisms as arrows.
 instance Category Mon where
@@ -53,6 +50,7 @@ data ForgetMonoid = ForgetMonoid
 type instance Dom ForgetMonoid = Mon
 type instance Cod ForgetMonoid = (->)
 type instance ForgetMonoid :% a = a
+-- | The 'ForgetMonoid' functor forgets the monoid structure.
 instance Functor ForgetMonoid where
   ForgetMonoid % MonoidMorphism f = f
   
@@ -60,14 +58,16 @@ data FreeMonoid = FreeMonoid
 type instance Dom FreeMonoid = (->)
 type instance Cod FreeMonoid = Mon
 type instance FreeMonoid :% a = [a]
+-- | The 'FreeMonoid' functor is the list functor.
 instance Functor FreeMonoid where
   FreeMonoid % f = MonoidMorphism $ map f
 
+-- | The free monoid functor is left adjoint to the forgetful functor.
 freeMonoidAdj :: Adjunction Mon (->) FreeMonoid ForgetMonoid
 freeMonoidAdj = mkAdjunction FreeMonoid ForgetMonoid (\_ -> (:[])) (\(MonoidMorphism _) -> MonoidMorphism mconcat)
 
 foldMap :: Monoid m => (a -> m) -> [a] -> m
-foldMap = unMonoidMorphism . rightAdjunct freeMonoidAdj (MonoidMorphism id)
+foldMap = (ForgetMonoid %) . rightAdjunct freeMonoidAdj (MonoidMorphism id)
 
 listMonadReturn :: a -> [a]
 listMonadReturn = M.unit (adjunctionMonad freeMonoidAdj) ! id
@@ -76,7 +76,7 @@ listMonadJoin :: [[a]] -> [a]
 listMonadJoin = M.multiply (adjunctionMonad freeMonoidAdj) ! id
 
 listComonadExtract :: Monoid m => [m] -> m
-listComonadExtract = let MonoidMorphism f = M.counit (adjunctionComonad freeMonoidAdj) ! MonoidMorphism id in f
+listComonadExtract = ForgetMonoid % (M.counit (adjunctionComonad freeMonoidAdj) ! MonoidMorphism id)
 
 listComonadDuplicate :: Monoid m => [m] -> [[m]]
-listComonadDuplicate = let MonoidMorphism f = M.comultiply (adjunctionComonad freeMonoidAdj) ! MonoidMorphism id in f
+listComonadDuplicate = ForgetMonoid % (M.comultiply (adjunctionComonad freeMonoidAdj) ! MonoidMorphism id)
