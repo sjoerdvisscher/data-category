@@ -23,6 +23,7 @@ import Data.Category.Monoidal as M
 
 type family Exponential (~>) y z :: *
 
+-- | A category is cartesian closed if it has all products and exponentials for all objects.
 class (HasTerminalObject (~>), HasBinaryProducts (~>)) => CartesianClosed (~>) where
   
   apply :: Obj (~>) y -> Obj (~>) z -> BinaryProduct (~>) (Exponential (~>) y z) y ~> z
@@ -34,6 +35,7 @@ data ExpFunctor ((~>) :: * -> * -> *) = ExpFunctor
 type instance Dom (ExpFunctor (~>)) = Op (~>) :**: (~>)
 type instance Cod (ExpFunctor (~>)) = (~>)
 type instance (ExpFunctor (~>)) :% (y, z) = Exponential (~>) y z
+-- | The exponential as a bifunctor.
 instance CartesianClosed (~>) => Functor (ExpFunctor (~>)) where
   ExpFunctor % (Op y :**: z) = z ^^^ y
 
@@ -41,6 +43,7 @@ instance CartesianClosed (~>) => Functor (ExpFunctor (~>)) where
 
 type instance Exponential (->) y z = y -> z
 
+-- | Exponentials in @Hask@ are functions.
 instance CartesianClosed (->) where
   
   apply _ _ (f, y) = f y
@@ -66,6 +69,7 @@ instance (Category y, Category z) => Functor (CatTuple y z) where
 
 type instance Exponential Cat (CatW c) (CatW d) = CatW (Nat c d)
 
+-- | Exponentials in @Cat@ are the functor categories.
 instance CartesianClosed Cat where
   
   apply CatA{} CatA{}   = CatA CatApply
@@ -92,6 +96,7 @@ instance Category (~>) => CartesianClosed (Presheaves (~>)) where
   zn@Nat{} ^^^ yn@Nat{} = Nat PShExponential PShExponential $ \(Op i) n -> zn . n . (natId (hom_X i) *** yn)
 
     
+-- | The product functor is left adjoint the the exponential functor.
 curryAdj :: CartesianClosed (~>) 
          => Obj (~>) y 
          -> Adjunction (~>) (~>) 
@@ -99,12 +104,15 @@ curryAdj :: CartesianClosed (~>)
               (ExpFunctor (~>) :.: Tuple1 (Op (~>)) (~>) y)
 curryAdj y = mkAdjunction (ProductFunctor :.: Tuple2 y) (ExpFunctor :.: Tuple1 (Op y)) (tuple y) (apply y)
 
+-- | From the adjunction between the product functor and the exponential functor we get the curry and uncurry functions,
+--   generalized to any cartesian closed category.
 curry :: CartesianClosed (~>) => Obj (~>) x -> Obj (~>) y -> Obj (~>) z -> BinaryProduct (~>) x y ~> z -> x ~> Exponential (~>) y z
 curry x y _ = leftAdjunct (curryAdj y) x
 
 uncurry :: CartesianClosed (~>) => Obj (~>) x -> Obj (~>) y -> Obj (~>) z -> x ~> Exponential (~>) y z -> BinaryProduct (~>) x y ~> z
 uncurry _ y z = rightAdjunct (curryAdj y) z
 
+-- | From every adjunction we get a monad, in this case the State monad.
 type State (~>) s a = Exponential (~>) s (BinaryProduct (~>) a s)
 
 stateMonadReturn :: CartesianClosed (~>) => Obj (~>) s -> Obj (~>) a -> a ~> State (~>) s a
@@ -113,6 +121,7 @@ stateMonadReturn s a = M.unit (adjunctionMonad $ curryAdj s) ! a
 stateMonadJoin :: CartesianClosed (~>) => Obj (~>) s -> Obj (~>) a -> State (~>) s (State (~>) s a) ~> State (~>) s a
 stateMonadJoin s a = M.multiply (adjunctionMonad $ curryAdj s) ! a
 
+-- ! From every adjunction we also get a comonad, the Context comonad in this case.
 type Context (~>) s a = BinaryProduct (~>) (Exponential (~>) s a) s
 
 contextComonadExtract :: CartesianClosed (~>) => Obj (~>) s -> Obj (~>) a -> Context (~>) s a ~> a

@@ -73,6 +73,7 @@ type instance BinaryProduct Boolean Fls Tru = Fls
 type instance BinaryProduct Boolean Tru Fls = Fls
 type instance BinaryProduct Boolean Tru Tru = Tru
 
+-- | Conjunction is the binary product in the Boolean category.
 instance HasBinaryProducts Boolean where 
   
   proj1 Fls Fls = Fls
@@ -99,6 +100,7 @@ type instance BinaryCoproduct Boolean Fls Tru = Tru
 type instance BinaryCoproduct Boolean Tru Fls = Tru
 type instance BinaryCoproduct Boolean Tru Tru = Tru
 
+-- | Disjunction is the binary product in the Boolean category.
 instance HasBinaryCoproducts Boolean where 
   
   inj1 Fls Fls = Fls
@@ -125,6 +127,7 @@ type instance Exponential Boolean Fls Tru = Tru
 type instance Exponential Boolean Tru Fls = Fls
 type instance Exponential Boolean Tru Tru = Tru
 
+-- | Implication makes the Boolean category cartesian closed.
 instance CartesianClosed Boolean where
   
   apply Fls Fls = Fls
@@ -169,12 +172,12 @@ falseProductComonoid :: ComonoidObject (ProductFunctor Boolean) Fls
 falseProductComonoid = ComonoidObject F2T Fls
 
 
--- | A natural transformation @Nat c d@ is isomorphic to a functor from @c :**: 2@ to @d@.
 data NatAsFunctor f g = NatAsFunctor (Nat (Dom f) (Cod f) f g)
 type instance Dom (NatAsFunctor f g) = Dom f :**: Boolean
 type instance Cod (NatAsFunctor f g) = Cod f
 type instance NatAsFunctor f g :% (a, Fls) = f :% a
 type instance NatAsFunctor f g :% (a, Tru) = g :% a
+-- | A natural transformation @Nat c d@ is isomorphic to a functor from @c :**: 2@ to @d@.
 instance (Functor f, Functor g, Category c, Category d, Dom f ~ c, Cod f ~ d, Dom g ~ c, Cod g ~ d) => Functor (NatAsFunctor f g) where
   NatAsFunctor (Nat f _ _) % (a :**: Fls) = f % a
   NatAsFunctor (Nat _ g _) % (a :**: Tru) = g % a

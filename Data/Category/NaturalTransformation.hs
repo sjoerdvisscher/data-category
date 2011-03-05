@@ -140,19 +140,17 @@ constPostcompInv (Const x) f = Nat (Const x) (Const x :.: f) $ const x
 type Endo (~>) = Nat (~>) (~>)
 
 
--- | Composition of endofunctors is a functor.
 data FunctorCompose ((~>) :: * -> * -> *) = FunctorCompose
 
 type instance Dom (FunctorCompose (~>)) = Endo (~>) :**: Endo (~>)
 type instance Cod (FunctorCompose (~>)) = Endo (~>)
 type instance FunctorCompose (~>) :% (f, g) = f :.: g
 
+-- | Composition of endofunctors is a functor.
 instance Category (~>) => Functor (FunctorCompose (~>)) where
   FunctorCompose % (n1 :**: n2) = n1 `o` n2
 
 
--- | @Precompose f d@ is the functor such that @Precompose f d :% g = g :.: f@, 
---   for functors @g@ that compose with @f@ and with codomain @d@.
 data Precompose :: * -> (* -> * -> *) -> * where
   Precompose :: f -> Precompose f d
 
@@ -160,12 +158,12 @@ type instance Dom (Precompose f d) = Nat (Cod f) d
 type instance Cod (Precompose f d) = Nat (Dom f) d
 type instance Precompose f d :% g = g :.: f
 
+-- | @Precompose f d@ is the functor such that @Precompose f d :% g = g :.: f@, 
+--   for functors @g@ that compose with @f@ and with codomain @d@.
 instance (Functor f, Category d) => Functor (Precompose f d) where
   Precompose f % n = n `o` natId f
 
 
--- | @Postcompose f c@ is the functor such that @Postcompose f c :% g = f :.: g@, 
---   for functors @g@ that compose with @f@ and with domain @c@.
 data Postcompose :: * -> (* -> * -> *) -> * where
   Postcompose :: f -> Postcompose f c
 
@@ -173,17 +171,19 @@ type instance Dom (Postcompose f c) = Nat c (Dom f)
 type instance Cod (Postcompose f c) = Nat c (Cod f)
 type instance Postcompose f c :% g = f :.: g
 
+-- | @Postcompose f c@ is the functor such that @Postcompose f c :% g = f :.: g@, 
+--   for functors @g@ that compose with @f@ and with domain @c@.
 instance (Functor f, Category c) => Functor (Postcompose f c) where
   Postcompose f % n = natId f `o` n
 
 
--- | @Wrap f h@ is the functor such that @Wrap f h :% g = f :.: g :.: h@, 
---   for functors @g@ that compose with @f@ and @h@.
 data Wrap f h = Wrap f h
 
 type instance Dom (Wrap f h) = Nat (Cod h) (Dom f)
 type instance Cod (Wrap f h) = Nat (Dom h) (Cod f)
 type instance Wrap f h :% g = f :.: g :.: h
 
+-- | @Wrap f h@ is the functor such that @Wrap f h :% g = f :.: g :.: h@, 
+--   for functors @g@ that compose with @f@ and @h@.
 instance (Functor f, Functor h) => Functor (Wrap f h) where
   Wrap f h % n = natId f `o` n `o` natId h

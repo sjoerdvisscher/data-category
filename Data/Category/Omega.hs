@@ -29,6 +29,7 @@ data Omega :: * -> * -> * where
   Z2S :: Omega Z n -> Omega Z (S n)
   S   :: Omega a b -> Omega (S a) (S b)
   
+-- | The objects of omega are the natural numbers, and there's an arrow from a to b iff a <= b.
 instance Category Omega where
   
   src Z       = Z
@@ -45,6 +46,7 @@ instance Category Omega where
   _       . _     = error "Other combinations should not type check"
 
 
+-- | 'Z' (zero) is the initial object of omega.
 instance HasInitialObject Omega where
   
   type InitialObject Omega = Z
@@ -61,7 +63,7 @@ type instance BinaryProduct Omega Z     n = Z
 type instance BinaryProduct Omega n     Z = Z
 type instance BinaryProduct Omega (S a) (S b) = S (BinaryProduct Omega a b)
 
--- The product in omega is the minimum.
+-- | The product in omega is the minimum.
 instance HasBinaryProducts Omega where 
 
   proj1 Z     Z     = Z
@@ -87,7 +89,7 @@ type instance BinaryCoproduct Omega Z     n     = n
 type instance BinaryCoproduct Omega n     Z     = n
 type instance BinaryCoproduct Omega (S a) (S b) = S (BinaryCoproduct Omega a b)
 
--- The coproduct in omega is the maximum.
+-- | The coproduct in omega is the maximum.
 instance HasBinaryCoproducts Omega where 
   
   inj1 Z     Z     = Z
@@ -108,10 +110,10 @@ instance HasBinaryCoproducts Omega where
   _     ||| _     = error "Other combinations should not type check"
 
 
--- Zero is a monoid object wrt the maximum.
+-- | Zero is a monoid object wrt the maximum.
 zeroMonoid :: MonoidObject (CoproductFunctor Omega) Z
 zeroMonoid = MonoidObject Z Z
 
--- Zero is also a comonoid object wrt the maximum.
+-- | Zero is also a comonoid object wrt the maximum.
 zeroComonoid :: ComonoidObject (CoproductFunctor Omega) Z
 zeroComonoid = ComonoidObject Z Z

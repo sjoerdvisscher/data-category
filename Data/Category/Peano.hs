@@ -39,7 +39,6 @@ instance HasTerminalObject (~>) => Category (Peano (~>)) where
   (PeanoA _ t f) . (PeanoA s _ g) = PeanoA s t $ f . g
   
   
--- | The natural numbers are the initial object for the 'Peano' category.
 data NatNum = Z () | S NatNum
 
 -- | Primitive recursion is the factorizer from the natural numbers.
@@ -47,6 +46,7 @@ primRec :: (() -> t) -> (t -> t) -> NatNum -> t
 primRec z _ (Z ()) = z ()
 primRec z s (S  n) = s (primRec z s n)
   
+-- | The natural numbers are the initial object for the 'Peano' category.
 instance HasInitialObject (Peano (->)) where
   
   type InitialObject (Peano (->)) = NatNum

@@ -72,11 +72,11 @@ instance Category (Discrete n) => Category (Discrete (S n)) where
   _   . _   = error "Other combinations should not type-check."
 
 
--- | @Void@ is the empty category.
+-- | 'Void' is the empty category.
 type Void = Discrete Z
--- | @Unit@ is the discrete category with one object.
+-- | 'Unit' is the discrete category with one object.
 type Unit = Discrete (S Z)
--- | @Pair@ is the discrete category with two objects.
+-- | 'Pair' is the discrete category with two objects.
 type Pair = Discrete (S (S Z))
 
 
@@ -84,6 +84,7 @@ data Succ n = Succ
 type instance Dom (Succ n) = Discrete n
 type instance Cod (Succ n) = Discrete (S n)
 type instance Succ n :% a = S a
+-- | 'Succ' maps each object in @Discrete n@ to its successor in @Discrete (S n)@.
 instance (Category (Discrete n)) => Functor (Succ n) where
   Succ % Z     = S Z
   Succ % (S a) = S (S a)
@@ -101,16 +102,19 @@ type instance Cod (DiscreteDiagram (~>) n xs) = (~>)
 type instance DiscreteDiagram (~>) (S n) (x, xs) :% Z = x
 type instance DiscreteDiagram (~>) (S n) (x, xs) :% (S a) = DiscreteDiagram (~>) n xs :% a
 
+-- | The empty diagram.
 instance (Category (~>)) 
   => Functor (DiscreteDiagram (~>) Z ()) where
   Nil        % f = magicZ f
 
+-- | A diagram with one more object.
 instance (Category (~>), Category (Discrete n), Functor (DiscreteDiagram (~>) n xs)) 
   => Functor (DiscreteDiagram (~>) (S n) (x, xs)) where
   (x ::: _)  % Z   = x
   (_ ::: xs) % S n = xs % n
 
 
+-- | Natural transformations in 'Void' are trivial.
 voidNat :: (Functor f, Functor g, Category d, Dom f ~ Void, Dom g ~ Void, Cod f ~ d, Cod g ~ d)
   => f -> g -> Nat Void d f g
 voidNat f g = Nat f g magicZ

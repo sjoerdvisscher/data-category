@@ -33,10 +33,12 @@ data Yoneda f = Yoneda
 type instance Dom (Yoneda f) = Dom f
 type instance Cod (Yoneda f) = (->)
 type instance Yoneda f :% a = Nat (Dom f) (->) (a :*-: Dom f) f
+-- | 'Yoneda' converts a functor @f@ into a natural transformation from the hom functor to f.
 instance Functor f => Functor (Yoneda f) where
   Yoneda % ab = \n -> n . yonedaEmbedding % Op ab
       
   
+-- | 'fromYoneda' and 'toYoneda' are together the isomophism from the Yoneda lemma.
 fromYoneda :: (Functor f, Cod f ~ (->)) => f -> Yoneda f :~> f
 fromYoneda f = Nat Yoneda f $ \a n -> (n ! a) a
 
