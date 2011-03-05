@@ -79,12 +79,12 @@ instance CartesianClosed Cat where
 
 type Presheaves (~>) = Nat (Op (~>)) (->)
 
-data PShExponential ((~>) :: * -> * -> *) p q = PShExponential
+data PShExponential ((~>) :: * -> * -> *) p q where 
+  PShExponential :: (Dom p ~ Op (~>), Dom q ~ Op (~>), Cod p ~ (->), Cod q ~ (->), Functor p, Functor q) => PShExponential (~>) p q
 type instance Dom (PShExponential (~>) p q) = Op (~>)
 type instance Cod (PShExponential (~>) p q) = (->)
 type instance PShExponential (~>) p q :% a = Presheaves (~>) (((~>) :-*: a) :*: p) q
-instance (Category (~>), Dom p ~ Op (~>), Dom q ~ Op (~>), Cod p ~ (->), Cod q ~ (->), Functor p, Functor q)
-  => Functor (PShExponential (~>) p q) where
+instance Category (~>) => Functor (PShExponential (~>) p q) where
   PShExponential % Op f = \(Nat (_ :*: p) q n) -> Nat (hom_X (src f) :*: p) q $ \i (i2a, pi) -> n i (f . i2a, pi)
 
 type instance Exponential (Presheaves (~>)) y z = PShExponential (~>) y z
