@@ -17,33 +17,25 @@ import Data.Category.Functor
 import Data.Category.NaturalTransformation
 import Data.Category.CartesianClosed
 
--- The Yoneda emedding is just the Hom functor in curried form:
--- curry (CatA Id) (CatA Id) (CatA Id) (CatA Hom)
--- leftAdjunct (curryAdj (CatA Id)) (CatA Id) (CatA Hom)
--- (ExponentialWith (CatA Id) % (CatA Hom)) . (tuple (CatA Id) (CatA Id))
--- CatA (Wrap Hom Id) . CatA CatTuple
--- CatA (Postcompose Hom :.: CatTuple)
+type YonedaEmbedding (~>) = Postcompose (Hom (~>)) (Op (~>)) :.: ToTuple2 (~>) (Op (~>)) 
 
--- | The Yoneda embedding functor.
-yonedaEmbedding :: Category (~>) => Postcompose (Hom (~>)) (~>) :.: CatTuple (~>) (Op (~>))
-yonedaEmbedding = Postcompose Hom :.: CatTuple
+-- | The Yoneda embedding functor, @C -> Set^(C^op)@.
+yonedaEmbedding :: Category (~>) => YonedaEmbedding (~>)
+yonedaEmbedding = Postcompose Hom :.: ToTuple2
 
 
-data Yoneda f = Yoneda
-type instance Dom (Yoneda f) = Dom f
-type instance Cod (Yoneda f) = (->)
-type instance Yoneda f :% a = Nat (Dom f) (->) (a :*-: Dom f) f
+data Yoneda ((~>) :: * -> * -> *) f = Yoneda
+type instance Dom (Yoneda (~>) f) = Op (~>)
+type instance Cod (Yoneda (~>) f) = (->)
+type instance Yoneda (~>) f :% a = Nat (Op (~>)) (->) ((~>) :-*: a) f
 -- | 'Yoneda' converts a functor @f@ into a natural transformation from the hom functor to f.
-instance Functor f => Functor (Yoneda f) where
-  Yoneda % ab = \n -> n . yonedaEmbedding % Op ab
+instance (Category (~>), Functor f, Dom f ~ Op (~>), Cod f ~ (->)) => Functor (Yoneda (~>) f) where
+  Yoneda % Op ab = \n -> n . yonedaEmbedding % ab
       
   
 -- | 'fromYoneda' and 'toYoneda' are together the isomophism from the Yoneda lemma.
-fromYoneda :: (Functor f, Cod f ~ (->)) => f -> Yoneda f :~> f
-fromYoneda f = Nat Yoneda f $ \a n -> (n ! a) a
+fromYoneda :: (Category (~>), Functor f, Dom f ~ Op (~>), Cod f ~ (->)) => f -> Yoneda (~>) f :~> f
+fromYoneda f = Nat Yoneda f $ \(Op a) n -> (n ! Op a) a
 
-toYoneda :: (Functor f, Cod f ~ (->)) => f -> f :~> Yoneda f
-toYoneda f = Nat f Yoneda $ \a fa -> Nat (homX_ a) f $ \_ h -> (f % h) fa
-
--- Contravariant Yoneda:
--- type instance Yoneda f :% a = Nat (Op (Dom f)) (->) (Dom f :-*: a) f
+toYoneda   :: (Category (~>), Functor f, Dom f ~ Op (~>), Cod f ~ (->)) => f -> f :~> Yoneda (~>) f
+toYoneda   f = Nat f Yoneda $ \(Op a) fa -> Nat (hom_X a) f $ \_ h -> (f % Op h) fa

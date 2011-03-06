@@ -52,21 +52,29 @@ instance CartesianClosed (->) where
 
 
 
-data CatApply (y :: * -> * -> *) (z :: * -> * -> *) = CatApply
-type instance Dom (CatApply y z) = Nat y z :**: y
-type instance Cod (CatApply y z) = z
-type instance CatApply y z :% (f, a) = f :% a
--- | 'CatApply' is a bifunctor, @CatApply :% (f, a)@ applies @f@ to @a@, i.e. @f :% a@.
-instance (Category y, Category z) => Functor (CatApply y z) where
-  CatApply % (l :**: r) = l ! r
+data Apply (y :: * -> * -> *) (z :: * -> * -> *) = Apply
+type instance Dom (Apply y z) = Nat y z :**: y
+type instance Cod (Apply y z) = z
+type instance Apply y z :% (f, a) = f :% a
+-- | 'Apply' is a bifunctor, @Apply :% (f, a)@ applies @f@ to @a@, i.e. @f :% a@.
+instance (Category y, Category z) => Functor (Apply y z) where
+  Apply % (l :**: r) = l ! r
 
-data CatTuple (y :: * -> * -> *) (z :: * -> * -> *) = CatTuple
-type instance Dom (CatTuple y z) = z
-type instance Cod (CatTuple y z) = Nat y (z :**: y)
-type instance CatTuple y z :% a = Tuple1 z y a
--- | 'CatTuple' converts an object @a@ to the functor 'Tuple1' @a@.
-instance (Category y, Category z) => Functor (CatTuple y z) where
-  CatTuple % f = Nat (Tuple1 (src f)) (Tuple1 (tgt f)) $ \z -> f :**: z
+data ToTuple1 (y :: * -> * -> *) (z :: * -> * -> *) = ToTuple1
+type instance Dom (ToTuple1 y z) = z
+type instance Cod (ToTuple1 y z) = Nat y (z :**: y)
+type instance ToTuple1 y z :% a = Tuple1 z y a
+-- | 'ToTuple1' converts an object @a@ to the functor 'Tuple1' @a@.
+instance (Category y, Category z) => Functor (ToTuple1 y z) where
+  ToTuple1 % f = Nat (Tuple1 (src f)) (Tuple1 (tgt f)) $ \z -> f :**: z
+
+data ToTuple2 (y :: * -> * -> *) (z :: * -> * -> *) = ToTuple2
+type instance Dom (ToTuple2 y z) = y
+type instance Cod (ToTuple2 y z) = Nat z (z :**: y)
+type instance ToTuple2 y z :% a = Tuple2 z y a
+-- | 'ToTuple2' converts an object @a@ to the functor 'Tuple2' @a@.
+instance (Category y, Category z) => Functor (ToTuple2 y z) where
+  ToTuple2 % f = Nat (Tuple2 (src f)) (Tuple2 (tgt f)) $ \y -> y :**: f
 
 
 type instance Exponential Cat (CatW c) (CatW d) = CatW (Nat c d)
@@ -74,30 +82,11 @@ type instance Exponential Cat (CatW c) (CatW d) = CatW (Nat c d)
 -- | Exponentials in @Cat@ are the functor categories.
 instance CartesianClosed Cat where
   
-  apply CatA{} CatA{}   = CatA CatApply
-  tuple CatA{} CatA{}   = CatA CatTuple
+  apply CatA{} CatA{}   = CatA Apply
+  tuple CatA{} CatA{}   = CatA ToTuple1
   (CatA f) ^^^ (CatA h) = CatA (Wrap f h)
 
 
-type Presheaves (~>) = Nat (Op (~>)) (->)
-
-data PShExponential ((~>) :: * -> * -> *) p q where 
-  PShExponential :: (Dom p ~ Op (~>), Dom q ~ Op (~>), Cod p ~ (->), Cod q ~ (->), Functor p, Functor q) => PShExponential (~>) p q
-type instance Dom (PShExponential (~>) p q) = Op (~>)
-type instance Cod (PShExponential (~>) p q) = (->)
-type instance PShExponential (~>) p q :% a = Presheaves (~>) (((~>) :-*: a) :*: p) q
-instance Category (~>) => Functor (PShExponential (~>) p q) where
-  PShExponential % Op f = \(Nat (_ :*: p) q n) -> Nat (hom_X (src f) :*: p) q $ \i (i2a, pi) -> n i (f . i2a, pi)
-
-type instance Exponential (Presheaves (~>)) y z = PShExponential (~>) y z
-
-instance Category (~>) => CartesianClosed (Presheaves (~>)) where
-  
-  apply (Nat y _ _) (Nat z _ _) = Nat (PShExponential :*: y) z $ \(Op i) (n, yi) -> (n ! Op i) (i, yi)
-  tuple (Nat y _ _) (Nat z _ _) = Nat z PShExponential $ \(Op i) zi -> (Nat (hom_X i) z $ \_ j2i -> (z % Op j2i) zi) *** natId y
-  zn@Nat{} ^^^ yn@Nat{} = Nat PShExponential PShExponential $ \(Op i) n -> zn . n . (natId (hom_X i) *** yn)
-
-    
 -- | The product functor is left adjoint the the exponential functor.
 curryAdj :: CartesianClosed (~>) 
          => Obj (~>) y 
