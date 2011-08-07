@@ -10,8 +10,6 @@
 -----------------------------------------------------------------------------
 module Data.Category.Product where
 
-import Prelude ()
-
 import Data.Category
 
 

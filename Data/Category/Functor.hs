@@ -27,7 +27,7 @@ module Data.Category.Functor (
   , Opposite(..)
   , OpOp(..)
   , OpOpInv(..)
-  , EndoHask(..)
+  -- , EndoHask(..)
   
   -- *** Related to the product category
   , Proj1(..)
@@ -45,9 +45,6 @@ module Data.Category.Functor (
   , hom_X
   
 ) where
-  
-import Prelude hiding ((.), Functor)
-import qualified Prelude
   
 import Data.Category
 import Data.Category.Product
@@ -134,7 +131,7 @@ type instance Opposite f :% a = f :% a
 
 -- | The dual of a functor
 instance (Category (Dom f), Category (Cod f)) => Functor (Opposite f) where
-  Opposite f % Op a = Op $ f % a
+  Opposite f % Op a = Op (f % a)
 
 
 data OpOp ((~>) :: * -> * -> *) = OpOp
@@ -157,18 +154,6 @@ type instance OpOpInv (~>) :% a = a
 -- | The @x = Op (Op x)@ functor.
 instance Category (~>) => Functor (OpOpInv (~>)) where
   OpOpInv % f = Op (Op f)
-
-
-data EndoHask :: (* -> *) -> * where
-  EndoHask :: Prelude.Functor f => EndoHask f
-  
-type instance Dom (EndoHask f) = (->)
-type instance Cod (EndoHask f) = (->)
-type instance EndoHask f :% r = f r
-
--- | 'EndoHask' is a wrapper to turn instances of the 'Functor' class into categorical functors.
-instance Functor (EndoHask f) where
-  EndoHask % f = fmap f
 
 
 data Proj1 (c1 :: * -> * -> *) (c2 :: * -> * -> *) = Proj1

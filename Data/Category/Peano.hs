@@ -13,8 +13,6 @@
 -----------------------------------------------------------------------------
 module Data.Category.Peano where
 
-import Prelude(($))
-
 import Data.Category
 import Data.Category.Limit
 
@@ -26,7 +24,7 @@ data Peano :: (* -> * -> *) -> * -> * -> * where
   PeanoA :: PeanoO (~>) a -> PeanoO (~>) b -> (a ~> b) -> Peano (~>) a b
 
 peanoId :: Category (~>) => PeanoO (~>) a -> Obj (Peano (~>)) a
-peanoId o@(PeanoO z _) = PeanoA o o $ tgt z
+peanoId o@(PeanoO z _) = PeanoA o o (tgt z)
 
 peanoO :: Category (~>) => Obj (Peano (~>)) a -> PeanoO (~>) a
 peanoO (PeanoA o _ _) = o
@@ -37,7 +35,7 @@ instance HasTerminalObject (~>) => Category (Peano (~>)) where
   src (PeanoA s _ _) = peanoId s
   tgt (PeanoA _ t _) = peanoId t
   
-  (PeanoA _ t f) . (PeanoA s _ g) = PeanoA s t $ f . g
+  (PeanoA _ t f) . (PeanoA s _ g) = PeanoA s t (f . g)
   
   
 data NatNum = Z () | S NatNum
@@ -52,6 +50,6 @@ instance HasInitialObject (Peano (->)) where
   
   type InitialObject (Peano (->)) = NatNum
   
-  initialObject = peanoId $ PeanoO Z S
+  initialObject = peanoId (PeanoO Z S)
   
-  initialize (peanoO -> o@(PeanoO z s)) = PeanoA (peanoO initialObject) o $ primRec z s
+  initialize (peanoO -> o@(PeanoO z s)) = PeanoA (peanoO initialObject) o (primRec z s)

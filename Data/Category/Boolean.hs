@@ -14,8 +14,6 @@
 -----------------------------------------------------------------------------
 module Data.Category.Boolean where
 
-import Prelude hiding ((.), id, Functor)
-
 import Data.Category
 import Data.Category.Functor
 import Data.Category.NaturalTransformation
@@ -48,7 +46,6 @@ instance Category Boolean where
   F2T . Fls = F2T
   Tru . F2T = F2T
   Tru . Tru = Tru
-  _      . _      = error "Other combinations should not type check"
 
 
 -- | False is the initial object in the Boolean category.
@@ -57,7 +54,6 @@ instance HasInitialObject Boolean where
   initialObject = Fls
   initialize Fls = Fls
   initialize Tru = F2T
-  initialize _   = error "Other values should not type check"
   
 -- | True is the terminal object in the Boolean category.
 instance HasTerminalObject Boolean where
@@ -65,7 +61,6 @@ instance HasTerminalObject Boolean where
   terminalObject = Tru
   terminate Fls = F2T
   terminate Tru = Tru
-  terminate _   = error "Other values should not type check"
 
 
 type instance BinaryProduct Boolean Fls Fls = Fls
@@ -80,19 +75,16 @@ instance HasBinaryProducts Boolean where
   proj1 Fls Tru = Fls
   proj1 Tru Fls = F2T
   proj1 Tru Tru = Tru
-  proj1 _   _   = error "Other combinations should not type check"
   proj2 Fls Fls = Fls
   proj2 Fls Tru = F2T
   proj2 Tru Fls = Fls
   proj2 Tru Tru = Tru
-  proj2 _   _   = error "Other combinations should not type check"
     
   Fls &&& Fls = Fls
   Fls &&& F2T = Fls
   F2T &&& Fls = Fls
   F2T &&& F2T = F2T
   Tru &&& Tru = Tru
-  _   &&& _   = error "Other combinations should not type check"
 
 
 type instance BinaryCoproduct Boolean Fls Fls = Fls
@@ -107,19 +99,16 @@ instance HasBinaryCoproducts Boolean where
   inj1 Fls Tru = F2T
   inj1 Tru Fls = Tru
   inj1 Tru Tru = Tru
-  inj1 _   _   = error "Other combinations should not type check"
   inj2 Fls Fls = Fls
   inj2 Fls Tru = Tru
   inj2 Tru Fls = F2T
   inj2 Tru Tru = Tru
-  inj2 _   _   = error "Other combinations should not type check"
     
   Fls ||| Fls = Fls
   F2T ||| F2T = F2T
   F2T ||| Tru = Tru
   Tru ||| F2T = Tru
   Tru ||| Tru = Tru
-  _   ||| _   = error "Other combinations should not type check"
 
 
 type instance Exponential Boolean Fls Fls = Tru
@@ -134,13 +123,11 @@ instance CartesianClosed Boolean where
   apply Fls Tru = F2T
   apply Tru Fls = Fls
   apply Tru Tru = Tru
-  apply _   _   = error "Other combinations should not type check"
   
   tuple Fls Fls = F2T
   tuple Fls Tru = Tru
   tuple Tru Fls = Fls
   tuple Tru Tru = Tru
-  tuple _   _   = error "Other combinations should not type check"
   
   Fls ^^^ Fls = Tru
   Fls ^^^ F2T = F2T

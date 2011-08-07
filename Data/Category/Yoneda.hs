@@ -10,8 +10,6 @@
 -----------------------------------------------------------------------------
 module Data.Category.Yoneda where
 
-import Prelude (($))
-
 import Data.Category
 import Data.Category.Functor
 import Data.Category.NaturalTransformation
@@ -35,7 +33,7 @@ instance (Category (~>), Functor f, Dom f ~ Op (~>), Cod f ~ (->)) => Functor (Y
   
 -- | 'fromYoneda' and 'toYoneda' are together the isomophism from the Yoneda lemma.
 fromYoneda :: (Category (~>), Functor f, Dom f ~ Op (~>), Cod f ~ (->)) => f -> Yoneda (~>) f :~> f
-fromYoneda f = Nat Yoneda f $ \(Op a) n -> (n ! Op a) a
+fromYoneda f = Nat Yoneda f (\(Op a) n -> (n ! Op a) a)
 
 toYoneda   :: (Category (~>), Functor f, Dom f ~ Op (~>), Cod f ~ (->)) => f -> f :~> Yoneda (~>) f
-toYoneda   f = Nat f Yoneda $ \(Op a) fa -> Nat (hom_X a) f $ \_ h -> (f % Op h) fa
+toYoneda   f = Nat f Yoneda (\(Op a) fa -> Nat (hom_X a) f (\_ h -> (f % Op h) fa))

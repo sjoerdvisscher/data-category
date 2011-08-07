@@ -10,8 +10,6 @@
 -----------------------------------------------------------------------------
 module Data.Category.Presheaf where
 
-import Prelude (($))
-
 import Data.Category
 import Data.Category.Functor
 import Data.Category.NaturalTransformation
@@ -35,8 +33,8 @@ type instance Exponential (Presheaves (~>)) y z = PShExponential (~>) y z
 -- | The category of presheaves on a category @C@ is cartesian closed for any @C@.
 instance Category (~>) => CartesianClosed (Presheaves (~>)) where
   
-  apply yn@(Nat y _ _) zn@(Nat z _ _) = Nat (pshExponential yn zn :*: y) z $ \(Op i) (n, yi) -> (n ! Op i) (i, yi)
-  tuple yn zn@(Nat z _ _) = Nat z (pshExponential yn (zn *** yn)) $ \(Op i) zi -> (Nat (hom_X i) z $ \_ j2i -> (z % Op j2i) zi) *** yn
-  zn ^^^ yn = Nat (pshExponential (tgt yn) (src zn)) (pshExponential (src yn) (tgt zn)) $ \(Op i) n -> zn . n . (natId (hom_X i) *** yn)
+  apply yn@(Nat y _ _) zn@(Nat z _ _) = Nat (pshExponential yn zn :*: y) z (\(Op i) (n, yi) -> (n ! Op i) (i, yi))
+  tuple yn zn@(Nat z _ _) = Nat z (pshExponential yn (zn *** yn)) (\(Op i) zi -> (Nat (hom_X i) z (\_ j2i -> (z % Op j2i) zi) *** yn))
+  zn ^^^ yn = Nat (pshExponential (tgt yn) (src zn)) (pshExponential (src yn) (tgt zn)) (\(Op i) n -> zn . n . (natId (hom_X i) *** yn))
 
     

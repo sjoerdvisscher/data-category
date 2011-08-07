@@ -12,8 +12,6 @@
 -----------------------------------------------------------------------------
 module Data.Category.Comma where
 
-import Prelude()
-
 import Data.Category
 import Data.Category.Functor
 

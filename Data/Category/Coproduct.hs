@@ -10,8 +10,6 @@
 -----------------------------------------------------------------------------
 module Data.Category.Coproduct where
 
-import Prelude (error)
-
 import Data.Category
 import Data.Category.Functor
 
@@ -33,7 +31,6 @@ instance (Category c1, Category c2) => Category (c1 :++: c2) where
 
   (I1 a) . (I1 b) = I1 (a . b)
   (I2 a) . (I2 b) = I2 (a . b)
-  _      . _      = error "Other combinations should not type check"
 
   
   

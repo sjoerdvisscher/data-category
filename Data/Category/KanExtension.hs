@@ -10,7 +10,6 @@
 -----------------------------------------------------------------------------
 module Data.Category.KanExtension where
 
-import Prelude (($))
 
 import Data.Category
 import Data.Category.Functor

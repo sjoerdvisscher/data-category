@@ -29,8 +29,6 @@ module Data.Category.Discrete (
     
 ) where
 
-import Prelude hiding ((.), id, Functor, product)
-
 import Data.Category
 import Data.Category.Functor
 import Data.Category.NaturalTransformation
@@ -46,30 +44,29 @@ data Discrete :: * -> * -> * -> * where
 
 
 magicZ :: Discrete Z a b -> x
-magicZ x = x `seq` error "we never get this far"
+magicZ x = magicZ x
 
 
 -- | @Discrete Z@ is the discrete category with no objects.
 instance Category (Discrete Z) where
   
-  src   = magicZ
-  tgt   = magicZ
+  src = magicZ
+  tgt = magicZ
   
-  a . b = magicZ (a `seq` b)
+  (.) = magicZ
 
 
 -- | @Discrete (S n)@ is the discrete category with one object more than @Discrete n@.
 instance Category (Discrete n) => Category (Discrete (S n)) where
   
   src Z     = Z
-  src (S a) = S $ src a
+  src (S a) = S (src a)
   
   tgt Z     = Z
-  tgt (S a) = S $ tgt a
+  tgt (S a) = S (tgt a)
   
   Z   . Z   = Z
   S a . S b = S (a . b)
-  _   . _   = error "Other combinations should not type-check."
 
 
 -- | 'Void' is the empty category.

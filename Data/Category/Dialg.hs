@@ -12,9 +12,6 @@
 -----------------------------------------------------------------------------
 module Data.Category.Dialg where
 
-import Prelude (($), id)
-import qualified Prelude
-
 import Data.Category
 import Data.Category.Functor
 import Data.Category.NaturalTransformation
@@ -46,7 +43,7 @@ instance Category (Dialg f g) where
   src (DialgA s _ _) = dialgId s
   tgt (DialgA _ t _) = dialgId t
   
-  DialgA _ t f . DialgA s _ g = DialgA s t $ f . g
+  DialgA _ t f . DialgA s _ g = DialgA s t (f . g)
 
 
 
@@ -70,34 +67,6 @@ type Ana f a = Coalgebra f a -> Coalg f a (TerminalFAlgebra f)
 
 
 
-newtype FixF f = InF { outF :: f :% FixF f }
-
--- | Catamorphisms for endofunctors in Hask.
-cataHask :: Prelude.Functor f => Cata (EndoHask f) a
-cataHask a@(Dialgebra _ f) = DialgA (dialgebra initialObject) a $ cata_f where cata_f = f . (EndoHask % cata_f) . outF 
-
--- | Anamorphisms for endofunctors in Hask.
-anaHask :: Prelude.Functor f => Ana (EndoHask f) a
-anaHask a@(Dialgebra _ f) = DialgA a (dialgebra terminalObject) $ ana_f where ana_f = InF . (EndoHask % ana_f) . f 
-
-
--- | 'FixF' provides the initial F-algebra for endofunctors in Hask.
-instance Prelude.Functor f => HasInitialObject (Dialg (EndoHask f) (Id (->))) where
-  
-  type InitialObject (Dialg (EndoHask f) (Id (->))) = FixF (EndoHask f)
-  
-  initialObject = dialgId $ Dialgebra id InF
-  initialize a = cataHask (dialgebra a)
-  
--- | 'FixF' also provides the terminal F-coalgebra for endofunctors in Hask.
-instance Prelude.Functor f => HasTerminalObject (Dialg (Id (->)) (EndoHask f)) where
-
-  type TerminalObject (Dialg (Id (->)) (EndoHask f)) = FixF (EndoHask f)
-  
-  terminalObject = dialgId $ Dialgebra id outF
-  terminate a = anaHask (dialgebra a)
-  
-
 
 data NatNum = Z () | S NatNum
 primRec :: (() -> t) -> (t -> t) -> NatNum -> t
@@ -110,9 +79,9 @@ instance HasInitialObject (Dialg (Tuple1 (->) (->) ()) (DiagProd (->))) where
   
   type InitialObject (Dialg (Tuple1 (->) (->) ()) (DiagProd (->))) = NatNum
     
-  initialObject = dialgId $ Dialgebra id (Z :**: S)
+  initialObject = dialgId (Dialgebra (\x -> x) (Z :**: S))
   
-  initialize (dialgebra -> d@(Dialgebra _ (z :**: s))) = DialgA (dialgebra initialObject) d $ primRec z s
+  initialize (dialgebra -> d@(Dialgebra _ (z :**: s))) = DialgA (dialgebra initialObject) d (primRec z s)
 
 
 
@@ -122,7 +91,7 @@ type instance Cod (FreeAlg m) = Alg m
 type instance FreeAlg m :% a = m :% a
 -- | @FreeAlg@ M takes @x@ to the free algebra @(M x, mu_x)@ of the monad @M@.
 instance (Functor m, Dom m ~ (~>), Cod m ~ (~>)) => Functor (FreeAlg m) where
-  FreeAlg m % f = DialgA (alg (src f)) (alg (tgt f)) $ monadFunctor m % f
+  FreeAlg m % f = DialgA (alg (src f)) (alg (tgt f)) (monadFunctor m % f)
     where
       alg :: Obj (~>) x -> Algebra m (m :% x)
       alg x = Dialgebra (monadFunctor m % x) (multiply m ! x)

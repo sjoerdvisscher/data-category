@@ -10,10 +10,6 @@
 -----------------------------------------------------------------------------
 module Data.Category.Monoidal where
 
-import Prelude (($), uncurry)
-import qualified Control.Monad as M
-import qualified Data.Monoid as M
-
 import Data.Category
 import Data.Category.Functor
 import Data.Category.NaturalTransformation
@@ -95,11 +91,6 @@ data ComonoidObject f a = ComonoidObject
   , comultiply :: (Cod f ~ (~>)) => a ~> (f :% (a, a))
   }
 
--- | Monoids as defined in the prelude are monoids in @Hask@ with the product functor as tensor product.
-preludeMonoid :: M.Monoid m => MonoidObject (ProductFunctor (->)) m
-preludeMonoid = MonoidObject M.mempty (uncurry M.mappend)
-
-
 data MonoidAsCategory f m a b where
   MonoidValue :: (TensorProduct f, Dom f ~ ((~>) :**: (~>)), Cod f ~ (~>))
               => f -> MonoidObject f m -> Unit f ~> m -> MonoidAsCategory f m m m
@@ -107,10 +98,10 @@ data MonoidAsCategory f m a b where
 -- | A monoid as a category with one object.
 instance Category (MonoidAsCategory f m) where
   
-  src (MonoidValue f m _) = MonoidValue f m $ unit m
-  tgt (MonoidValue f m _) = MonoidValue f m $ unit m
+  src (MonoidValue f m _) = MonoidValue f m (unit m)
+  tgt (MonoidValue f m _) = MonoidValue f m (unit m)
   
-  MonoidValue f m a . MonoidValue _ _ b = MonoidValue f m $ multiply m . f % (a :**: b) . leftUnitorInv f (unitObject f)
+  MonoidValue f m a . MonoidValue _ _ b = MonoidValue f m (multiply m . f % (a :**: b) . leftUnitorInv f (unitObject f))
 
 
 -- | A monad is a monoid in the category of endofunctors.
@@ -125,9 +116,6 @@ mkMonad f ret join = MonoidObject
   { unit     = Nat Id        f ret
   , multiply = Nat (f :.: f) f join
   }
-
-preludeMonad :: (M.Functor f, M.Monad f) => Monad (EndoHask f)
-preludeMonad = mkMonad EndoHask (\_ -> M.return) (\_ -> M.join)
 
 monadFunctor :: Monad f -> f
 monadFunctor (unit -> Nat _ f _) = f

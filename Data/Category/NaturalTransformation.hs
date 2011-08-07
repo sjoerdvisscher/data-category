@@ -44,8 +44,6 @@ module Data.Category.NaturalTransformation (
   
 ) where
   
-import Prelude hiding ((.), Functor)
-
 import Data.Category
 import Data.Category.Functor
 import Data.Category.Product
@@ -77,12 +75,12 @@ Nat f _ n ! h = n (tgt h) . f % h -- or g % h . n (src h), or n h when h is an i
 
 -- | Horizontal composition of natural transformations.
 o :: (Category c, Category d, Category e) => Nat d e j k -> Nat c d f g -> Nat c e (j :.: f) (k :.: g)
-njk@(Nat j k _) `o` nfg@(Nat f g _) = Nat (j :.: f) (k :.: g) $ (njk !) . (nfg !)
--- Nat j k njk `o` Nat f g nfg = Nat (j :.: f) (k :.: g) $ \x -> njk (g % x) . j % nfg x -- or k % nfg x . njk (f % x)
+njk@(Nat j k _) `o` nfg@(Nat f g _) = Nat (j :.: f) (k :.: g) ((njk !) . (nfg !))
+-- Nat j k njk `o` Nat f g nfg = Nat (j :.: f) (k :.: g) (\x -> njk (g % x) . j % nfg x) -- or k % nfg x . njk (f % x)
 
 -- | The identity natural transformation of a functor.
 natId :: Functor f => f -> Nat (Dom f) (Cod f) f f
-natId f = Nat f f $ \i -> f % i
+natId f = Nat f f (\i -> f % i)
 
 srcF :: Nat c d f g -> f
 srcF (Nat f _ _) = f
@@ -98,16 +96,16 @@ instance (Category c, Category d) => Category (Nat c d) where
   src (Nat f _ _)           = natId f
   tgt (Nat _ g _)           = natId g
   
-  Nat _ h ngh . Nat f _ nfg = Nat f h $ \i -> ngh i . nfg i
+  Nat _ h ngh . Nat f _ nfg = Nat f h (\i -> ngh i . nfg i)
 
 
 compAssoc :: (Functor f, Functor g, Functor h, Dom f ~ Cod g, Dom g ~ Cod h) 
           => f -> g -> h -> Nat (Dom h) (Cod f) ((f :.: g) :.: h) (f :.: (g :.: h))
-compAssoc f g h = Nat ((f :.: g) :.: h) (f :.: (g :.: h)) $ \i -> f % g % h % i
+compAssoc f g h = Nat ((f :.: g) :.: h) (f :.: (g :.: h)) (\i -> f % g % h % i)
 
 compAssocInv :: (Functor f, Functor g, Functor h, Dom f ~ Cod g, Dom g ~ Cod h) 
              => f -> g -> h -> Nat (Dom h) (Cod f) (f :.: (g :.: h)) ((f :.: g) :.: h)
-compAssocInv f g h = Nat (f :.: (g :.: h)) ((f :.: g) :.: h) $ \i -> f % g % h % i
+compAssocInv f g h = Nat (f :.: (g :.: h)) ((f :.: g) :.: h) (\i -> f % g % h % i)
 
 idPrecomp :: Functor f => f -> Nat (Dom f) (Cod f) (f :.: Id (Dom f)) f
 idPrecomp f = Nat (f :.: Id) f (f %)
@@ -123,16 +121,16 @@ idPostcompInv f = Nat f (Id :.: f) (f %)
 
 
 constPrecomp :: (Category c1, Functor f) => Const c1 (Dom f) x -> f -> Nat c1 (Cod f) (f :.: Const c1 (Dom f) x) (Const c1 (Cod f) (f :% x))
-constPrecomp (Const x) f = let fx = f % x in Nat (f :.: Const x) (Const fx) $ const fx
+constPrecomp (Const x) f = let fx = f % x in Nat (f :.: Const x) (Const fx) (\_ -> fx)
 
 constPrecompInv :: (Category c1, Functor f) => Const c1 (Dom f) x -> f -> Nat c1 (Cod f) (Const c1 (Cod f) (f :% x)) (f :.: Const c1 (Dom f) x)
-constPrecompInv (Const x) f = let fx = f % x in Nat (Const fx) (f :.: Const x) $ const fx
+constPrecompInv (Const x) f = let fx = f % x in Nat (Const fx) (f :.: Const x) (\_ -> fx)
 
 constPostcomp :: Functor f => Const (Cod f) c2 x -> f -> Nat (Dom f) c2 (Const (Cod f) c2 x :.: f) (Const (Dom f) c2 x)
-constPostcomp (Const x) f = Nat (Const x :.: f) (Const x) $ const x
+constPostcomp (Const x) f = Nat (Const x :.: f) (Const x) (\_ -> x)
 
 constPostcompInv :: Functor f => Const (Cod f) c2 x -> f -> Nat (Dom f) c2 (Const (Dom f) c2 x) (Const (Cod f) c2 x :.: f)
-constPostcompInv (Const x) f = Nat (Const x) (Const x :.: f) $ const x
+constPostcompInv (Const x) f = Nat (Const x) (Const x :.: f) (\_ -> x)
 
 
 

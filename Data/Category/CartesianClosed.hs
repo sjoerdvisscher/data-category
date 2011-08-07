@@ -10,8 +10,6 @@
 -----------------------------------------------------------------------------
 module Data.Category.CartesianClosed where
   
-import Prelude (($))
-
 import Data.Category
 import Data.Category.Functor
 import Data.Category.NaturalTransformation
@@ -66,7 +64,7 @@ type instance Cod (ToTuple1 y z) = Nat y (z :**: y)
 type instance ToTuple1 y z :% a = Tuple1 z y a
 -- | 'ToTuple1' converts an object @a@ to the functor 'Tuple1' @a@.
 instance (Category y, Category z) => Functor (ToTuple1 y z) where
-  ToTuple1 % f = Nat (Tuple1 (src f)) (Tuple1 (tgt f)) $ \z -> f :**: z
+  ToTuple1 % f = Nat (Tuple1 (src f)) (Tuple1 (tgt f)) (\z -> f :**: z)
 
 data ToTuple2 (y :: * -> * -> *) (z :: * -> * -> *) = ToTuple2
 type instance Dom (ToTuple2 y z) = y
@@ -74,7 +72,7 @@ type instance Cod (ToTuple2 y z) = Nat z (z :**: y)
 type instance ToTuple2 y z :% a = Tuple2 z y a
 -- | 'ToTuple2' converts an object @a@ to the functor 'Tuple2' @a@.
 instance (Category y, Category z) => Functor (ToTuple2 y z) where
-  ToTuple2 % f = Nat (Tuple2 (src f)) (Tuple2 (tgt f)) $ \y -> y :**: f
+  ToTuple2 % f = Nat (Tuple2 (src f)) (Tuple2 (tgt f)) (\y -> y :**: f)
 
 
 type instance Exponential Cat (CatW c) (CatW d) = CatW (Nat c d)
@@ -107,17 +105,17 @@ uncurry _ y z = rightAdjunct (curryAdj y) z
 type State (~>) s a = Exponential (~>) s (BinaryProduct (~>) a s)
 
 stateMonadReturn :: CartesianClosed (~>) => Obj (~>) s -> Obj (~>) a -> a ~> State (~>) s a
-stateMonadReturn s a = M.unit (adjunctionMonad $ curryAdj s) ! a
+stateMonadReturn s a = M.unit (adjunctionMonad (curryAdj s)) ! a
 
 stateMonadJoin :: CartesianClosed (~>) => Obj (~>) s -> Obj (~>) a -> State (~>) s (State (~>) s a) ~> State (~>) s a
-stateMonadJoin s a = M.multiply (adjunctionMonad $ curryAdj s) ! a
+stateMonadJoin s a = M.multiply (adjunctionMonad (curryAdj s)) ! a
 
 -- ! From every adjunction we also get a comonad, the Context comonad in this case.
 type Context (~>) s a = BinaryProduct (~>) (Exponential (~>) s a) s
 
 contextComonadExtract :: CartesianClosed (~>) => Obj (~>) s -> Obj (~>) a -> Context (~>) s a ~> a
-contextComonadExtract s a = M.counit (adjunctionComonad $ curryAdj s) ! a
+contextComonadExtract s a = M.counit (adjunctionComonad (curryAdj s)) ! a
 
 contextComonadDuplicate :: CartesianClosed (~>) => Obj (~>) s -> Obj (~>) a -> Context (~>) s a ~> Context (~>) s (Context (~>) s a)
-contextComonadDuplicate s a = M.comultiply (adjunctionComonad $ curryAdj s) ! a
+contextComonadDuplicate s a = M.comultiply (adjunctionComonad (curryAdj s)) ! a
 

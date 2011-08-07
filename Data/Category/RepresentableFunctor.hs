@@ -10,8 +10,6 @@
 -----------------------------------------------------------------------------
 module Data.Category.RepresentableFunctor where
 
-import Prelude (($), id)
-
 import Data.Category
 import Data.Category.Functor
 
@@ -24,13 +22,13 @@ data Representable f repObj = Representable
   }
 
 unrepresent :: (Functor f, Dom f ~ (~>), Cod f ~ (->)) => Representable f repObj -> repObj ~> z -> f :% z
-unrepresent rep h = representedFunctor rep % h $ universalElement rep
+unrepresent rep h = (representedFunctor rep % h) (universalElement rep)
 
 covariantHomRepr :: Category (~>) => Obj (~>) x -> Representable (x :*-: (~>)) x
 covariantHomRepr x = Representable
   { representedFunctor = homX_ x
   , representingObject = x
-  , represent          = \_ -> id
+  , represent          = \_ h -> h
   , universalElement   = x
   }
 

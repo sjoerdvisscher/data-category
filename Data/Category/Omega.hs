@@ -13,8 +13,6 @@
 -----------------------------------------------------------------------------
 module Data.Category.Omega where
 
-import Prelude hiding ((.), id, Functor, product)
-
 import Data.Category
 import Data.Category.Limit
 import Data.Category.Monoidal
@@ -43,7 +41,6 @@ instance Category Omega where
   a     . Z       = a
   (S a) . (Z2S n) = Z2S (a . n)
   (S a) . (S   b) = S   (a . b)
-  _       . _     = error "Other combinations should not type check"
 
 
 -- | 'Z' (zero) is the initial object of omega.
@@ -54,8 +51,7 @@ instance HasInitialObject Omega where
   initialObject    = Z
   
   initialize Z     = Z
-  initialize (S n) = Z2S $ initialize n
-  initialize _     = error "Other combinations should not type check"
+  initialize (S n) = Z2S (initialize n)
 
 
 
@@ -68,21 +64,18 @@ instance HasBinaryProducts Omega where
 
   proj1 Z     Z     = Z
   proj1 Z     (S _) = Z
-  proj1 (S n) Z     = Z2S $ proj1 n Z
-  proj1 (S a) (S b) = S $ proj1 a b
-  proj1 _     _     = error "Other combinations should not type check"
+  proj1 (S n) Z     = Z2S (proj1 n Z)
+  proj1 (S a) (S b) = S (proj1 a b)
 
   proj2 Z     Z     = Z
-  proj2 Z     (S n) = Z2S $ proj2 Z n
+  proj2 Z     (S n) = Z2S (proj2 Z n)
   proj2 (S _) Z     = Z
-  proj2 (S a) (S b) = S $ proj2 a b
-  proj2 _     _     = error "Other combinations should not type check"
+  proj2 (S a) (S b) = S (proj2 a b)
   
   Z     &&& _     = Z
   _     &&& Z     = Z
   Z2S a &&& Z2S b = Z2S (a &&& b)
   S a   &&& S b   = S (a &&& b)
-  _     &&& _     = error "Other combinations should not type check"
 
 
 type instance BinaryCoproduct Omega Z     n     = n
@@ -93,21 +86,19 @@ type instance BinaryCoproduct Omega (S a) (S b) = S (BinaryCoproduct Omega a b)
 instance HasBinaryCoproducts Omega where 
   
   inj1 Z     Z     = Z
-  inj1 Z     (S n) = Z2S $ inj1 Z n
-  inj1 (S n) Z     = S $ inj1 n Z
-  inj1 (S a) (S b) = S $ inj1 a b
-  inj1 _     _     = error "Other combinations should not type check"
+  inj1 Z     (S n) = Z2S (inj1 Z n)
+  inj1 (S n) Z     = S (inj1 n Z)
+  inj1 (S a) (S b) = S (inj1 a b)
+  
   inj2 Z     Z     = Z
-  inj2 Z     (S n) = S $ inj2 Z n
-  inj2 (S n) Z     = Z2S $ inj2 n Z
-  inj2 (S a) (S b) = S $ inj2 a b
-  inj2 _     _     = error "Other combinations should not type check"
+  inj2 Z     (S n) = S (inj2 Z n)
+  inj2 (S n) Z     = Z2S (inj2 n Z)
+  inj2 (S a) (S b) = S (inj2 a b)
   
   Z     ||| Z     = Z
   Z2S _ ||| a     = a
   a     ||| Z2S _ = a
   S a   ||| S b   = S (a ||| b)
-  _     ||| _     = error "Other combinations should not type check"
 
 
 -- | Zero is a monoid object wrt the maximum.

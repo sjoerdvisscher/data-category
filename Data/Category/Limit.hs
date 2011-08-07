@@ -67,9 +67,6 @@ module Data.Category.Limit (
   
 ) where
 
-import Prelude hiding ((.), Functor, product)
-import qualified Control.Arrow as A ((&&&), (***), (|||), (+++))
-
 import Data.Category
 import Data.Category.Functor
 import Data.Category.NaturalTransformation
@@ -94,7 +91,7 @@ type instance Diag j (~>) :% a = Const j (~>) a
 
 -- | The diagonal functor from (index-) category J to (~>).
 instance (Category j, Category (~>)) => Functor (Diag j (~>)) where 
-  Diag % f = Nat (Const $ src f) (Const $ tgt f) $ const f
+  Diag % f = Nat (Const (src f)) (Const (tgt f)) (\_ -> f)
 
 -- | The diagonal functor with the same domain and codomain as @f@.
 type DiagF f = Diag (Dom f) (Cod f)
@@ -199,7 +196,7 @@ instance HasTerminalObject (->) where
   
   type TerminalObject (->) = ()
   
-  terminalObject = id
+  terminalObject = \x -> x
   
   terminate _ _ = ()
 
@@ -210,16 +207,16 @@ instance HasTerminalObject Cat where
   
   terminalObject = CatA Id
   
-  terminate (CatA _) = CatA $ Const Z
+  terminate (CatA _) = CatA (Const Z)
 
 -- | The constant functor to the terminal object is itself the terminal object in its functor category.
 instance (Category c, HasTerminalObject d) => HasTerminalObject (Nat c d) where
   
   type TerminalObject (Nat c d) = Const c d (TerminalObject d)
   
-  terminalObject = natId $ Const terminalObject
+  terminalObject = natId (Const terminalObject)
   
-  terminate (Nat f _ _) = Nat f (Const terminalObject) $ terminate . (f %)
+  terminate (Nat f _ _) = Nat f (Const terminalObject) (terminate . (f %))
 
 -- | The terminal object of the product of 2 categories is the product of their terminal objects.
 instance (HasTerminalObject c1, HasTerminalObject c2) => HasTerminalObject (c1 :**: c2) where
@@ -257,10 +254,9 @@ instance HasInitialObject (->) where
   
   type InitialObject (->) = Zero
   
-  initialObject = id
+  initialObject = \x -> x
   
-  -- With thanks to Conor McBride
-  initialize _ x = x `seq` error "we never get this far"
+  initialize = initialize
 
 -- | The empty category is the initial object in @Cat@.
 instance HasInitialObject Cat where
@@ -276,9 +272,9 @@ instance (Category c, HasInitialObject d) => HasInitialObject (Nat c d) where
   
   type InitialObject (Nat c d) = Const c d (InitialObject d)
   
-  initialObject = natId $ Const initialObject
+  initialObject = natId (Const initialObject)
   
-  initialize (Nat f _ _) = Nat (Const initialObject) f $ initialize . (f %)
+  initialize (Nat f _ _) = Nat (Const initialObject) f (initialize . (f %))
 
 -- | The initial object of the product of 2 categories is the product of their initial objects.
 instance (HasInitialObject c1, HasInitialObject c2) => HasInitialObject (c1 :**: c2) where
@@ -311,14 +307,14 @@ instance (HasLimits (Discrete n) (~>), HasBinaryProducts (~>)) => HasLimits (Dis
   limit = limit'
     where
       limit' :: forall f. Obj (Nat (Discrete (S n)) (~>)) f -> Cone f (Limit f)
-      limit' l@Nat{} = Nat (Const $ x *** y) (srcF l) (\z -> unCom $ h z)
+      limit' l@Nat{} = Nat (Const (x *** y)) (srcF l) (\z -> unCom (h z))
         where
           x = l ! Z
           y = coneVertex limNext
           limNext = limit (l `o` natId Succ)
           h :: Obj (Discrete (S n)) z -> Com (ConstF f (LimitFam (Discrete (S n)) (~>) f)) f z
-          h Z     = Com $               proj1 x y
-          h (S n) = Com $ limNext ! n . proj2 x y
+          h Z     = Com (              proj1 x y)
+          h (S n) = Com (limNext ! n . proj2 x y)
 
   limitFactorizer l@Nat{} c = c ! Z &&& limitFactorizer (l `o` natId Succ) ((c `o` natId Succ) . constPostcompInv (srcF c) Succ)
 
@@ -328,11 +324,11 @@ type instance BinaryProduct (->) x y = (x, y)
 -- | The tuple is the binary product in @Hask@.
 instance HasBinaryProducts (->) where
   
-  proj1 _ _ = fst
-  proj2 _ _ = snd
+  proj1 _ _ = \(x, _) -> x
+  proj2 _ _ = \(_, y) -> y
   
-  (&&&) = (A.&&&)
-  (***) = (A.***)
+  f &&& g = \x -> (f x, g x)
+  f *** g = \(x, y) -> (f x, g y)
 
 type instance BinaryProduct Cat (CatW c1) (CatW c2) = CatW (c1 :**: c2)
 
@@ -379,11 +375,11 @@ type instance BinaryProduct (Nat c d) x y = x :*: y
 -- | The functor product '(:*:)' is the binary product in functor categories.
 instance (Category c, HasBinaryProducts d) => HasBinaryProducts (Nat c d) where
   
-  proj1 (Nat f _ _) (Nat g _ _) = Nat (f :*: g) f $ \z -> proj1 (f % z) (g % z)
-  proj2 (Nat f _ _) (Nat g _ _) = Nat (f :*: g) g $ \z -> proj2 (f % z) (g % z)
+  proj1 (Nat f _ _) (Nat g _ _) = Nat (f :*: g) f (\z -> proj1 (f % z) (g % z))
+  proj2 (Nat f _ _) (Nat g _ _) = Nat (f :*: g) g (\z -> proj2 (f % z) (g % z))
   
-  Nat a f af &&& Nat _ g ag = Nat a (f :*: g) $ \z -> af z &&& ag z
-  Nat f1 f2 f *** Nat g1 g2 g = Nat (f1 :*: g1) (f2 :*: g2) $ \z -> f z *** g z
+  Nat a f af &&& Nat _ g ag = Nat a (f :*: g) (\z -> af z &&& ag z)
+  Nat f1 f2 f *** Nat g1 g2 g = Nat (f1 :*: g1) (f2 :*: g2) (\z -> f z *** g z)
   
   
 
@@ -408,28 +404,17 @@ instance (HasColimits (Discrete n) (~>), HasBinaryCoproducts (~>)) => HasColimit
   colimit = colimit'
     where
       colimit' :: forall f. Obj (Nat (Discrete (S n)) (~>)) f -> Cocone f (Colimit f)
-      colimit' l@Nat{} = Nat (srcF l) (Const $ x +++ y) (\z -> unCom $ h z)
+      colimit' l@Nat{} = Nat (srcF l) (Const (x +++ y)) (\z -> unCom (h z))
         where
           x = l ! Z
           y = coconeVertex colNext
           colNext = colimit (l `o` natId Succ)
           h :: Obj (Discrete (S n)) z -> Com f (ConstF f (ColimitFam (Discrete (S n)) (~>) f)) z
-          h Z     = Com $ inj1 x y
-          h (S n) = Com $ inj2 x y . colNext ! n
+          h Z     = Com (inj1 x y)
+          h (S n) = Com (inj2 x y . colNext ! n)
   
   colimitFactorizer l@Nat{} c = c ! Z ||| colimitFactorizer (l `o` natId Succ) (constPostcomp (tgtF c) Succ . (c `o` natId Succ))
 
-
-type instance BinaryCoproduct (->) x y = Either x y
-
--- | 'Either' is the coproduct in @Hask@.
-instance HasBinaryCoproducts (->) where
-  
-  inj1 _ _ = Left
-  inj2 _ _ = Right
-  
-  (|||) = (A.|||)
-  (+++) = (A.+++)
 
 type instance BinaryCoproduct Cat (CatW c1) (CatW c2) = CatW (c1 :++: c2)
 
@@ -476,11 +461,11 @@ type instance BinaryCoproduct (Nat c d) x y = x :+: y
 -- | The functor coproduct '(:+:)' is the binary coproduct in functor categories.
 instance (Category c, HasBinaryCoproducts d) => HasBinaryCoproducts (Nat c d) where
   
-  inj1 (Nat f _ _) (Nat g _ _) = Nat f (f :+: g) $ \z -> inj1 (f % z) (g % z)
-  inj2 (Nat f _ _) (Nat g _ _) = Nat g (f :+: g) $ \z -> inj2 (f % z) (g % z)
+  inj1 (Nat f _ _) (Nat g _ _) = Nat f (f :+: g) (\z -> inj1 (f % z) (g % z))
+  inj2 (Nat f _ _) (Nat g _ _) = Nat g (f :+: g) (\z -> inj2 (f % z) (g % z))
   
-  Nat f a fa ||| Nat g _ ga = Nat (f :+: g) a $ \z -> fa z ||| ga z
-  Nat f1 f2 f +++ Nat g1 g2 g = Nat (f1 :+: g1) (f2 :+: g2) $ \z -> f z +++ g z
+  Nat f a fa ||| Nat g _ ga = Nat (f :+: g) a (\z -> fa z ||| ga z)
+  Nat f1 f2 f +++ Nat g1 g2 g = Nat (f1 :+: g1) (f2 :+: g2) (\z -> f z +++ g z)
 
 
 -- newtype ForAll f = ForAll { unForAll :: forall a. f :% a }

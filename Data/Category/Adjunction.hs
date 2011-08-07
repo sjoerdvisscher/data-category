@@ -18,6 +18,8 @@ module Data.Category.Adjunction (
   , rightAdjunct
   
   -- * Adjunctions as a category
+  , idAdj
+  , composeAdj
   , AdjArrow(..)
   
   -- * Adjunctions from universal morphisms
@@ -33,9 +35,6 @@ module Data.Category.Adjunction (
   
 ) where
   
-import Prelude (($), id, flip)
-import Control.Monad.Instances ()
-
 import Data.Category
 import Data.Category.Functor
 import Data.Category.NaturalTransformation
@@ -61,6 +60,8 @@ leftAdjunct (Adjunction _ g un _) i h = (g % h) . (un ! i)
 rightAdjunct :: Adjunction c d f g -> Obj c b -> d a (g :% b) -> c (f :% a) b
 rightAdjunct (Adjunction f _ _ coun) i h = (coun ! i) . (f % h)
 
+
+
 -- Each pair (FY, unit_Y) is an initial morphism from Y to G.
 adjunctionInitialProp :: Adjunction c d f g -> Obj d y -> InitialUniversal y g (f :% y)
 adjunctionInitialProp adj@(Adjunction f g un _) y = initialUniversal g (f % y) (un ! y) (rightAdjunct adj)
@@ -80,9 +81,18 @@ initialPropAdjunction f g univ = mkAdjunction f g
 terminalPropAdjunction :: forall f g c d. (Functor f, Functor g, Category c, Category d, Dom f ~ d, Cod f ~ c, Dom g ~ c, Cod g ~ d)
   => f -> g -> (forall x. Obj c x -> TerminalUniversal x f (g :% x)) -> Adjunction c d f g
 terminalPropAdjunction f g univ = mkAdjunction f g 
-  (\a -> unOp $ represent (univ (f % a)) (Op a) (f % a)) 
+  (\a -> unOp (represent (univ (f % a)) (Op a) (f % a)))
   (universalElement . univ)
     
+
+idAdj :: Category (~>) => Adjunction (~>) (~>) (Id (~>)) (Id (~>))
+idAdj = mkAdjunction Id Id (\x -> x) (\x -> x)
+
+composeAdj :: Adjunction d e f g -> Adjunction c d f' g' -> Adjunction c e (f' :.: f) (g :.: g')
+composeAdj (Adjunction f g u c) (Adjunction f' g' u' c') = Adjunction (f' :.: f) (g :.: g') 
+  (compAssoc (g :.: g') f' f . Precompose f % (compAssocInv g g' f' . Postcompose g % u' . idPrecompInv g) . u)
+  (c' . Precompose g' % (idPrecomp f' . Postcompose f' % c . compAssoc f' f g) . compAssocInv (f' :.: f) g g')
+
 
 data AdjArrow c d where
   AdjArrow :: (Category c, Category d) => Adjunction c d f g -> AdjArrow (CatW c) (CatW d)
@@ -90,19 +100,16 @@ data AdjArrow c d where
 -- | The category with categories as objects and adjunctions as arrows.
 instance Category AdjArrow where
   
-  src (AdjArrow (Adjunction _ _ _ _)) = AdjArrow $ mkAdjunction Id Id id id
-  tgt (AdjArrow (Adjunction _ _ _ _)) = AdjArrow $ mkAdjunction Id Id id id
+  src (AdjArrow (Adjunction _ _ _ _)) = AdjArrow idAdj
+  tgt (AdjArrow (Adjunction _ _ _ _)) = AdjArrow idAdj
   
-  AdjArrow (Adjunction f g u c) . AdjArrow (Adjunction f' g' u' c') = AdjArrow $ 
-    Adjunction (f' :.: f) (g :.: g') 
-      (compAssoc (g :.: g') f' f . Precompose f % (compAssocInv g g' f' . Postcompose g % u' . idPrecompInv g) . u)
-      (c' . Precompose g' % (idPrecomp f' . Postcompose f' % c . compAssoc f' f g) . compAssocInv (f' :.: f) g g')
+  AdjArrow x . AdjArrow y = AdjArrow (composeAdj x y)
 
 
 
 contAdj :: Adjunction (Op (->)) (->) (Opposite ((->) :-*: r) :.: OpOpInv (->)) ((->) :-*: r)
 contAdj = mkAdjunction
-  (Opposite (hom_X id) :.: OpOpInv)
-  (hom_X id)
-  (\_ -> flip ($))
-  (\_ -> Op (flip ($)))
+  (Opposite (hom_X (\x -> x)) :.: OpOpInv)
+  (hom_X (\x -> x))
+  (\_ x f -> f x)
+  (\_ -> Op (\x f -> f x))

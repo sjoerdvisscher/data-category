@@ -19,9 +19,6 @@ module Data.Category (
     
 ) where
 
-import Prelude (($))
-import qualified Prelude
-
 infixr 8 .
 
 
@@ -40,10 +37,10 @@ class Category (~>) where
 -- | The category with Haskell types as objects and Haskell functions as arrows.
 instance Category (->) where
   
-  src _ = Prelude.id
-  tgt _ = Prelude.id
+  src _ = \x -> x
+  tgt _ = \x -> x
   
-  (.)   = (Prelude..)    
+  f . g = \x -> f (g x)
 
 
 data Op (~>) a b = Op { unOp :: b ~> a }
@@ -51,7 +48,7 @@ data Op (~>) a b = Op { unOp :: b ~> a }
 -- | @Op (~>)@ is opposite category of the category @(~>)@.
 instance Category (~>) => Category (Op (~>)) where
   
-  src (Op a)      = Op $ tgt a
-  tgt (Op a)      = Op $ src a
+  src (Op a)      = Op (tgt a)
+  tgt (Op a)      = Op (src a)
   
-  (Op a) . (Op b) = Op $ b . a
+  (Op a) . (Op b) = Op (b . a)
