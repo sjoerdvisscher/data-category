@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeOperators, TypeFamilies, RankNTypes #-}
+{-# LANGUAGE TypeOperators, TypeFamilies, RankNTypes, NoImplicitPrelude #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category.RepresentableFunctor

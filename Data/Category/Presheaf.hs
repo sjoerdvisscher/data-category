@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeOperators, TypeFamilies, TypeSynonymInstances, GADTs, FlexibleInstances #-}
+{-# LANGUAGE TypeOperators, TypeFamilies, TypeSynonymInstances, GADTs, FlexibleInstances, NoImplicitPrelude #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category.Presheaf

@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeFamilies, TypeOperators, GADTs, FlexibleContexts #-}
+{-# LANGUAGE TypeFamilies, TypeOperators, GADTs, FlexibleContexts, NoImplicitPrelude #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category.Coproduct

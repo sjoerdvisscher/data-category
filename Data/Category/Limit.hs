@@ -8,7 +8,8 @@
   TypeOperators, 
   TypeFamilies,
   TypeSynonymInstances,
-  UndecidableInstances  #-}
+  UndecidableInstances, 
+  NoImplicitPrelude  #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category.Limit

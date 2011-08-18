@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeOperators, TypeFamilies, GADTs, Rank2Types, ViewPatterns #-}
+{-# LANGUAGE TypeOperators, TypeFamilies, GADTs, Rank2Types, ViewPatterns, NoImplicitPrelude #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category.Monoidal

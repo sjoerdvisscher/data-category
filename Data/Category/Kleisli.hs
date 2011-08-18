@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeFamilies, TypeOperators, GADTs, FlexibleInstances, FlexibleContexts, RankNTypes, ScopedTypeVariables, UndecidableInstances  #-}
+{-# LANGUAGE TypeFamilies, TypeOperators, GADTs, FlexibleInstances, FlexibleContexts, RankNTypes, ScopedTypeVariables, UndecidableInstances, NoImplicitPrelude  #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category.Kleisli

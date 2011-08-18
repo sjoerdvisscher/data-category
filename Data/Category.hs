@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeOperators, TypeFamilies, GADTs, RankNTypes #-}
+{-# LANGUAGE TypeOperators, TypeFamilies, GADTs, RankNTypes, NoImplicitPrelude #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category

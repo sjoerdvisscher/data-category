@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeFamilies, GADTs, TypeOperators, ScopedTypeVariables, UndecidableInstances #-}
+{-# LANGUAGE TypeFamilies, GADTs, TypeOperators, ScopedTypeVariables, UndecidableInstances, NoImplicitPrelude #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category.Boolean

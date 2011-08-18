@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeOperators, TypeFamilies, GADTs, FlexibleInstances, ViewPatterns #-}
+{-# LANGUAGE TypeOperators, TypeFamilies, GADTs, FlexibleInstances, ViewPatterns, NoImplicitPrelude #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category.Peano
