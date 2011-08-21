@@ -46,6 +46,7 @@ Library
     Data.Category.Kleisli,
     Data.Category.Dialg,
     Data.Category.Peano,
+    Data.Category.Simplex,
     Data.Category.Comma
     
   default-language:    Haskell2010
