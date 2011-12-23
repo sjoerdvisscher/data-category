@@ -487,3 +487,27 @@ instance (Category c, HasBinaryCoproducts d) => HasBinaryCoproducts (Nat c d) wh
 --   
 --   colimit (Nat f _ _) = Nat f (Const id) $ \_ -> Exists
 --   colimitFactorizer Nat{} c (Exists fa) = (c ! id) fa -- (c ! id) . unExists
+
+instance HasInitialObject (~>) => HasTerminalObject (Op (~>)) where
+  type TerminalObject (Op (~>)) = InitialObject (~>)
+  terminalObject = Op initialObject
+  terminate (Op f) = Op (initialize f)
+
+instance HasTerminalObject (~>) => HasInitialObject (Op (~>)) where
+  type InitialObject (Op (~>)) = TerminalObject (~>)
+  initialObject = Op terminalObject
+  initialize (Op f) = Op (terminate f)
+
+type instance BinaryProduct (Op (~>)) x y = BinaryCoproduct (~>) x y
+instance HasBinaryCoproducts (~>) => HasBinaryProducts (Op (~>)) where
+  proj1 (Op x) (Op y) = Op (inj1 x y)
+  proj2 (Op x) (Op y) = Op (inj2 x y)
+  Op f &&& Op g = Op (f ||| g)
+  Op f *** Op g = Op (f +++ g)
+
+type instance BinaryCoproduct (Op (~>)) x y = BinaryProduct (~>) x y
+instance HasBinaryProducts (~>) => HasBinaryCoproducts (Op (~>)) where
+  inj1 (Op x) (Op y) = Op (proj1 x y)
+  inj2 (Op x) (Op y) = Op (proj2 x y)
+  Op f ||| Op g = Op (f &&& g)
+  Op f +++ Op g = Op (f *** g)
