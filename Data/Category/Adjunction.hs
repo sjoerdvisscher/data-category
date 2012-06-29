@@ -107,6 +107,20 @@ instance Category AdjArrow where
 
 
 
+precomposeAdj :: Category e => Adjunction c d f g -> Adjunction (Nat c e) (Nat d e) (Precompose g e) (Precompose f e)
+precomposeAdj (Adjunction f g un coun) = mkAdjunction 
+  (Precompose g)
+  (Precompose f)
+  (\nh@(Nat h _ _) -> compAssocInv h g f . (nh `o` un) . idPrecompInv h)
+  (\nh@(Nat h _ _) -> idPrecomp h . (nh `o` coun) . compAssoc h f g)
+
+postcomposeAdj :: Category e => Adjunction c d f g -> Adjunction (Nat e c) (Nat e d) (Postcompose f e) (Postcompose g e)
+postcomposeAdj (Adjunction f g un coun) = mkAdjunction 
+  (Postcompose f)
+  (Postcompose g)
+  (\nh@(Nat h _ _) -> compAssoc g f h . (un `o` nh) . idPostcompInv h)
+  (\nh@(Nat h _ _) -> idPostcomp h . (coun `o` nh) . compAssocInv f g h)
+
 contAdj :: Adjunction (Op (->)) (->) (Opposite ((->) :-*: r) :.: OpOpInv (->)) ((->) :-*: r)
 contAdj = mkAdjunction
   (Opposite (hom_X (\x -> x)) :.: OpOpInv)
