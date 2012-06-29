@@ -19,7 +19,7 @@ import Data.Category.Adjunction
 import Data.Category.Monoidal as M
 
 
-type family Exponential (~>) y z :: *
+type family Exponential ((~>) :: * -> * -> *) y z :: *
 
 -- | A category is cartesian closed if it has all products and exponentials for all objects.
 class (HasTerminalObject (~>), HasBinaryProducts (~>)) => CartesianClosed (~>) where

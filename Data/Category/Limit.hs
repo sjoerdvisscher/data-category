@@ -117,7 +117,7 @@ coconeVertex (Nat _ (Const x) _) = x
 
 
 -- | Limits in a category @(~>)@ by means of a diagram of type @j@, which is a functor from @j@ to @(~>)@.
-type family LimitFam j (~>) f :: *
+type family LimitFam (j :: * -> * -> *) ((~>) :: * -> * -> *) (f :: *) :: *
 
 type Limit f = LimitFam (Dom f) (Cod f) f
 
@@ -139,14 +139,14 @@ instance HasLimits j (~>) => Functor (LimitFunctor j (~>)) where
   LimitFunctor % n @ Nat{}  = limitFactorizer (tgt n) (n . limit (src n))
 
 -- | The limit functor is right adjoint to the diagonal functor.
-limitAdj :: HasLimits j (~>) => Adjunction (Nat j (~>)) (~>) (Diag j (~>)) (LimitFunctor j (~>))
+limitAdj :: forall j (~>). HasLimits j (~>) => Adjunction (Nat j (~>)) (~>) (Diag j (~>)) (LimitFunctor j (~>))
 limitAdj = mkAdjunction diag LimitFunctor (\a -> limitFactorizer (diag % a) (diag % a)) (\f @ Nat{} -> limit f)
-  where diag = Diag -- Forces the type of all Diags to be the same.
+  where diag = Diag :: Diag j (~>) -- Forces the type of all Diags to be the same.
 
 
 
 -- | Colimits in a category @(~>)@ by means of a diagram of type @j@, which is a functor from @j@ to @(~>)@.
-type family ColimitFam j (~>) f :: *
+type family ColimitFam (j :: * -> * -> *) ((~>) :: * -> * -> *) (f :: *) :: *
 
 type Colimit f = ColimitFam (Dom f) (Cod f) f
 
@@ -168,9 +168,9 @@ instance HasColimits j (~>) => Functor (ColimitFunctor j (~>)) where
   ColimitFunctor % n @ Nat{}  = colimitFactorizer (src n) (colimit (tgt n) . n)
 
 -- | The colimit functor is left adjoint to the diagonal functor.
-colimitAdj :: HasColimits j (~>) => Adjunction (~>) (Nat j (~>)) (ColimitFunctor j (~>)) (Diag j (~>))
+colimitAdj :: forall j (~>). HasColimits j (~>) => Adjunction (~>) (Nat j (~>)) (ColimitFunctor j (~>)) (Diag j (~>))
 colimitAdj = mkAdjunction ColimitFunctor diag (\f @ Nat{} -> colimit f) (\a -> colimitFactorizer (diag % a) (diag % a)) 
-  where diag = Diag -- Forces the type of all Diags to be the same.
+  where diag = Diag :: Diag j (~>) -- Forces the type of all Diags to be the same.
   
 
 
