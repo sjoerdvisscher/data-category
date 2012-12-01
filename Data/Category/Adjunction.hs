@@ -85,7 +85,7 @@ terminalPropAdjunction f g univ = mkAdjunction f g
   (universalElement . univ)
     
 
-idAdj :: Category (~>) => Adjunction (~>) (~>) (Id (~>)) (Id (~>))
+idAdj :: Category k => Adjunction k k (Id k) (Id k)
 idAdj = mkAdjunction Id Id (\x -> x) (\x -> x)
 
 composeAdj :: Adjunction d e f g -> Adjunction c d f' g' -> Adjunction c e (f' :.: f) (g :.: g')

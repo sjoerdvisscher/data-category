@@ -189,7 +189,7 @@ type instance Cod (Replicate f a) = Cod f
 type instance Replicate f a :% Z = Unit f
 type instance Replicate f a :% S n = f :% (a, Replicate f a :% n)
 -- | Replicate a monoid a number of times.
-instance (TensorProduct f, Dom f ~ ((~>) :**: (~>)), Cod f ~ (~>)) => Functor (Replicate f a) where
+instance TensorProduct f => Functor (Replicate f a) where
   Replicate f _ % Z = unitObject f
   Replicate f m % Y n = f % (unit m :**: tgt n') . leftUnitorInv f (tgt n') . n' where n' = Replicate f m % n
   Replicate f m % X (Y n) = f % (tgt (unit m) :**: (Replicate f m % n))

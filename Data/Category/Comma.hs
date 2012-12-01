@@ -19,8 +19,8 @@ import Data.Category.RepresentableFunctor
 
 
 data CommaO :: * -> * -> * -> * where
-  CommaO :: (Cod t ~ (~>), Cod s ~ (~>))
-    => Obj (Dom t) a -> ((t :% a) ~> (s :% b)) -> Obj (Dom s) b -> CommaO t s (a, b)
+  CommaO :: (Cod t ~ k, Cod s ~ k)
+    => Obj (Dom t) a -> k (t :% a) (s :% b) -> Obj (Dom s) b -> CommaO t s (a, b)
     
 data (:/\:) :: * -> * -> * -> * -> * where 
   CommaA :: 

@@ -84,14 +84,14 @@ infixl 2 |||
 
 
 data Diag :: (* -> * -> *) -> (* -> * -> *) -> * where
-  Diag :: Diag j (~>)
+  Diag :: Diag j k
   
-type instance Dom (Diag j (~>)) = (~>)
-type instance Cod (Diag j (~>)) = Nat j (~>)
-type instance Diag j (~>) :% a = Const j (~>) a
+type instance Dom (Diag j k) = k
+type instance Cod (Diag j k) = Nat j k
+type instance Diag j k :% a = Const j k a
 
--- | The diagonal functor from (index-) category J to (~>).
-instance (Category j, Category (~>)) => Functor (Diag j (~>)) where 
+-- | The diagonal functor from (index-) category J to k.
+instance (Category j, Category k) => Functor (Diag j k) where 
   Diag % f = Nat (Const (src f)) (Const (tgt f)) (\_ -> f)
 
 -- | The diagonal functor with the same domain and codomain as @f@.
@@ -116,77 +116,77 @@ coconeVertex (Nat _ (Const x) _) = x
 
 
 
--- | Limits in a category @(~>)@ by means of a diagram of type @j@, which is a functor from @j@ to @(~>)@.
-type family LimitFam (j :: * -> * -> *) ((~>) :: * -> * -> *) (f :: *) :: *
+-- | Limits in a category @k@ by means of a diagram of type @j@, which is a functor from @j@ to @k@.
+type family LimitFam (j :: * -> * -> *) (k :: * -> * -> *) (f :: *) :: *
 
 type Limit f = LimitFam (Dom f) (Cod f) f
 
--- | An instance of @HasLimits j (~>)@ says that @(~>)@ has all limits of type @j@.
-class (Category j, Category (~>)) => HasLimits j (~>) where
+-- | An instance of @HasLimits j k@ says that @k@ has all limits of type @j@.
+class (Category j, Category k) => HasLimits j k where
   -- | 'limit' returns the limiting cone for a functor @f@.
-  limit           :: Obj (Nat j (~>)) f -> Cone f (Limit f)
+  limit           :: Obj (Nat j k) f -> Cone f (Limit f)
   -- | 'limitFactorizer' shows that the limiting cone is universal – i.e. any other cone of @f@ factors through it –
   --   by returning the morphism between the vertices of the cones.
-  limitFactorizer :: Obj (Nat j (~>)) f -> (forall n. Cone f n -> n ~> Limit f)
+  limitFactorizer :: Obj (Nat j k) f -> (forall n. Cone f n -> k n (Limit f))
 
-data LimitFunctor (j :: * -> * -> *) ((~>)  :: * -> * -> *) = LimitFunctor
-type instance Dom (LimitFunctor j (~>)) = Nat j (~>)
-type instance Cod (LimitFunctor j (~>)) = (~>)
-type instance LimitFunctor j (~>) :% f = LimitFam j (~>) f
--- | If every diagram of type @j@ has a limit in @(~>)@ there exists a limit functor.
+data LimitFunctor (j :: * -> * -> *) (k  :: * -> * -> *) = LimitFunctor
+type instance Dom (LimitFunctor j k) = Nat j k
+type instance Cod (LimitFunctor j k) = k
+type instance LimitFunctor j k :% f = LimitFam j k f
+-- | If every diagram of type @j@ has a limit in @k@ there exists a limit functor.
 --   It can be seen as a generalisation of @(***)@.
-instance HasLimits j (~>) => Functor (LimitFunctor j (~>)) where
+instance HasLimits j k => Functor (LimitFunctor j k) where
   LimitFunctor % n @ Nat{}  = limitFactorizer (tgt n) (n . limit (src n))
 
 -- | The limit functor is right adjoint to the diagonal functor.
-limitAdj :: forall j (~>). HasLimits j (~>) => Adjunction (Nat j (~>)) (~>) (Diag j (~>)) (LimitFunctor j (~>))
+limitAdj :: forall j k. HasLimits j k => Adjunction (Nat j k) k (Diag j k) (LimitFunctor j k)
 limitAdj = mkAdjunction diag LimitFunctor (\a -> limitFactorizer (diag % a) (diag % a)) (\f @ Nat{} -> limit f)
-  where diag = Diag :: Diag j (~>) -- Forces the type of all Diags to be the same.
+  where diag = Diag :: Diag j k -- Forces the type of all Diags to be the same.
 
 
 
--- | Colimits in a category @(~>)@ by means of a diagram of type @j@, which is a functor from @j@ to @(~>)@.
-type family ColimitFam (j :: * -> * -> *) ((~>) :: * -> * -> *) (f :: *) :: *
+-- | Colimits in a category @k@ by means of a diagram of type @j@, which is a functor from @j@ to @k@.
+type family ColimitFam (j :: * -> * -> *) (k :: * -> * -> *) (f :: *) :: *
 
 type Colimit f = ColimitFam (Dom f) (Cod f) f
 
--- | An instance of @HasColimits j (~>)@ says that @(~>)@ has all colimits of type @j@.
-class (Category j, Category (~>)) => HasColimits j (~>) where
+-- | An instance of @HasColimits j k@ says that @k@ has all colimits of type @j@.
+class (Category j, Category k) => HasColimits j k where
   -- | 'colimit' returns the limiting co-cone for a functor @f@.
-  colimit           :: Obj (Nat j (~>)) f -> Cocone f (Colimit f)
+  colimit           :: Obj (Nat j k) f -> Cocone f (Colimit f)
   -- | 'colimitFactorizer' shows that the limiting co-cone is universal – i.e. any other co-cone of @f@ factors through it –
   --   by returning the morphism between the vertices of the cones.
-  colimitFactorizer :: Obj (Nat j (~>)) f -> (forall n. Cocone f n -> Colimit f ~> n)
+  colimitFactorizer :: Obj (Nat j k) f -> (forall n. Cocone f n -> k (Colimit f) n)
 
-data ColimitFunctor (j :: * -> * -> *) ((~>)  :: * -> * -> *) = ColimitFunctor
-type instance Dom (ColimitFunctor j (~>)) = Nat j (~>)
-type instance Cod (ColimitFunctor j (~>)) = (~>)
-type instance ColimitFunctor j (~>) :% f = ColimitFam j (~>) f
--- | If every diagram of type @j@ has a colimit in @(~>)@ there exists a colimit functor.
+data ColimitFunctor (j :: * -> * -> *) (k  :: * -> * -> *) = ColimitFunctor
+type instance Dom (ColimitFunctor j k) = Nat j k
+type instance Cod (ColimitFunctor j k) = k
+type instance ColimitFunctor j k :% f = ColimitFam j k f
+-- | If every diagram of type @j@ has a colimit in @k@ there exists a colimit functor.
 --   It can be seen as a generalisation of @(+++)@.
-instance HasColimits j (~>) => Functor (ColimitFunctor j (~>)) where
+instance HasColimits j k => Functor (ColimitFunctor j k) where
   ColimitFunctor % n @ Nat{}  = colimitFactorizer (src n) (colimit (tgt n) . n)
 
 -- | The colimit functor is left adjoint to the diagonal functor.
-colimitAdj :: forall j (~>). HasColimits j (~>) => Adjunction (~>) (Nat j (~>)) (ColimitFunctor j (~>)) (Diag j (~>))
+colimitAdj :: forall j k. HasColimits j k => Adjunction k (Nat j k) (ColimitFunctor j k) (Diag j k)
 colimitAdj = mkAdjunction ColimitFunctor diag (\f @ Nat{} -> colimit f) (\a -> colimitFactorizer (diag % a) (diag % a)) 
-  where diag = Diag :: Diag j (~>) -- Forces the type of all Diags to be the same.
+  where diag = Diag :: Diag j k -- Forces the type of all Diags to be the same.
   
 
 
-class Category (~>) => HasTerminalObject (~>) where
+class Category k => HasTerminalObject k where
   
-  type TerminalObject (~>) :: *
+  type TerminalObject k :: *
   
-  terminalObject :: Obj (~>) (TerminalObject (~>))
+  terminalObject :: Obj k (TerminalObject k)
   
-  terminate :: Obj (~>) a -> a ~> TerminalObject (~>)
+  terminate :: Obj k a -> k a (TerminalObject k)
 
 
-type instance LimitFam Void (~>) f = TerminalObject (~>)
+type instance LimitFam Void k f = TerminalObject k
 
--- | A terminal object is the limit of the functor from /0/ to (~>).
-instance (HasTerminalObject (~>)) => HasLimits Void (~>) where
+-- | A terminal object is the limit of the functor from /0/ to k.
+instance (HasTerminalObject k) => HasLimits Void k where
   
   limit (Nat f _ _) = voidNat (Const terminalObject) f
   limitFactorizer Nat{} = terminate . coneVertex
@@ -230,19 +230,19 @@ instance (HasTerminalObject c1, HasTerminalObject c2) => HasTerminalObject (c1 :
   
   
 
-class Category (~>) => HasInitialObject (~>) where
+class Category k => HasInitialObject k where
   
-  type InitialObject (~>) :: *
+  type InitialObject k :: *
   
-  initialObject :: Obj (~>) (InitialObject (~>))
+  initialObject :: Obj k (InitialObject k)
 
-  initialize :: Obj (~>) a -> InitialObject (~>) ~> a
+  initialize :: Obj k a -> k (InitialObject k) a
 
 
-type instance ColimitFam Void (~>) f = InitialObject (~>)
+type instance ColimitFam Void k f = InitialObject k
 
--- | An initial object is the colimit of the functor from /0/ to (~>).
-instance HasInitialObject (~>) => HasColimits Void (~>) where
+-- | An initial object is the colimit of the functor from /0/ to k.
+instance HasInitialObject k => HasColimits Void k where
   
   colimit (Nat f _ _) = voidNat f (Const initialObject)
   colimitFactorizer Nat{} = initialize . coconeVertex
@@ -288,32 +288,32 @@ instance (HasInitialObject c1, HasInitialObject c2) => HasInitialObject (c1 :**:
 
 
 
-type family BinaryProduct ((~>) :: * -> * -> *) x y :: *
+type family BinaryProduct (k :: * -> * -> *) x y :: *
 
-class Category (~>) => HasBinaryProducts (~>) where
+class Category k => HasBinaryProducts k where
   
-  proj1 :: Obj (~>) x -> Obj (~>) y -> BinaryProduct (~>) x y ~> x
-  proj2 :: Obj (~>) x -> Obj (~>) y -> BinaryProduct (~>) x y ~> y
+  proj1 :: Obj k x -> Obj k y -> k (BinaryProduct k x y) x
+  proj2 :: Obj k x -> Obj k y -> k (BinaryProduct k x y) y
 
-  (&&&) :: (a ~> x) -> (a ~> y) -> (a ~> BinaryProduct (~>) x y)
+  (&&&) :: (k a x) -> (k a y) -> (k a (BinaryProduct k x y))
 
-  (***) :: (a1 ~> b1) -> (a2 ~> b2) -> (BinaryProduct (~>) a1 a2 ~> BinaryProduct (~>) b1 b2)
+  (***) :: (k a1 b1) -> (k a2 b2) -> (k (BinaryProduct k a1 a2) (BinaryProduct k b1 b2))
   l *** r = (l . proj1 (src l) (src r)) &&& (r . proj2 (src l) (src r))
 
-type instance LimitFam (Discrete (S n)) (~>) f = BinaryProduct (~>) (f :% Z) (LimitFam (Discrete n) (~>) (f :.: Succ n))
+type instance LimitFam (Discrete (S n)) k f = BinaryProduct k (f :% Z) (LimitFam (Discrete n) k (f :.: Succ n))
 
--- | The product of @n@ objects is the limit of the functor from @Discrete n@ to @(~>)@.
-instance (HasLimits (Discrete n) (~>), HasBinaryProducts (~>)) => HasLimits (Discrete (S n)) (~>) where
+-- | The product of @n@ objects is the limit of the functor from @Discrete n@ to @k@.
+instance (HasLimits (Discrete n) k, HasBinaryProducts k) => HasLimits (Discrete (S n)) k where
   
   limit = limit'
     where
-      limit' :: forall f. Obj (Nat (Discrete (S n)) (~>)) f -> Cone f (Limit f)
+      limit' :: forall f. Obj (Nat (Discrete (S n)) k) f -> Cone f (Limit f)
       limit' l@Nat{} = Nat (Const (x *** y)) (srcF l) (\z -> unCom (h z))
         where
           x = l ! Z
           y = coneVertex limNext
           limNext = limit (l `o` natId Succ)
-          h :: Obj (Discrete (S n)) z -> Com (ConstF f (LimitFam (Discrete (S n)) (~>) f)) f z
+          h :: Obj (Discrete (S n)) z -> Com (ConstF f (LimitFam (Discrete (S n)) k f)) f z
           h Z     = Com (              proj1 x y)
           h (S n) = Com (limNext ! n . proj2 x y)
 
@@ -354,16 +354,16 @@ instance (HasBinaryProducts c1, HasBinaryProducts c2) => HasBinaryProducts (c1 :
   (f1 :**: f2) *** (g1 :**: g2) = (f1 *** g1) :**: (f2 *** g2)
 
 
-data ProductFunctor ((~>) :: * -> * -> *) = ProductFunctor
-type instance Dom (ProductFunctor (~>)) = (~>) :**: (~>)
-type instance Cod (ProductFunctor (~>)) = (~>)
-type instance ProductFunctor (~>) :% (a, b) = BinaryProduct (~>) a b
+data ProductFunctor (k :: * -> * -> *) = ProductFunctor
+type instance Dom (ProductFunctor k) = k :**: k
+type instance Cod (ProductFunctor k) = k
+type instance ProductFunctor k :% (a, b) = BinaryProduct k a b
 -- | Binary product as a bifunctor.
-instance HasBinaryProducts (~>) => Functor (ProductFunctor (~>)) where
+instance HasBinaryProducts k => Functor (ProductFunctor k) where
   ProductFunctor % (a1 :**: a2) = a1 *** a2
 
 data p :*: q where 
-  (:*:) :: (Functor p, Functor q, Dom p ~ Dom q, Cod p ~ (~>), Cod q ~ (~>), HasBinaryProducts (~>)) => p -> q -> p :*: q
+  (:*:) :: (Functor p, Functor q, Dom p ~ Dom q, Cod p ~ k, Cod q ~ k, HasBinaryProducts k) => p -> q -> p :*: q
 type instance Dom (p :*: q) = Dom p
 type instance Cod (p :*: q) = Cod p
 type instance (p :*: q) :% a = BinaryProduct (Cod p) (p :% a) (q :% a)
@@ -384,33 +384,33 @@ instance (Category c, HasBinaryProducts d) => HasBinaryProducts (Nat c d) where
   
   
 
-type family BinaryCoproduct ((~>) :: * -> * -> *) x y :: *
+type family BinaryCoproduct (k :: * -> * -> *) x y :: *
 
-class Category (~>) => HasBinaryCoproducts (~>) where
+class Category k => HasBinaryCoproducts k where
 
-  inj1 :: Obj (~>) x -> Obj (~>) y -> x ~> BinaryCoproduct (~>) x y
-  inj2 :: Obj (~>) x -> Obj (~>) y -> y ~> BinaryCoproduct (~>) x y
+  inj1 :: Obj k x -> Obj k y -> k x (BinaryCoproduct k x y)
+  inj2 :: Obj k x -> Obj k y -> k y (BinaryCoproduct k x y)
 
-  (|||) :: (x ~> a) -> (y ~> a) -> (BinaryCoproduct (~>) x y ~> a)
+  (|||) :: (k x a) -> (k y a) -> (k (BinaryCoproduct k x y) a)
     
-  (+++) :: (a1 ~> b1) -> (a2 ~> b2) -> (BinaryCoproduct (~>) a1 a2 ~> BinaryCoproduct (~>) b1 b2)
+  (+++) :: (k a1 b1) -> (k a2 b2) -> (k (BinaryCoproduct k a1 a2) (BinaryCoproduct k b1 b2))
   l +++ r = (inj1 (tgt l) (tgt r) . l) ||| (inj2 (tgt l) (tgt r) . r)
     
 
-type instance ColimitFam (Discrete (S n)) (~>) f = BinaryCoproduct (~>) (f :% Z) (ColimitFam (Discrete n) (~>) (f :.: Succ n))
+type instance ColimitFam (Discrete (S n)) k f = BinaryCoproduct k (f :% Z) (ColimitFam (Discrete n) k (f :.: Succ n))
 
--- | The coproduct of @n@ objects is the colimit of the functor from @Discrete n@ to @(~>)@.
-instance (HasColimits (Discrete n) (~>), HasBinaryCoproducts (~>)) => HasColimits (Discrete (S n)) (~>) where
+-- | The coproduct of @n@ objects is the colimit of the functor from @Discrete n@ to @k@.
+instance (HasColimits (Discrete n) k, HasBinaryCoproducts k) => HasColimits (Discrete (S n)) k where
   
   colimit = colimit'
     where
-      colimit' :: forall f. Obj (Nat (Discrete (S n)) (~>)) f -> Cocone f (Colimit f)
+      colimit' :: forall f. Obj (Nat (Discrete (S n)) k) f -> Cocone f (Colimit f)
       colimit' l@Nat{} = Nat (srcF l) (Const (x +++ y)) (\z -> unCom (h z))
         where
           x = l ! Z
           y = coconeVertex colNext
           colNext = colimit (l `o` natId Succ)
-          h :: Obj (Discrete (S n)) z -> Com f (ConstF f (ColimitFam (Discrete (S n)) (~>) f)) z
+          h :: Obj (Discrete (S n)) z -> Com f (ConstF f (ColimitFam (Discrete (S n)) k f)) z
           h Z     = Com (inj1 x y)
           h (S n) = Com (inj2 x y . colNext ! n)
   
@@ -440,16 +440,16 @@ instance (HasBinaryCoproducts c1, HasBinaryCoproducts c2) => HasBinaryCoproducts
   (f1 :**: f2) +++ (g1 :**: g2) = (f1 +++ g1) :**: (f2 +++ g2)
 
 
-data CoproductFunctor ((~>) :: * -> * -> *) = CoproductFunctor
-type instance Dom (CoproductFunctor (~>)) = (~>) :**: (~>)
-type instance Cod (CoproductFunctor (~>)) = (~>)
-type instance CoproductFunctor (~>) :% (a, b) = BinaryCoproduct (~>) a b
+data CoproductFunctor (k :: * -> * -> *) = CoproductFunctor
+type instance Dom (CoproductFunctor k) = k :**: k
+type instance Cod (CoproductFunctor k) = k
+type instance CoproductFunctor k :% (a, b) = BinaryCoproduct k a b
 -- | Binary coproduct as a bifunctor.
-instance HasBinaryCoproducts (~>) => Functor (CoproductFunctor (~>)) where
+instance HasBinaryCoproducts k => Functor (CoproductFunctor k) where
   CoproductFunctor % (a1 :**: a2) = a1 +++ a2
 
 data p :+: q where 
-  (:+:) :: (Functor p, Functor q, Dom p ~ Dom q, Cod p ~ (~>), Cod q ~ (~>), HasBinaryCoproducts (~>)) => p -> q -> p :+: q
+  (:+:) :: (Functor p, Functor q, Dom p ~ Dom q, Cod p ~ k, Cod q ~ k, HasBinaryCoproducts k) => p -> q -> p :+: q
 type instance Dom (p :+: q) = Dom p
 type instance Cod (p :+: q) = Cod p
 type instance (p :+: q) :% a = BinaryCoproduct (Cod p) (p :% a) (q :% a)
@@ -488,25 +488,25 @@ instance (Category c, HasBinaryCoproducts d) => HasBinaryCoproducts (Nat c d) wh
 --   colimit (Nat f _ _) = Nat f (Const id) $ \_ -> Exists
 --   colimitFactorizer Nat{} c (Exists fa) = (c ! id) fa -- (c ! id) . unExists
 
-instance HasInitialObject (~>) => HasTerminalObject (Op (~>)) where
-  type TerminalObject (Op (~>)) = InitialObject (~>)
+instance HasInitialObject k => HasTerminalObject (Op k) where
+  type TerminalObject (Op k) = InitialObject k
   terminalObject = Op initialObject
   terminate (Op f) = Op (initialize f)
 
-instance HasTerminalObject (~>) => HasInitialObject (Op (~>)) where
-  type InitialObject (Op (~>)) = TerminalObject (~>)
+instance HasTerminalObject k => HasInitialObject (Op k) where
+  type InitialObject (Op k) = TerminalObject k
   initialObject = Op terminalObject
   initialize (Op f) = Op (terminate f)
 
-type instance BinaryProduct (Op (~>)) x y = BinaryCoproduct (~>) x y
-instance HasBinaryCoproducts (~>) => HasBinaryProducts (Op (~>)) where
+type instance BinaryProduct (Op k) x y = BinaryCoproduct k x y
+instance HasBinaryCoproducts k => HasBinaryProducts (Op k) where
   proj1 (Op x) (Op y) = Op (inj1 x y)
   proj2 (Op x) (Op y) = Op (inj2 x y)
   Op f &&& Op g = Op (f ||| g)
   Op f *** Op g = Op (f +++ g)
 
-type instance BinaryCoproduct (Op (~>)) x y = BinaryProduct (~>) x y
-instance HasBinaryProducts (~>) => HasBinaryCoproducts (Op (~>)) where
+type instance BinaryCoproduct (Op k) x y = BinaryProduct k x y
+instance HasBinaryProducts k => HasBinaryCoproducts (Op k) where
   inj1 (Op x) (Op y) = Op (proj1 x y)
   inj2 (Op x) (Op y) = Op (proj2 x y)
   Op f ||| Op g = Op (f &&& g)

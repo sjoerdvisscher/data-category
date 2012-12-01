@@ -1,5 +1,5 @@
 name:                data-category
-version:             0.5.0
+version:             0.6.0
 synopsis:            Category theory
 
 description:         Data-category is a collection of categories, and some categorical constructions on them.
@@ -47,7 +47,8 @@ Library
     Data.Category.Dialg,
     Data.Category.Peano,
     Data.Category.Simplex,
-    Data.Category.Comma
+    Data.Category.Comma,
+    Data.Category.AddObject
     
   default-language:    Haskell2010
 

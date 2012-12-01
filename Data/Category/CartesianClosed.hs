@@ -19,22 +19,22 @@ import Data.Category.Adjunction
 import Data.Category.Monoidal as M
 
 
-type family Exponential ((~>) :: * -> * -> *) y z :: *
+type family Exponential (k :: * -> * -> *) y z :: *
 
 -- | A category is cartesian closed if it has all products and exponentials for all objects.
-class (HasTerminalObject (~>), HasBinaryProducts (~>)) => CartesianClosed (~>) where
+class (HasTerminalObject k, HasBinaryProducts k) => CartesianClosed k where
   
-  apply :: Obj (~>) y -> Obj (~>) z -> BinaryProduct (~>) (Exponential (~>) y z) y ~> z
-  tuple :: Obj (~>) y -> Obj (~>) z -> z ~> Exponential (~>) y (BinaryProduct (~>) z y)
-  (^^^) :: (z1 ~> z2) -> (y2 ~> y1) -> (Exponential (~>) y1 z1 ~> Exponential (~>) y2 z2)
+  apply :: Obj k y -> Obj k z -> k (BinaryProduct k (Exponential k y z) y) z
+  tuple :: Obj k y -> Obj k z -> k z (Exponential k y (BinaryProduct k z y))
+  (^^^) :: k z1 z2 -> k y2 y1 -> k (Exponential k y1 z1) (Exponential k y2 z2)
 
 
-data ExpFunctor ((~>) :: * -> * -> *) = ExpFunctor
-type instance Dom (ExpFunctor (~>)) = Op (~>) :**: (~>)
-type instance Cod (ExpFunctor (~>)) = (~>)
-type instance (ExpFunctor (~>)) :% (y, z) = Exponential (~>) y z
+data ExpFunctor (k :: * -> * -> *) = ExpFunctor
+type instance Dom (ExpFunctor k) = Op k :**: k
+type instance Cod (ExpFunctor k) = k
+type instance (ExpFunctor k) :% (y, z) = Exponential k y z
 -- | The exponential as a bifunctor.
-instance CartesianClosed (~>) => Functor (ExpFunctor (~>)) where
+instance CartesianClosed k => Functor (ExpFunctor k) where
   ExpFunctor % (Op y :**: z) = z ^^^ y
 
 
@@ -86,36 +86,36 @@ instance CartesianClosed Cat where
 
 
 -- | The product functor is left adjoint the the exponential functor.
-curryAdj :: CartesianClosed (~>) 
-         => Obj (~>) y 
-         -> Adjunction (~>) (~>) 
-              (ProductFunctor (~>) :.: Tuple2 (~>) (~>) y) 
-              (ExpFunctor (~>) :.: Tuple1 (Op (~>)) (~>) y)
+curryAdj :: CartesianClosed k 
+         => Obj k y 
+         -> Adjunction k k 
+              (ProductFunctor k :.: Tuple2 k k y) 
+              (ExpFunctor k :.: Tuple1 (Op k) k y)
 curryAdj y = mkAdjunction (ProductFunctor :.: Tuple2 y) (ExpFunctor :.: Tuple1 (Op y)) (tuple y) (apply y)
 
 -- | From the adjunction between the product functor and the exponential functor we get the curry and uncurry functions,
 --   generalized to any cartesian closed category.
-curry :: CartesianClosed (~>) => Obj (~>) x -> Obj (~>) y -> Obj (~>) z -> BinaryProduct (~>) x y ~> z -> x ~> Exponential (~>) y z
+curry :: CartesianClosed k => Obj k x -> Obj k y -> Obj k z -> k (BinaryProduct k x y) z -> k x (Exponential k y z)
 curry x y _ = leftAdjunct (curryAdj y) x
 
-uncurry :: CartesianClosed (~>) => Obj (~>) x -> Obj (~>) y -> Obj (~>) z -> x ~> Exponential (~>) y z -> BinaryProduct (~>) x y ~> z
+uncurry :: CartesianClosed k => Obj k x -> Obj k y -> Obj k z -> k x (Exponential k y z) -> k (BinaryProduct k x y) z
 uncurry _ y z = rightAdjunct (curryAdj y) z
 
 -- | From every adjunction we get a monad, in this case the State monad.
-type State (~>) s a = Exponential (~>) s (BinaryProduct (~>) a s)
+type State k s a = Exponential k s (BinaryProduct k a s)
 
-stateMonadReturn :: CartesianClosed (~>) => Obj (~>) s -> Obj (~>) a -> a ~> State (~>) s a
+stateMonadReturn :: CartesianClosed k => Obj k s -> Obj k a -> k a (State k s a)
 stateMonadReturn s a = M.unit (adjunctionMonad (curryAdj s)) ! a
 
-stateMonadJoin :: CartesianClosed (~>) => Obj (~>) s -> Obj (~>) a -> State (~>) s (State (~>) s a) ~> State (~>) s a
+stateMonadJoin :: CartesianClosed k => Obj k s -> Obj k a -> k (State k s (State k s a)) (State k s a)
 stateMonadJoin s a = M.multiply (adjunctionMonad (curryAdj s)) ! a
 
 -- ! From every adjunction we also get a comonad, the Context comonad in this case.
-type Context (~>) s a = BinaryProduct (~>) (Exponential (~>) s a) s
+type Context k s a = BinaryProduct k (Exponential k s a) s
 
-contextComonadExtract :: CartesianClosed (~>) => Obj (~>) s -> Obj (~>) a -> Context (~>) s a ~> a
+contextComonadExtract :: CartesianClosed k => Obj k s -> Obj k a -> k (Context k s a) a
 contextComonadExtract s a = M.counit (adjunctionComonad (curryAdj s)) ! a
 
-contextComonadDuplicate :: CartesianClosed (~>) => Obj (~>) s -> Obj (~>) a -> Context (~>) s a ~> Context (~>) s (Context (~>) s a)
+contextComonadDuplicate :: CartesianClosed k => Obj k s -> Obj k a -> k (Context k s a) (Context k s (Context k s a))
 contextComonadDuplicate s a = M.comultiply (adjunctionComonad (curryAdj s)) ! a
 

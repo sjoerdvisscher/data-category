@@ -18,20 +18,20 @@ import Data.Category.CartesianClosed
 import Data.Category.Yoneda
 
 
-type Presheaves (~>) = Nat (Op (~>)) (->)
+type Presheaves k = Nat (Op k) (->)
 
-type PShExponential (~>) y z = (Presheaves (~>) :-*: z) :.: Opposite 
-  (   ProductFunctor (Presheaves (~>))
-  :.: Tuple2 (Presheaves (~>)) (Presheaves (~>)) y
-  :.: YonedaEmbedding (~>)
+type PShExponential k y z = (Presheaves k :-*: z) :.: Opposite 
+  (   ProductFunctor (Presheaves k)
+  :.: Tuple2 (Presheaves k) (Presheaves k) y
+  :.: YonedaEmbedding k
   )
-pshExponential :: Category (~>) => Obj (Presheaves (~>)) y -> Obj (Presheaves (~>)) z -> PShExponential (~>) y z
+pshExponential :: Category k => Obj (Presheaves k) y -> Obj (Presheaves k) z -> PShExponential k y z
 pshExponential y z = hom_X z :.: Opposite (ProductFunctor :.: Tuple2 y :.: yonedaEmbedding)
 
-type instance Exponential (Presheaves (~>)) y z = PShExponential (~>) y z
+type instance Exponential (Presheaves k) y z = PShExponential k y z
 
 -- | The category of presheaves on a category @C@ is cartesian closed for any @C@.
-instance Category (~>) => CartesianClosed (Presheaves (~>)) where
+instance Category k => CartesianClosed (Presheaves k) where
   
   apply yn@(Nat y _ _) zn@(Nat z _ _) = Nat (pshExponential yn zn :*: y) z (\(Op i) (n, yi) -> (n ! Op i) (i, yi))
   tuple yn zn@(Nat z _ _) = Nat z (pshExponential yn (zn *** yn)) (\(Op i) zi -> (Nat (hom_X i) z (\_ j2i -> (z % Op j2i) zi) *** yn))

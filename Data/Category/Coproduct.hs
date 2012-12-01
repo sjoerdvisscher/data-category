@@ -61,13 +61,13 @@ instance (Functor f1, Functor f2) => Functor (f1 :+++: f2) where
   (g :+++: _) % I1 f = I1 (g % f)
   (_ :+++: g) % I2 f = I2 (g % f)
   
-data CodiagCoprod ((~>) :: * -> * -> *) = CodiagCoprod
-type instance Dom (CodiagCoprod (~>)) = (~>) :++: (~>)
-type instance Cod (CodiagCoprod (~>)) = (~>)
-type instance CodiagCoprod (~>) :% I1 a = a
-type instance CodiagCoprod (~>) :% I2 a = a
+data CodiagCoprod (k :: * -> * -> *) = CodiagCoprod
+type instance Dom (CodiagCoprod k) = k :++: k
+type instance Cod (CodiagCoprod k) = k
+type instance CodiagCoprod k :% I1 a = a
+type instance CodiagCoprod k :% I2 a = a
 -- | 'CodiagCoprod' is the codiagonal functor for coproducts.
-instance Category (~>) => Functor (CodiagCoprod (~>)) where 
+instance Category k => Functor (CodiagCoprod k) where 
   CodiagCoprod % I1 f = f
   CodiagCoprod % I2 f = f
 

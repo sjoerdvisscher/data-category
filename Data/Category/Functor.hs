@@ -84,14 +84,14 @@ instance Category Cat where
 
 
 
-data Id ((~>) :: * -> * -> *) = Id
+data Id (k :: * -> * -> *) = Id
 
-type instance Dom (Id (~>)) = (~>)
-type instance Cod (Id (~>)) = (~>)
-type instance Id (~>) :% a = a
+type instance Dom (Id k) = k
+type instance Cod (Id k) = k
+type instance Id k :% a = a
 
--- | The identity functor on (~>)
-instance Category (~>) => Functor (Id (~>)) where 
+-- | The identity functor on k
+instance Category k => Functor (Id k) where 
   _ % f = f
 
 
@@ -134,25 +134,25 @@ instance (Category (Dom f), Category (Cod f)) => Functor (Opposite f) where
   Opposite f % Op a = Op (f % a)
 
 
-data OpOp ((~>) :: * -> * -> *) = OpOp
+data OpOp (k :: * -> * -> *) = OpOp
 
-type instance Dom (OpOp (~>)) = Op (Op (~>))
-type instance Cod (OpOp (~>)) = (~>)
-type instance OpOp (~>) :% a = a
+type instance Dom (OpOp k) = Op (Op k)
+type instance Cod (OpOp k) = k
+type instance OpOp k :% a = a
 
 -- | The @Op (Op x) = x@ functor.
-instance Category (~>) => Functor (OpOp (~>)) where
+instance Category k => Functor (OpOp k) where
   OpOp % Op (Op f) = f
 
 
-data OpOpInv ((~>) :: * -> * -> *) = OpOpInv
+data OpOpInv (k :: * -> * -> *) = OpOpInv
 
-type instance Dom (OpOpInv (~>)) = (~>)
-type instance Cod (OpOpInv (~>)) = Op (Op (~>))
-type instance OpOpInv (~>) :% a = a
+type instance Dom (OpOpInv k) = k
+type instance Cod (OpOpInv k) = Op (Op k)
+type instance OpOpInv k :% a = a
 
 -- | The @x = Op (Op x)@ functor.
-instance Category (~>) => Functor (OpOpInv (~>)) where
+instance Category k => Functor (OpOpInv k) where
   OpOpInv % f = Op (Op f)
 
 
@@ -189,14 +189,14 @@ instance (Functor f1, Functor f2) => Functor (f1 :***: f2) where
   (g1 :***: g2) % (f1 :**: f2) = (g1 % f1) :**: (g2 % f2)
   
   
-data DiagProd ((~>) :: * -> * -> *) = DiagProd
+data DiagProd (k :: * -> * -> *) = DiagProd
 
-type instance Dom (DiagProd (~>)) = (~>)
-type instance Cod (DiagProd (~>)) = (~>) :**: (~>)
-type instance DiagProd (~>) :% a = (a, a)
+type instance Dom (DiagProd k) = k
+type instance Cod (DiagProd k) = k :**: k
+type instance DiagProd k :% a = (a, a)
 
 -- | 'DiagProd' is the diagonal functor for products.
-instance Category (~>) => Functor (DiagProd (~>)) where 
+instance Category k => Functor (DiagProd k) where 
   DiagProd % f = f :**: f
 
 
@@ -222,23 +222,23 @@ instance (Category c1, Category c2) => Functor (Tuple2 c1 c2 a2) where
   Tuple2 a % f = f :**: a
 
 
-data Hom ((~>) :: * -> * -> *) = Hom  
+data Hom (k :: * -> * -> *) = Hom  
 
-type instance Dom (Hom (~>)) = Op (~>) :**: (~>)
-type instance Cod (Hom (~>)) = (->)
-type instance (Hom (~>)) :% (a1, a2) = a1 ~> a2
+type instance Dom (Hom k) = Op k :**: k
+type instance Cod (Hom k) = (->)
+type instance (Hom k) :% (a1, a2) = k a1 a2
 
 -- | The Hom functor, Hom(--,--), a bifunctor contravariant in its first argument and covariant in its second argument.
-instance Category (~>) => Functor (Hom (~>)) where 
+instance Category k => Functor (Hom k) where 
   Hom % (Op f1 :**: f2) = \g -> f2 . g . f1
 
 
-type x :*-: (~>) = Hom (~>) :.: Tuple1 (Op (~>)) (~>) x
+type x :*-: k = Hom k :.: Tuple1 (Op k) k x
 -- | The covariant functor Hom(X,--)
-homX_ :: Category (~>) => Obj (~>) x -> x :*-: (~>)
+homX_ :: Category k => Obj k x -> x :*-: k
 homX_ x = Hom :.: Tuple1 (Op x)
 
-type (~>) :-*: x = Hom (~>) :.: Tuple2 (Op (~>)) (~>) x
+type k :-*: x = Hom k :.: Tuple2 (Op k) k x
 -- | The contravariant functor Hom(--,X)
-hom_X :: Category (~>) => Obj (~>) x -> (~>) :-*: x
+hom_X :: Category k => Obj k x -> k :-*: x
 hom_X x = Hom :.: Tuple2 x

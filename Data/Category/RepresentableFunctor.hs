@@ -17,14 +17,14 @@ import Data.Category.Functor
 data Representable f repObj = Representable
   { representedFunctor :: f
   , representingObject :: Obj (Dom f) repObj
-  , represent          :: (Dom f ~ (~>), Cod f ~ (->)) => Obj (~>) z -> f :% z -> repObj ~> z
-  , universalElement   :: (Dom f ~ (~>), Cod f ~ (->)) => f :% repObj
+  , represent          :: (Dom f ~ k, Cod f ~ (->)) => Obj k z -> f :% z -> k repObj z
+  , universalElement   :: (Dom f ~ k, Cod f ~ (->)) => f :% repObj
   }
 
-unrepresent :: (Functor f, Dom f ~ (~>), Cod f ~ (->)) => Representable f repObj -> repObj ~> z -> f :% z
+unrepresent :: (Functor f, Dom f ~ k, Cod f ~ (->)) => Representable f repObj -> k repObj z -> f :% z
 unrepresent rep h = (representedFunctor rep % h) (universalElement rep)
 
-covariantHomRepr :: Category (~>) => Obj (~>) x -> Representable (x :*-: (~>)) x
+covariantHomRepr :: Category k => Obj k x -> Representable (x :*-: k) x
 covariantHomRepr x = Representable
   { representedFunctor = homX_ x
   , representingObject = x
@@ -32,7 +32,7 @@ covariantHomRepr x = Representable
   , universalElement   = x
   }
 
-contravariantHomRepr :: Category (~>) => Obj (~>) x -> Representable ((~>) :-*: x) x
+contravariantHomRepr :: Category k => Obj k x -> Representable (k :-*: x) x
 contravariantHomRepr x = Representable
   { representedFunctor = hom_X x
   , representingObject = Op x

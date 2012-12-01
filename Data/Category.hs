@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeOperators, TypeFamilies, GADTs, RankNTypes, NoImplicitPrelude #-}
+{-# LANGUAGE TypeFamilies, GADTs, RankNTypes, NoImplicitPrelude #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category
@@ -23,15 +23,15 @@ infixr 8 .
 
 
 -- | Whenever objects are required at value level, they are represented by their identity arrows.
-type Obj (~>) a = a ~> a
+type Obj k a = k a a
 
--- | An instance of @Category (~>)@ declares the arrow @(~>)@ as a category.
-class Category (~>) where
+-- | An instance of @Category k@ declares the arrow @k@ as a category.
+class Category k where
   
-  src :: a ~> b -> Obj (~>) a
-  tgt :: a ~> b -> Obj (~>) b
+  src :: k a b -> Obj k a
+  tgt :: k a b -> Obj k b
 
-  (.) :: b ~> c -> a ~> b -> a ~> c
+  (.) :: k b c -> k a b -> k a c
 
 
 -- | The category with Haskell types as objects and Haskell functions as arrows.
@@ -43,10 +43,10 @@ instance Category (->) where
   f . g = \x -> f (g x)
 
 
-data Op (~>) a b = Op { unOp :: b ~> a }
+data Op k a b = Op { unOp :: k b a }
 
--- | @Op (~>)@ is opposite category of the category @(~>)@.
-instance Category (~>) => Category (Op (~>)) where
+-- | @Op k@ is opposite category of the category @k@.
+instance Category k => Category (Op k) where
   
   src (Op a)      = Op (tgt a)
   tgt (Op a)      = Op (src a)

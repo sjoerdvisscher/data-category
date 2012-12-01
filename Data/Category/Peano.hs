@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeOperators, TypeFamilies, GADTs, FlexibleInstances, ViewPatterns, NoImplicitPrelude #-}
+{-# LANGUAGE TypeFamilies, GADTs, FlexibleInstances, ViewPatterns, NoImplicitPrelude #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category.Peano
@@ -17,20 +17,20 @@ import Data.Category
 import Data.Category.Limit
 
 
-data PeanoO (~>) a where
-  PeanoO :: (TerminalObject (~>) ~> x) -> (x ~> x) -> PeanoO (~>) x
+data PeanoO k a where
+  PeanoO :: k (TerminalObject k) x -> k x x -> PeanoO k x
     
 data Peano :: (* -> * -> *) -> * -> * -> * where
-  PeanoA :: PeanoO (~>) a -> PeanoO (~>) b -> (a ~> b) -> Peano (~>) a b
+  PeanoA :: PeanoO k a -> PeanoO k b -> k a b -> Peano k a b
 
-peanoId :: Category (~>) => PeanoO (~>) a -> Obj (Peano (~>)) a
+peanoId :: Category k => PeanoO k a -> Obj (Peano k) a
 peanoId o@(PeanoO z _) = PeanoA o o (tgt z)
 
-peanoO :: Category (~>) => Obj (Peano (~>)) a -> PeanoO (~>) a
+peanoO :: Category k => Obj (Peano k) a -> PeanoO k a
 peanoO (PeanoA o _ _) = o
 
 -- | The 'Peano' category.
-instance HasTerminalObject (~>) => Category (Peano (~>)) where
+instance HasTerminalObject k => Category (Peano k) where
   
   src (PeanoA s _ _) = peanoId s
   tgt (PeanoA _ t _) = peanoId t

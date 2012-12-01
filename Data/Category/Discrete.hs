@@ -89,23 +89,23 @@ instance (Category (Discrete n)) => Functor (Succ n) where
 
 infixr 7 :::
 
--- | The functor from @Discrete n@ to @(~>)@, a diagram of @n@ objects in @(~>)@. 
+-- | The functor from @Discrete n@ to @k@, a diagram of @n@ objects in @k@. 
 data DiscreteDiagram :: (* -> * -> *) -> * -> * -> * where
-  Nil   :: DiscreteDiagram (~>) Z ()
-  (:::) :: (Category (~>), Category (Discrete n)) 
-        => Obj (~>) x -> DiscreteDiagram (~>) n xs -> DiscreteDiagram (~>) (S n) (x, xs)
+  Nil   :: DiscreteDiagram k Z ()
+  (:::) :: (Category k, Category (Discrete n)) 
+        => Obj k x -> DiscreteDiagram k n xs -> DiscreteDiagram k (S n) (x, xs)
   
-type instance Dom (DiscreteDiagram (~>) n xs) = Discrete n
-type instance Cod (DiscreteDiagram (~>) n xs) = (~>)
-type instance DiscreteDiagram (~>) (S n) (x, xs) :% Z = x
-type instance DiscreteDiagram (~>) (S n) (x, xs) :% (S a) = DiscreteDiagram (~>) n xs :% a
+type instance Dom (DiscreteDiagram k n xs) = Discrete n
+type instance Cod (DiscreteDiagram k n xs) = k
+type instance DiscreteDiagram k (S n) (x, xs) :% Z = x
+type instance DiscreteDiagram k (S n) (x, xs) :% (S a) = DiscreteDiagram k n xs :% a
 
 -- | The empty diagram.
-instance Category (~>) => Functor (DiscreteDiagram (~>) Z ()) where
+instance Category k => Functor (DiscreteDiagram k Z ()) where
   Nil        % f = magicZ f
 
 -- | A diagram with one more object.
-instance Functor (DiscreteDiagram (~>) n xs) => Functor (DiscreteDiagram (~>) (S n) (x, xs)) where
+instance Functor (DiscreteDiagram k n xs) => Functor (DiscreteDiagram k (S n) (x, xs)) where
   (x ::: _)  % Z   = x
   (_ ::: xs) % S n = xs % n
 

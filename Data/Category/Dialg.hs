@@ -90,10 +90,10 @@ type instance Dom (FreeAlg m) = Dom m
 type instance Cod (FreeAlg m) = Alg m
 type instance FreeAlg m :% a = m :% a
 -- | @FreeAlg@ M takes @x@ to the free algebra @(M x, mu_x)@ of the monad @M@.
-instance (Functor m, Dom m ~ (~>), Cod m ~ (~>)) => Functor (FreeAlg m) where
+instance (Functor m, Dom m ~ k, Cod m ~ k) => Functor (FreeAlg m) where
   FreeAlg m % f = DialgA (alg (src f)) (alg (tgt f)) (monadFunctor m % f)
     where
-      alg :: Obj (~>) x -> Algebra m (m :% x)
+      alg :: Obj k x -> Algebra m (m :% x)
       alg x = Dialgebra (monadFunctor m % x) (multiply m ! x)
 
 data ForgetAlg m = ForgetAlg
@@ -101,11 +101,11 @@ type instance Dom (ForgetAlg m) = Alg m
 type instance Cod (ForgetAlg m) = Dom m
 type instance ForgetAlg m :% a = a
 -- | @ForgetAlg m@ is the forgetful functor for @Alg m@.
-instance (Functor m, Dom m ~ (~>), Cod m ~ (~>)) => Functor (ForgetAlg m) where
+instance (Functor m, Dom m ~ k, Cod m ~ k) => Functor (ForgetAlg m) where
   ForgetAlg % DialgA _ _ f = f
 
-eilenbergMooreAdj :: (Functor m, Dom m ~ (~>), Cod m ~ (~>)) 
-  => Monad m -> A.Adjunction (Alg m) (~>) (FreeAlg m) (ForgetAlg m)
+eilenbergMooreAdj :: (Functor m, Dom m ~ k, Cod m ~ k) 
+  => Monad m -> A.Adjunction (Alg m) k (FreeAlg m) (ForgetAlg m)
 eilenbergMooreAdj m = A.mkAdjunction (FreeAlg m) ForgetAlg
   (\x -> unit m ! x)
   (\(DialgA (Dialgebra _ h) _ _) -> DialgA (Dialgebra (src h) (monadFunctor m % h)) (Dialgebra (tgt h) h) h)

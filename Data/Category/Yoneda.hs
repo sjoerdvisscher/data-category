@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeOperators, TypeFamilies, NoImplicitPrelude #-}
+{-# LANGUAGE TypeOperators, RankNTypes, TypeFamilies, NoImplicitPrelude #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category.Yoneda
@@ -15,25 +15,25 @@ import Data.Category.Functor
 import Data.Category.NaturalTransformation
 import Data.Category.CartesianClosed
 
-type YonedaEmbedding (~>) = Postcompose (Hom (~>)) (Op (~>)) :.: ToTuple2 (~>) (Op (~>)) 
+type YonedaEmbedding k = Postcompose (Hom k) (Op k) :.: ToTuple2 k (Op k) 
 
 -- | The Yoneda embedding functor, @C -> Set^(C^op)@.
-yonedaEmbedding :: Category (~>) => YonedaEmbedding (~>)
+yonedaEmbedding :: Category k => YonedaEmbedding k
 yonedaEmbedding = Postcompose Hom :.: ToTuple2
 
 
-data Yoneda ((~>) :: * -> * -> *) f = Yoneda
-type instance Dom (Yoneda (~>) f) = Op (~>)
-type instance Cod (Yoneda (~>) f) = (->)
-type instance Yoneda (~>) f :% a = Nat (Op (~>)) (->) ((~>) :-*: a) f
+data Yoneda (k :: * -> * -> *) f = Yoneda
+type instance Dom (Yoneda k f) = Op k
+type instance Cod (Yoneda k f) = (->)
+type instance Yoneda k f :% a = Nat (Op k) (->) (k :-*: a) f
 -- | 'Yoneda' converts a functor @f@ into a natural transformation from the hom functor to f.
-instance (Category (~>), Functor f, Dom f ~ Op (~>), Cod f ~ (->)) => Functor (Yoneda (~>) f) where
+instance (Category k, Functor f, Dom f ~ Op k, Cod f ~ (->)) => Functor (Yoneda k f) where
   Yoneda % Op ab = \n -> n . yonedaEmbedding % ab
       
   
 -- | 'fromYoneda' and 'toYoneda' are together the isomophism from the Yoneda lemma.
-fromYoneda :: (Category (~>), Functor f, Dom f ~ Op (~>), Cod f ~ (->)) => f -> Yoneda (~>) f :~> f
+fromYoneda :: (Category k, Functor f, Dom f ~ Op k, Cod f ~ (->)) => f -> Yoneda k f :~> f
 fromYoneda f = Nat Yoneda f (\(Op a) n -> (n ! Op a) a)
 
-toYoneda   :: (Category (~>), Functor f, Dom f ~ Op (~>), Cod f ~ (->)) => f -> f :~> Yoneda (~>) f
+toYoneda   :: (Category k, Functor f, Dom f ~ Op k, Cod f ~ (->)) => f -> f :~> Yoneda k f
 toYoneda   f = Nat f Yoneda (\(Op a) fa -> Nat (hom_X a) f (\_ h -> (f % Op h) fa))

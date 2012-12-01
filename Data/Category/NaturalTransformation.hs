@@ -135,17 +135,17 @@ constPostcompInv (Const x) f = Nat (Const x) (Const x :.: f) (\_ -> x)
 
 
 -- | The category of endofunctors.
-type Endo (~>) = Nat (~>) (~>)
+type Endo k = Nat k k
 
 
-data FunctorCompose ((~>) :: * -> * -> *) = FunctorCompose
+data FunctorCompose (k :: * -> * -> *) = FunctorCompose
 
-type instance Dom (FunctorCompose (~>)) = Endo (~>) :**: Endo (~>)
-type instance Cod (FunctorCompose (~>)) = Endo (~>)
-type instance FunctorCompose (~>) :% (f, g) = f :.: g
+type instance Dom (FunctorCompose k) = Endo k :**: Endo k
+type instance Cod (FunctorCompose k) = Endo k
+type instance FunctorCompose k :% (f, g) = f :.: g
 
 -- | Composition of endofunctors is a functor.
-instance Category (~>) => Functor (FunctorCompose (~>)) where
+instance Category k => Functor (FunctorCompose k) where
   FunctorCompose % (n1 :**: n2) = n1 `o` n2
 
 
