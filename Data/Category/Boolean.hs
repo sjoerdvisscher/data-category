@@ -158,16 +158,3 @@ trueCoproductMonoid = MonoidObject F2T Tru
 falseProductComonoid :: ComonoidObject (ProductFunctor Boolean) Fls
 falseProductComonoid = ComonoidObject F2T Fls
 
-
-data NatAsFunctor f g where
-  NatAsFunctor :: (Functor f, Functor g, Category c, Category d, Dom f ~ c, Cod f ~ d, Dom g ~ c, Cod g ~ d)
-               => Nat (Dom f) (Cod f) f g -> NatAsFunctor f g
-type instance Dom (NatAsFunctor f g) = Dom f :**: Boolean
-type instance Cod (NatAsFunctor f g) = Cod f
-type instance NatAsFunctor f g :% (a, Fls) = f :% a
-type instance NatAsFunctor f g :% (a, Tru) = g :% a
--- | A natural transformation @Nat c d@ is isomorphic to a functor from @c :**: 2@ to @d@.
-instance (Category (Dom f), Category (Cod f)) => Functor (NatAsFunctor f g) where
-  NatAsFunctor (Nat f _ _) % (a :**: Fls) = f % a
-  NatAsFunctor (Nat _ g _) % (a :**: Tru) = g % a
-  NatAsFunctor n           % (a :**: F2T) = n ! a

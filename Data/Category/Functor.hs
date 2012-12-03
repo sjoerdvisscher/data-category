@@ -27,7 +27,6 @@ module Data.Category.Functor (
   , Opposite(..)
   , OpOp(..)
   , OpOpInv(..)
-  -- , EndoHask(..)
   
   -- *** Related to the product category
   , Proj1(..)

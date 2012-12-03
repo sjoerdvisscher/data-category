@@ -9,6 +9,7 @@
   TypeFamilies,
   TypeSynonymInstances,
   UndecidableInstances, 
+  LambdaCase,
   NoImplicitPrelude  #-}
 -----------------------------------------------------------------------------
 -- |
@@ -75,7 +76,8 @@ import Data.Category.Adjunction
 
 import Data.Category.Product
 import Data.Category.Coproduct
-import Data.Category.Discrete
+import Data.Category.Unit
+import Data.Category.Void
 
 infixl 3 ***
 infixl 3 &&&
@@ -208,7 +210,7 @@ instance HasTerminalObject Cat where
   
   terminalObject = CatA Id
   
-  terminate (CatA _) = CatA (Const Z)
+  terminate (CatA _) = CatA (Const Unit)
 
 -- | The constant functor to the terminal object is itself the terminal object in its functor category.
 instance (Category c, HasTerminalObject d) => HasTerminalObject (Nat c d) where
@@ -219,6 +221,15 @@ instance (Category c, HasTerminalObject d) => HasTerminalObject (Nat c d) where
   
   terminate (Nat f _ _) = Nat f (Const terminalObject) (terminate . (f %))
 
+-- | The category of one object has that object as terminal object.
+instance HasTerminalObject Unit where
+  
+  type TerminalObject Unit = ()
+  
+  terminalObject = Unit
+  
+  terminate Unit = Unit
+  
 -- | The terminal object of the product of 2 categories is the product of their terminal objects.
 instance (HasTerminalObject c1, HasTerminalObject c2) => HasTerminalObject (c1 :**: c2) where
   
@@ -228,7 +239,16 @@ instance (HasTerminalObject c1, HasTerminalObject c2) => HasTerminalObject (c1 :
   
   terminate (a1 :**: a2) = terminate a1 :**: terminate a2
   
+instance (Category c1, HasTerminalObject c2) => HasTerminalObject (c1 :>>: c2) where
   
+  type TerminalObject (c1 :>>: c2) = I2 (TerminalObject c2)
+  
+  terminalObject = I2A terminalObject
+  
+  terminate (I1A a) = I12 a terminalObject
+  terminate (I2A a) = I2A (terminate a)
+
+
 
 class Category k => HasInitialObject k where
   
@@ -266,7 +286,7 @@ instance HasInitialObject Cat where
   
   initialObject = CatA Id
   
-  initialize (CatA _) = CatA Nil
+  initialize (CatA _) = CatA Magic
 
 -- | The constant functor to the initial object is itself the initial object in its functor category.
 instance (Category c, HasInitialObject d) => HasInitialObject (Nat c d) where
@@ -286,6 +306,24 @@ instance (HasInitialObject c1, HasInitialObject c2) => HasInitialObject (c1 :**:
   
   initialize (a1 :**: a2) = initialize a1 :**: initialize a2
 
+-- | The category of one object has that object as initial object. 
+instance HasInitialObject Unit where
+  
+  type InitialObject Unit = ()
+  
+  initialObject = Unit
+  
+  initialize Unit = Unit
+
+-- | The initial object of the direct coproduct of categories is the initial object of the initial category.
+instance (HasInitialObject c1, Category c2) => HasInitialObject (c1 :>>: c2) where
+  
+  type InitialObject (c1 :>>: c2) = I1 (InitialObject c1)
+  
+  initialObject = I1A initialObject
+  
+  initialize (I1A a) = I1A (initialize a)
+  initialize (I2A a) = I12 initialObject a
 
 
 type family BinaryProduct (k :: * -> * -> *) x y :: *
@@ -300,24 +338,31 @@ class Category k => HasBinaryProducts k where
   (***) :: (k a1 b1) -> (k a2 b2) -> (k (BinaryProduct k a1 a2) (BinaryProduct k b1 b2))
   l *** r = (l . proj1 (src l) (src r)) &&& (r . proj2 (src l) (src r))
 
-type instance LimitFam (Discrete (S n)) k f = BinaryProduct k (f :% Z) (LimitFam (Discrete n) k (f :.: Succ n))
 
--- | The product of @n@ objects is the limit of the functor from @Discrete n@ to @k@.
-instance (HasLimits (Discrete n) k, HasBinaryProducts k) => HasLimits (Discrete (S n)) k where
+type instance LimitFam (i :++: j) k f = BinaryProduct k 
+  (LimitFam i k (f :.: Inj1 i j))
+  (LimitFam j k (f :.: Inj2 i j))
+
+-- | If `k` has binary products, we can take the limit of 2 joined diagrams.
+instance (HasLimits i k, HasLimits j k, HasBinaryProducts k) => HasLimits (i :++: j) k where
   
   limit = limit'
     where
-      limit' :: forall f. Obj (Nat (Discrete (S n)) k) f -> Cone f (Limit f)
+      limit' :: forall f. Obj (Nat (i :++: j) k) f -> Cone f (Limit f)
       limit' l@Nat{} = Nat (Const (x *** y)) (srcF l) (\z -> unCom (h z))
         where
-          x = l ! Z
-          y = coneVertex limNext
-          limNext = limit (l `o` natId Succ)
-          h :: Obj (Discrete (S n)) z -> Com (ConstF f (LimitFam (Discrete (S n)) k f)) f z
-          h Z     = Com (              proj1 x y)
-          h (S n) = Com (limNext ! n . proj2 x y)
+          x = coneVertex lim1
+          y = coneVertex lim2
+          lim1 = limit (l `o` natId Inj1)
+          lim2 = limit (l `o` natId Inj2)
+          h :: Obj (i :++: j) z -> Com (ConstF f (LimitFam (i :++: j) k f)) f z
+          h (I1 n) = Com (lim1 ! n . proj1 x y)
+          h (I2 n) = Com (lim2 ! n . proj2 x y)
 
-  limitFactorizer l@Nat{} c = c ! Z &&& limitFactorizer (l `o` natId Succ) ((c `o` natId Succ) . constPostcompInv (srcF c) Succ)
+  limitFactorizer l@Nat{} c = 
+    limitFactorizer (l `o` natId Inj1) ((c `o` natId Inj1) . constPostcompInv (srcF c) Inj1)
+    &&& 
+    limitFactorizer (l `o` natId Inj2) ((c `o` natId Inj2) . constPostcompInv (srcF c) Inj2)
 
 
 type instance BinaryProduct (->) x y = (x, y)
@@ -342,6 +387,17 @@ instance HasBinaryProducts Cat where
   CatA f1 &&& CatA f2 = CatA ((f1 :***: f2) :.: DiagProd)
   CatA f1 *** CatA f2 = CatA (f1 :***: f2)
 
+type instance BinaryProduct Unit () () = ()
+
+-- | In the category of one object that object is its own product.
+instance HasBinaryProducts Unit where
+
+  proj1 Unit Unit = Unit
+  proj2 Unit Unit = Unit
+  
+  Unit &&& Unit = Unit
+  Unit *** Unit = Unit
+
 type instance BinaryProduct (c1 :**: c2) (x1, x2) (y1, y2) = (BinaryProduct c1 x1 y1, BinaryProduct c2 x2 y2)
 
 -- | The binary product of the product of 2 categories is the product of their binary products.
@@ -352,6 +408,28 @@ instance (HasBinaryProducts c1, HasBinaryProducts c2) => HasBinaryProducts (c1 :
   
   (f1 :**: f2) &&& (g1 :**: g2) = (f1 &&& g1) :**: (f2 &&& g2)
   (f1 :**: f2) *** (g1 :**: g2) = (f1 *** g1) :**: (f2 *** g2)
+
+type instance BinaryProduct (c1 :>>: c2) (I1 a) (I1 b) = I1 (BinaryProduct c1 a b)
+type instance BinaryProduct (c1 :>>: c2) (I1 a) (I2 b) = I1 a
+type instance BinaryProduct (c1 :>>: c2) (I2 a) (I1 b) = I1 b
+type instance BinaryProduct (c1 :>>: c2) (I2 a) (I2 b) = I2 (BinaryProduct c2 a b)
+
+instance (HasBinaryProducts c1, HasBinaryProducts c2) => HasBinaryProducts (c1 :>>: c2) where
+
+  proj1 (I1A a) (I1A b) = I1A (proj1 a b)
+  proj1 (I1A a) (I2A _) = I1A a
+  proj1 (I2A a) (I1A b) = I12 b a
+  proj1 (I2A a) (I2A b) = I2A (proj1 a b)
+  
+  proj2 (I1A a) (I1A b) = I1A (proj2 a b)
+  proj2 (I1A a) (I2A b) = I12 a b
+  proj2 (I2A _) (I1A b) = I1A b
+  proj2 (I2A a) (I2A b) = I2A (proj2 a b)
+
+  I1A a &&& I1A b = I1A (a &&& b)
+  I1A a &&& I12 _ _ = I1A a
+  I12 _ _ &&& I1A b = I1A b
+  I2A a &&& I2A b = I2A (a &&& b)
 
 
 data ProductFunctor (k :: * -> * -> *) = ProductFunctor
@@ -397,24 +475,30 @@ class Category k => HasBinaryCoproducts k where
   l +++ r = (inj1 (tgt l) (tgt r) . l) ||| (inj2 (tgt l) (tgt r) . r)
     
 
-type instance ColimitFam (Discrete (S n)) k f = BinaryCoproduct k (f :% Z) (ColimitFam (Discrete n) k (f :.: Succ n))
+type instance ColimitFam (i :++: j) k f = BinaryCoproduct k 
+  (ColimitFam i k (f :.: Inj1 i j))
+  (ColimitFam j k (f :.: Inj2 i j))
 
--- | The coproduct of @n@ objects is the colimit of the functor from @Discrete n@ to @k@.
-instance (HasColimits (Discrete n) k, HasBinaryCoproducts k) => HasColimits (Discrete (S n)) k where
+-- | If `k` has binary coproducts, we can take the colimit of 2 joined diagrams.
+instance (HasColimits i k, HasColimits j k, HasBinaryCoproducts k) => HasColimits (i :++: j) k where
   
   colimit = colimit'
     where
-      colimit' :: forall f. Obj (Nat (Discrete (S n)) k) f -> Cocone f (Colimit f)
+      colimit' :: forall f. Obj (Nat (i :++: j) k) f -> Cocone f (Colimit f)
       colimit' l@Nat{} = Nat (srcF l) (Const (x +++ y)) (\z -> unCom (h z))
         where
-          x = l ! Z
-          y = coconeVertex colNext
-          colNext = colimit (l `o` natId Succ)
-          h :: Obj (Discrete (S n)) z -> Com f (ConstF f (ColimitFam (Discrete (S n)) k f)) z
-          h Z     = Com (inj1 x y)
-          h (S n) = Com (inj2 x y . colNext ! n)
+          x = coconeVertex col1
+          y = coconeVertex col2
+          col1 = colimit (l `o` natId Inj1)
+          col2 = colimit (l `o` natId Inj2)
+          h :: Obj (i :++: j) z -> Com f (ConstF f (ColimitFam (i :++: j) k f)) z
+          h (I1 n) = Com (inj1 x y . col1 ! n)
+          h (I2 n) = Com (inj2 x y . col2 ! n)
   
-  colimitFactorizer l@Nat{} c = c ! Z ||| colimitFactorizer (l `o` natId Succ) (constPostcomp (tgtF c) Succ . (c `o` natId Succ))
+  colimitFactorizer l@Nat{} c = 
+    colimitFactorizer (l `o` natId Inj1) (constPostcomp (tgtF c) Inj1 . (c `o` natId Inj1))
+    ||| 
+    colimitFactorizer (l `o` natId Inj2) (constPostcomp (tgtF c) Inj2 . (c `o` natId Inj2))
 
 
 type instance BinaryCoproduct Cat (CatW c1) (CatW c2) = CatW (c1 :++: c2)
@@ -428,6 +512,16 @@ instance HasBinaryCoproducts Cat where
   CatA f1 ||| CatA f2 = CatA (CodiagCoprod :.: (f1 :+++: f2))
   CatA f1 +++ CatA f2 = CatA (f1 :+++: f2)
 
+type instance BinaryCoproduct Unit () () = ()
+
+instance HasBinaryCoproducts Unit where
+  
+  inj1 Unit Unit = Unit
+  inj2 Unit Unit = Unit
+  
+  Unit ||| Unit = Unit
+  Unit +++ Unit = Unit
+  
 type instance BinaryCoproduct (c1 :**: c2) (x1, x2) (y1, y2) = (BinaryCoproduct c1 x1 y1, BinaryCoproduct c2 x2 y2)
 
 -- | The binary coproduct of the product of 2 categories is the product of their binary coproducts.
@@ -438,6 +532,28 @@ instance (HasBinaryCoproducts c1, HasBinaryCoproducts c2) => HasBinaryCoproducts
   
   (f1 :**: f2) ||| (g1 :**: g2) = (f1 ||| g1) :**: (f2 ||| g2)
   (f1 :**: f2) +++ (g1 :**: g2) = (f1 +++ g1) :**: (f2 +++ g2)
+
+type instance BinaryCoproduct (c1 :>>: c2) (I1 a) (I1 b) = I1 (BinaryCoproduct c1 a b)
+type instance BinaryCoproduct (c1 :>>: c2) (I1 a) (I2 b) = I2 b
+type instance BinaryCoproduct (c1 :>>: c2) (I2 a) (I1 b) = I2 a
+type instance BinaryCoproduct (c1 :>>: c2) (I2 a) (I2 b) = I2 (BinaryCoproduct c2 a b)
+
+instance (HasBinaryCoproducts c1, HasBinaryCoproducts c2) => HasBinaryCoproducts (c1 :>>: c2) where
+
+  inj1 (I1A a) (I1A b) = I1A (inj1 a b)
+  inj1 (I1A a) (I2A b) = I12 a b
+  inj1 (I2A a) (I1A _) = I2A a
+  inj1 (I2A a) (I2A b) = I2A (inj1 a b)
+
+  inj2 (I1A a) (I1A b) = I1A (inj2 a b)
+  inj2 (I1A _) (I2A b) = I2A b
+  inj2 (I2A a) (I1A b) = I12 b a
+  inj2 (I2A a) (I2A b) = I2A (inj2 a b)
+
+  I1A a ||| I1A b = I1A (a ||| b)
+  I2A a ||| I12 _ _ = I2A a
+  I12 _ _ ||| I2A b = I2A b
+  I2A a ||| I2A b = I2A (a ||| b)
 
 
 data CoproductFunctor (k :: * -> * -> *) = CoproductFunctor
@@ -469,25 +585,6 @@ instance (Category c, HasBinaryCoproducts d) => HasBinaryCoproducts (Nat c d) wh
   Nat f1 f2 f +++ Nat g1 g2 g = Nat (f1 :+: g1) (f2 :+: g2) (\z -> f z +++ g z)
 
 
--- newtype ForAll f = ForAll { unForAll :: forall a. f :% a }
--- 
--- type instance LimitFam (->) (->) f = ForAll f
--- 
--- instance HasLimits (->) (->) where
---   
---   limit (Nat f _ _) = Nat (Const id) f $ \_ -> unForAll
---   limitFactorizer Nat{} c n = ForAll $ (c ! id) n -- ForAll . (c ! id)
--- 
--- 
--- data Exists f = forall a. Exists (f :% a)
--- 
--- type instance ColimitFam (->) (->) f = Exists f
--- 
--- instance HasColimits (->) (->) where
---   
---   colimit (Nat f _ _) = Nat f (Const id) $ \_ -> Exists
---   colimitFactorizer Nat{} c (Exists fa) = (c ! id) fa -- (c ! id) . unExists
-
 instance HasInitialObject k => HasTerminalObject (Op k) where
   type TerminalObject (Op k) = InitialObject k
   terminalObject = Op initialObject
@@ -511,3 +608,38 @@ instance HasBinaryProducts k => HasBinaryCoproducts (Op k) where
   inj2 (Op x) (Op y) = Op (proj2 x y)
   Op f ||| Op g = Op (f &&& g)
   Op f +++ Op g = Op (f *** g)
+
+
+
+
+type instance LimitFam Unit k f = f :% ()
+
+instance Category k => HasLimits Unit k where
+  
+  limit (Nat f _ _) = Nat (Const (f % Unit)) f (\Unit -> f % Unit)
+  limitFactorizer Nat{} n = n ! Unit
+
+type instance LimitFam (i :>>: j) k f = f :% InitialObject (i :>>: j)
+
+instance (HasInitialObject (i :>>: j), Category k) => HasLimits (i :>>: j) k where
+  
+  limit (Nat f _ _) = Nat (Const (f % initialObject)) f (\z -> f % initialize z)
+  limitFactorizer Nat{} n = n ! initialObject
+
+
+type instance ColimitFam Unit k f = f :% ()
+
+instance Category k => HasColimits Unit k where
+  
+  colimit (Nat f _ _) = Nat f (Const (f % Unit)) (\Unit -> f % Unit)
+  colimitFactorizer Nat{} n = n ! Unit
+  
+type instance ColimitFam (i :>>: j) k f = f :% TerminalObject (i :>>: j)
+
+instance (HasTerminalObject (i :>>: j), Category k) => HasColimits (i :>>: j) k where
+
+  colimit (Nat f _ _) = Nat f (Const (f % terminalObject)) (\z -> f % terminate z)
+  colimitFactorizer Nat{} n = n ! terminalObject
+
+
+-- type instance ColimitFam (Unit :>>: Unit) Cat f = (f :% I1 ()) :>>: (f :% I2 ())

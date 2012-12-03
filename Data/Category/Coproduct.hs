@@ -13,6 +13,10 @@ module Data.Category.Coproduct where
 import Data.Category
 import Data.Category.Functor
 
+import Data.Category.NaturalTransformation
+import Data.Category.Product
+import Data.Category.Unit
+
 
 data I1 a
 data I2 a
@@ -21,7 +25,7 @@ data (:++:) :: (* -> * -> *) -> (* -> * -> *) -> * -> * -> * where
   I1 :: c1 a1 b1 -> (:++:) c1 c2 (I1 a1) (I1 b1)
   I2 :: c2 a2 b2 -> (:++:) c1 c2 (I2 a2) (I2 b2)
 
--- | The coproduct category of category @c1@ and @c2@.
+-- | The coproduct category of categories @c1@ and @c2@.
 instance (Category c1, Category c2) => Category (c1 :++: c2) where
   
   src (I1 a)      = I1 (src a)
@@ -91,3 +95,37 @@ instance (Category c1, Category c2) => Functor (Cotuple2 c1 c2 a2) where
   Cotuple2 a % I1 _ = a
   Cotuple2 _ % I2 f = f
 
+
+data (:>>:) :: (* -> * -> *) -> (* -> * -> *) -> * -> * -> * where
+  I1A :: c1 a1 b1 -> (:>>:) c1 c2 (I1 a1) (I1 b1)
+  I12 :: Obj c1 a -> Obj c2 b -> (:>>:) c1 c2 (I1 a) (I2 b)
+  I2A :: c2 a2 b2 -> (:>>:) c1 c2 (I2 a2) (I2 b2)
+
+-- | The directed coproduct category of categories @c1@ and @c2@.
+instance (Category c1, Category c2) => Category (c1 :>>: c2) where
+
+  src (I1A a)   = I1A (src a)
+  src (I12 a _) = I1A a
+  src (I2A a)   = I2A (src a)
+  tgt (I1A a)   = I1A (tgt a)
+  tgt (I12 _ b) = I2A b
+  tgt (I2A a)   = I2A (tgt a)
+
+  (I1A a) . (I1A b) = I1A (a . b)
+  (I12 _ a) . (I1A b) = I12 (src b) a
+  (I2A a) . (I12 b _) = I12 b (tgt a)
+  (I2A a) . (I2A b) = I2A (a . b)
+
+
+
+
+data NatAsFunctor f g = NatAsFunctor (Nat (Dom f) (Cod f) f g)
+type instance Dom (NatAsFunctor f g) = Dom f :**: (Unit :>>: Unit)
+type instance Cod (NatAsFunctor f g) = Cod f
+type instance NatAsFunctor f g :% (a, I1 ()) = f :% a
+type instance NatAsFunctor f g :% (a, I2 ()) = g :% a
+-- | A natural transformation @Nat c d@ is isomorphic to a functor from @c :**: 2@ to @d@.
+instance (Functor f, Functor g, Dom f ~ Dom g, Cod f ~ Cod g) => Functor (NatAsFunctor f g) where
+  NatAsFunctor (Nat f _ _) % (a :**: I1A Unit) = f % a
+  NatAsFunctor (Nat _ g _) % (a :**: I2A Unit) = g % a
+  NatAsFunctor n           % (a :**: I12 Unit Unit) = n ! a
