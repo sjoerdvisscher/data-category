@@ -32,6 +32,7 @@ Library
     Data.Category.Functor,
     Data.Category.NaturalTransformation,
     Data.Category.Unit,
+    Data.Category.Void,
     Data.Category.Product,
     Data.Category.Coproduct,
     Data.Category.RepresentableFunctor,
@@ -45,7 +46,7 @@ Library
     Data.Category.Fix,
     Data.Category.Kleisli,
     Data.Category.Dialg,
-    Data.Category.Peano,
+    Data.Category.NNO,
     Data.Category.Simplex,
     Data.Category.Comma
     
