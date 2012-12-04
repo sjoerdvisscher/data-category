@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeFamilies, UndecidableInstances, NoImplicitPrelude #-}
+{-# LANGUAGE TypeOperators, TypeFamilies, UndecidableInstances, NoImplicitPrelude #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category.AddObject
@@ -20,29 +20,33 @@ import Data.Category.Coproduct
 
 newtype Fix f a b = Fix (f (Fix f) a b)
 
--- | `Fix f` is the fixed point category for a category combinator `f`.
+-- | @`Fix` f@ is the fixed point category for a category combinator `f`.
 instance Category (f (Fix f)) => Category (Fix f) where
   src (Fix a) = Fix (src a)
   tgt (Fix a) = Fix (tgt a)
   Fix a . Fix b = Fix (a . b)
 
+-- | @Fix f@ inherits its (co)limits from @f (Fix f)@.
 instance HasInitialObject (f (Fix f)) => HasInitialObject (Fix f) where
   type InitialObject (Fix f) = InitialObject (f (Fix f))
   initialObject = Fix initialObject
   initialize (Fix o) = Fix (initialize o)
 
+-- | @Fix f@ inherits its (co)limits from @f (Fix f)@.
 instance HasTerminalObject (f (Fix f)) => HasTerminalObject (Fix f) where
   type TerminalObject (Fix f) = TerminalObject (f (Fix f))
   terminalObject = Fix terminalObject
   terminate (Fix o) = Fix (terminate o)
 
 type instance BinaryProduct (Fix f) a b = BinaryProduct (f (Fix f)) a b
+-- | @Fix f@ inherits its (co)limits from @f (Fix f)@.
 instance HasBinaryProducts (f (Fix f)) => HasBinaryProducts (Fix f) where
   proj1 (Fix a) (Fix b) = Fix (proj1 a b)
   proj2 (Fix a) (Fix b) = Fix (proj2 a b)
   Fix a &&& Fix b = Fix (a &&& b)
   
 type instance BinaryCoproduct (Fix f) a b = BinaryCoproduct (f (Fix f)) a b
+-- | @Fix f@ inherits its (co)limits from @f (Fix f)@.
 instance HasBinaryCoproducts (f (Fix f)) => HasBinaryCoproducts (Fix f) where
   inj1 (Fix a) (Fix b) = Fix (inj1 a b)
   inj2 (Fix a) (Fix b) = Fix (inj2 a b)
@@ -52,7 +56,10 @@ data Wrap (f :: (* -> * -> *) -> * -> * -> *) = Wrap
 type instance Dom (Wrap f) = f (Fix f)
 type instance Cod (Wrap f) = Fix f
 type instance Wrap f :% a = a
+-- | The `Wrap` functor wraps `Fix` around @f (Fix f)@.
 instance Category (f (Fix f)) => Functor (Wrap f) where
   Wrap % f = Fix f
-  
+
+-- | Take the `Omega` category, add a new disctinct object, and an arrow from that object to every object in `Omega`,
+--   and you get `Omega` again.
 type Omega = Fix ((:>>:) Unit)

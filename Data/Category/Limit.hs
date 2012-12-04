@@ -239,6 +239,7 @@ instance (HasTerminalObject c1, HasTerminalObject c2) => HasTerminalObject (c1 :
   
   terminate (a1 :**: a2) = terminate a1 :**: terminate a2
   
+-- | The terminal object of the direct coproduct of categories is the terminal object of the terminal category.
 instance (Category c1, HasTerminalObject c2) => HasTerminalObject (c1 :>>: c2) where
   
   type TerminalObject (c1 :>>: c2) = I2 (TerminalObject c2)
@@ -378,7 +379,7 @@ instance HasBinaryProducts (->) where
 
 type instance BinaryProduct Cat (CatW c1) (CatW c2) = CatW (c1 :**: c2)
 
--- | The product of categories '(:**:)' is the binary product in 'Cat'.
+-- | The product of categories ':**:' is the binary product in 'Cat'.
 instance HasBinaryProducts Cat where
   
   proj1 (CatA _) (CatA _) = CatA Proj1
@@ -451,7 +452,7 @@ instance (Category (Dom p), Category (Cod p)) => Functor (p :*: q) where
 
 type instance BinaryProduct (Nat c d) x y = x :*: y
 
--- | The functor product '(:*:)' is the binary product in functor categories.
+-- | The functor product ':*:' is the binary product in functor categories.
 instance (Category c, HasBinaryProducts d) => HasBinaryProducts (Nat c d) where
   
   proj1 (Nat f _ _) (Nat g _ _) = Nat (f :*: g) f (\z -> proj1 (f % z) (g % z))
@@ -503,7 +504,7 @@ instance (HasColimits i k, HasColimits j k, HasBinaryCoproducts k) => HasColimit
 
 type instance BinaryCoproduct Cat (CatW c1) (CatW c2) = CatW (c1 :++: c2)
 
--- | The coproduct of categories '(:++:)' is the binary coproduct in 'Cat'.
+-- | The coproduct of categories ':++:' is the binary coproduct in 'Cat'.
 instance HasBinaryCoproducts Cat where
   
   inj1 (CatA _) (CatA _) = CatA Inj1
@@ -514,6 +515,7 @@ instance HasBinaryCoproducts Cat where
 
 type instance BinaryCoproduct Unit () () = ()
 
+-- | In the category of one object that object is its own coproduct.
 instance HasBinaryCoproducts Unit where
   
   inj1 Unit Unit = Unit
@@ -575,7 +577,7 @@ instance (Category (Dom p), Category (Cod p)) => Functor (p :+: q) where
 
 type instance BinaryCoproduct (Nat c d) x y = x :+: y
 
--- | The functor coproduct '(:+:)' is the binary coproduct in functor categories.
+-- | The functor coproduct ':+:' is the binary coproduct in functor categories.
 instance (Category c, HasBinaryCoproducts d) => HasBinaryCoproducts (Nat c d) where
   
   inj1 (Nat f _ _) (Nat g _ _) = Nat f (f :+: g) (\z -> inj1 (f % z) (g % z))
@@ -584,18 +586,20 @@ instance (Category c, HasBinaryCoproducts d) => HasBinaryCoproducts (Nat c d) wh
   Nat f a fa ||| Nat g _ ga = Nat (f :+: g) a (\z -> fa z ||| ga z)
   Nat f1 f2 f +++ Nat g1 g2 g = Nat (f1 :+: g1) (f2 :+: g2) (\z -> f z +++ g z)
 
-
+-- | Terminal objects are the dual of initial objects.
 instance HasInitialObject k => HasTerminalObject (Op k) where
   type TerminalObject (Op k) = InitialObject k
   terminalObject = Op initialObject
   terminate (Op f) = Op (initialize f)
 
+-- | Terminal objects are the dual of initial objects.
 instance HasTerminalObject k => HasInitialObject (Op k) where
   type InitialObject (Op k) = TerminalObject k
   initialObject = Op terminalObject
   initialize (Op f) = Op (terminate f)
 
 type instance BinaryProduct (Op k) x y = BinaryCoproduct k x y
+-- | Binary products are the dual of binary coproducts.
 instance HasBinaryCoproducts k => HasBinaryProducts (Op k) where
   proj1 (Op x) (Op y) = Op (inj1 x y)
   proj2 (Op x) (Op y) = Op (inj2 x y)
@@ -603,6 +607,7 @@ instance HasBinaryCoproducts k => HasBinaryProducts (Op k) where
   Op f *** Op g = Op (f +++ g)
 
 type instance BinaryCoproduct (Op k) x y = BinaryProduct k x y
+-- | Binary products are the dual of binary coproducts.
 instance HasBinaryProducts k => HasBinaryCoproducts (Op k) where
   inj1 (Op x) (Op y) = Op (proj1 x y)
   inj2 (Op x) (Op y) = Op (proj2 x y)
@@ -614,6 +619,7 @@ instance HasBinaryProducts k => HasBinaryCoproducts (Op k) where
 
 type instance LimitFam Unit k f = f :% ()
 
+-- | The limit of a single object is that object.
 instance Category k => HasLimits Unit k where
   
   limit (Nat f _ _) = Nat (Const (f % Unit)) f (\Unit -> f % Unit)
@@ -621,6 +627,7 @@ instance Category k => HasLimits Unit k where
 
 type instance LimitFam (i :>>: j) k f = f :% InitialObject (i :>>: j)
 
+-- | The limit of any diagram with an initial object, has the limit at the initial object.
 instance (HasInitialObject (i :>>: j), Category k) => HasLimits (i :>>: j) k where
   
   limit (Nat f _ _) = Nat (Const (f % initialObject)) f (\z -> f % initialize z)
@@ -629,6 +636,7 @@ instance (HasInitialObject (i :>>: j), Category k) => HasLimits (i :>>: j) k whe
 
 type instance ColimitFam Unit k f = f :% ()
 
+-- | The colimit of a single object is that object.
 instance Category k => HasColimits Unit k where
   
   colimit (Nat f _ _) = Nat f (Const (f % Unit)) (\Unit -> f % Unit)
@@ -636,10 +644,8 @@ instance Category k => HasColimits Unit k where
   
 type instance ColimitFam (i :>>: j) k f = f :% TerminalObject (i :>>: j)
 
+-- | The colimit of any diagram with a terminal object, has the limit at the terminal object.
 instance (HasTerminalObject (i :>>: j), Category k) => HasColimits (i :>>: j) k where
 
   colimit (Nat f _ _) = Nat f (Const (f % terminalObject)) (\z -> f % terminate z)
   colimitFactorizer Nat{} n = n ! terminalObject
-
-
--- type instance ColimitFam (Unit :>>: Unit) Cat f = (f :% I1 ()) :>>: (f :% I2 ())
