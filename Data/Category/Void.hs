@@ -35,8 +35,9 @@ voidNat f g = Nat f g magic
 
 
 data Magic (k :: * -> * -> *) = Magic
-type instance Dom (Magic k) = Void
-type instance Cod (Magic k) = k
 -- | Since there is nothing to map in `Void`, there's a functor from it to any other category.
 instance Category k => Functor (Magic k) where
+  type Dom (Magic k) = Void
+  type Cod (Magic k) = k
+
   Magic % f = magic f

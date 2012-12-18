@@ -1,14 +1,14 @@
-{-# LANGUAGE 
-  FlexibleContexts, 
-  FlexibleInstances, 
-  GADTs, 
+{-# LANGUAGE
+  FlexibleContexts,
+  FlexibleInstances,
+  GADTs,
   MultiParamTypeClasses,
-  RankNTypes, 
+  RankNTypes,
   ScopedTypeVariables,
-  TypeOperators, 
+  TypeOperators,
   TypeFamilies,
   TypeSynonymInstances,
-  UndecidableInstances, 
+  UndecidableInstances,
   LambdaCase,
   NoImplicitPrelude  #-}
 -----------------------------------------------------------------------------
@@ -54,18 +54,12 @@ module Data.Category.Limit (
   , Zero
   
   -- ** Limits of type Pair
-  , BinaryProduct
   , HasBinaryProducts(..)
   , ProductFunctor(..)
   , (:*:)(..)
-  , BinaryCoproduct
   , HasBinaryCoproducts(..)
   , CoproductFunctor(..)
   , (:+:)(..)
-  
-  -- -- ** Limits of type Hask
-  -- , ForAll(..)
-  -- , Exists(..)
   
 ) where
 
@@ -88,12 +82,12 @@ infixl 2 |||
 data Diag :: (* -> * -> *) -> (* -> * -> *) -> * where
   Diag :: Diag j k
   
-type instance Dom (Diag j k) = k
-type instance Cod (Diag j k) = Nat j k
-type instance Diag j k :% a = Const j k a
-
 -- | The diagonal functor from (index-) category J to k.
-instance (Category j, Category k) => Functor (Diag j k) where 
+instance (Category j, Category k) => Functor (Diag j k) where
+  type Dom (Diag j k) = k
+  type Cod (Diag j k) = Nat j k
+  type Diag j k :% a = Const j k a
+  
   Diag % f = Nat (Const (src f)) (Const (tgt f)) (\_ -> f)
 
 -- | The diagonal functor with the same domain and codomain as @f@.
@@ -127,17 +121,18 @@ type Limit f = LimitFam (Dom f) (Cod f) f
 class (Category j, Category k) => HasLimits j k where
   -- | 'limit' returns the limiting cone for a functor @f@.
   limit           :: Obj (Nat j k) f -> Cone f (Limit f)
-  -- | 'limitFactorizer' shows that the limiting cone is universal – i.e. any other cone of @f@ factors through it –
+  -- | 'limitFactorizer' shows that the limiting cone is universal – i.e. any other cone of @f@ factors through it
   --   by returning the morphism between the vertices of the cones.
   limitFactorizer :: Obj (Nat j k) f -> (forall n. Cone f n -> k n (Limit f))
 
 data LimitFunctor (j :: * -> * -> *) (k  :: * -> * -> *) = LimitFunctor
-type instance Dom (LimitFunctor j k) = Nat j k
-type instance Cod (LimitFunctor j k) = k
-type instance LimitFunctor j k :% f = LimitFam j k f
 -- | If every diagram of type @j@ has a limit in @k@ there exists a limit functor.
 --   It can be seen as a generalisation of @(***)@.
 instance HasLimits j k => Functor (LimitFunctor j k) where
+  type Dom (LimitFunctor j k) = Nat j k
+  type Cod (LimitFunctor j k) = k
+  type LimitFunctor j k :% f = LimitFam j k f
+
   LimitFunctor % n @ Nat{}  = limitFactorizer (tgt n) (n . limit (src n))
 
 -- | The limit functor is right adjoint to the diagonal functor.
@@ -156,22 +151,23 @@ type Colimit f = ColimitFam (Dom f) (Cod f) f
 class (Category j, Category k) => HasColimits j k where
   -- | 'colimit' returns the limiting co-cone for a functor @f@.
   colimit           :: Obj (Nat j k) f -> Cocone f (Colimit f)
-  -- | 'colimitFactorizer' shows that the limiting co-cone is universal – i.e. any other co-cone of @f@ factors through it –
+  -- | 'colimitFactorizer' shows that the limiting co-cone is universal – i.e. any other co-cone of @f@ factors through it
   --   by returning the morphism between the vertices of the cones.
   colimitFactorizer :: Obj (Nat j k) f -> (forall n. Cocone f n -> k (Colimit f) n)
 
 data ColimitFunctor (j :: * -> * -> *) (k  :: * -> * -> *) = ColimitFunctor
-type instance Dom (ColimitFunctor j k) = Nat j k
-type instance Cod (ColimitFunctor j k) = k
-type instance ColimitFunctor j k :% f = ColimitFam j k f
 -- | If every diagram of type @j@ has a colimit in @k@ there exists a colimit functor.
 --   It can be seen as a generalisation of @(+++)@.
 instance HasColimits j k => Functor (ColimitFunctor j k) where
+  type Dom (ColimitFunctor j k) = Nat j k
+  type Cod (ColimitFunctor j k) = k
+  type ColimitFunctor j k :% f = ColimitFam j k f
+
   ColimitFunctor % n @ Nat{}  = colimitFactorizer (src n) (colimit (tgt n) . n)
 
 -- | The colimit functor is left adjoint to the diagonal functor.
 colimitAdj :: forall j k. HasColimits j k => Adjunction k (Nat j k) (ColimitFunctor j k) (Diag j k)
-colimitAdj = mkAdjunction ColimitFunctor diag (\f @ Nat{} -> colimit f) (\a -> colimitFactorizer (diag % a) (diag % a)) 
+colimitAdj = mkAdjunction ColimitFunctor diag (\f @ Nat{} -> colimit f) (\a -> colimitFactorizer (diag % a) (diag % a))
   where diag = Diag :: Diag j k -- Forces the type of all Diags to be the same.
   
 
@@ -196,7 +192,6 @@ instance (HasTerminalObject k) => HasLimits Void k where
 
 -- | @()@ is the terminal object in @Hask@.
 instance HasTerminalObject (->) where
-  
   type TerminalObject (->) = ()
   
   terminalObject = \x -> x
@@ -205,7 +200,6 @@ instance HasTerminalObject (->) where
 
 -- | @Unit@ is the terminal category.
 instance HasTerminalObject Cat where
-  
   type TerminalObject Cat = CatW Unit
   
   terminalObject = CatA Id
@@ -214,7 +208,6 @@ instance HasTerminalObject Cat where
 
 -- | The constant functor to the terminal object is itself the terminal object in its functor category.
 instance (Category c, HasTerminalObject d) => HasTerminalObject (Nat c d) where
-  
   type TerminalObject (Nat c d) = Const c d (TerminalObject d)
   
   terminalObject = natId (Const terminalObject)
@@ -223,7 +216,6 @@ instance (Category c, HasTerminalObject d) => HasTerminalObject (Nat c d) where
 
 -- | The category of one object has that object as terminal object.
 instance HasTerminalObject Unit where
-  
   type TerminalObject Unit = ()
   
   terminalObject = Unit
@@ -232,7 +224,6 @@ instance HasTerminalObject Unit where
   
 -- | The terminal object of the product of 2 categories is the product of their terminal objects.
 instance (HasTerminalObject c1, HasTerminalObject c2) => HasTerminalObject (c1 :**: c2) where
-  
   type TerminalObject (c1 :**: c2) = (TerminalObject c1, TerminalObject c2)
   
   terminalObject = terminalObject :**: terminalObject
@@ -241,7 +232,6 @@ instance (HasTerminalObject c1, HasTerminalObject c2) => HasTerminalObject (c1 :
   
 -- | The terminal object of the direct coproduct of categories is the terminal object of the terminal category.
 instance (Category c1, HasTerminalObject c2) => HasTerminalObject (c1 :>>: c2) where
-  
   type TerminalObject (c1 :>>: c2) = I2 (TerminalObject c2)
   
   terminalObject = I2A terminalObject
@@ -252,7 +242,6 @@ instance (Category c1, HasTerminalObject c2) => HasTerminalObject (c1 :>>: c2) w
 
 
 class Category k => HasInitialObject k where
-  
   type InitialObject k :: *
   
   initialObject :: Obj k (InitialObject k)
@@ -273,7 +262,6 @@ data Zero
 
 -- | Any empty data type is an initial object in @Hask@.
 instance HasInitialObject (->) where
-  
   type InitialObject (->) = Zero
   
   initialObject = \x -> x
@@ -282,7 +270,6 @@ instance HasInitialObject (->) where
 
 -- | The empty category is the initial object in @Cat@.
 instance HasInitialObject Cat where
-  
   type InitialObject Cat = CatW Void
   
   initialObject = CatA Id
@@ -291,7 +278,6 @@ instance HasInitialObject Cat where
 
 -- | The constant functor to the initial object is itself the initial object in its functor category.
 instance (Category c, HasInitialObject d) => HasInitialObject (Nat c d) where
-  
   type InitialObject (Nat c d) = Const c d (InitialObject d)
   
   initialObject = natId (Const initialObject)
@@ -300,16 +286,14 @@ instance (Category c, HasInitialObject d) => HasInitialObject (Nat c d) where
 
 -- | The initial object of the product of 2 categories is the product of their initial objects.
 instance (HasInitialObject c1, HasInitialObject c2) => HasInitialObject (c1 :**: c2) where
-  
   type InitialObject (c1 :**: c2) = (InitialObject c1, InitialObject c2)
   
   initialObject = initialObject :**: initialObject
   
   initialize (a1 :**: a2) = initialize a1 :**: initialize a2
 
--- | The category of one object has that object as initial object. 
+-- | The category of one object has that object as initial object.
 instance HasInitialObject Unit where
-  
   type InitialObject Unit = ()
   
   initialObject = Unit
@@ -318,7 +302,6 @@ instance HasInitialObject Unit where
 
 -- | The initial object of the direct coproduct of categories is the initial object of the initial category.
 instance (HasInitialObject c1, Category c2) => HasInitialObject (c1 :>>: c2) where
-  
   type InitialObject (c1 :>>: c2) = I1 (InitialObject c1)
   
   initialObject = I1A initialObject
@@ -327,9 +310,8 @@ instance (HasInitialObject c1, Category c2) => HasInitialObject (c1 :>>: c2) whe
   initialize (I2A a) = I12 initialObject a
 
 
-type family BinaryProduct (k :: * -> * -> *) x y :: *
-
 class Category k => HasBinaryProducts k where
+  type BinaryProduct (k :: * -> * -> *) x y :: *
   
   proj1 :: Obj k x -> Obj k y -> k (BinaryProduct k x y) x
   proj2 :: Obj k x -> Obj k y -> k (BinaryProduct k x y) y
@@ -340,7 +322,7 @@ class Category k => HasBinaryProducts k where
   l *** r = (l . proj1 (src l) (src r)) &&& (r . proj2 (src l) (src r))
 
 
-type instance LimitFam (i :++: j) k f = BinaryProduct k 
+type instance LimitFam (i :++: j) k f = BinaryProduct k
   (LimitFam i k (f :.: Inj1 i j))
   (LimitFam j k (f :.: Inj2 i j))
 
@@ -360,16 +342,15 @@ instance (HasLimits i k, HasLimits j k, HasBinaryProducts k) => HasLimits (i :++
           h (I1 n) = Com (lim1 ! n . proj1 x y)
           h (I2 n) = Com (lim2 ! n . proj2 x y)
 
-  limitFactorizer l@Nat{} c = 
+  limitFactorizer l@Nat{} c =
     limitFactorizer (l `o` natId Inj1) ((c `o` natId Inj1) . constPostcompInv (srcF c) Inj1)
-    &&& 
+    &&&
     limitFactorizer (l `o` natId Inj2) ((c `o` natId Inj2) . constPostcompInv (srcF c) Inj2)
 
 
-type instance BinaryProduct (->) x y = (x, y)
-
 -- | The tuple is the binary product in @Hask@.
 instance HasBinaryProducts (->) where
+  type BinaryProduct (->) x y = (x, y)
   
   proj1 _ _ = \(x, _) -> x
   proj2 _ _ = \(_, y) -> y
@@ -377,10 +358,9 @@ instance HasBinaryProducts (->) where
   f &&& g = \x -> (f x, g x)
   f *** g = \(x, y) -> (f x, g y)
 
-type instance BinaryProduct Cat (CatW c1) (CatW c2) = CatW (c1 :**: c2)
-
 -- | The product of categories ':**:' is the binary product in 'Cat'.
 instance HasBinaryProducts Cat where
+  type BinaryProduct Cat (CatW c1) (CatW c2) = CatW (c1 :**: c2)
   
   proj1 (CatA _) (CatA _) = CatA Proj1
   proj2 (CatA _) (CatA _) = CatA Proj2
@@ -388,10 +368,9 @@ instance HasBinaryProducts Cat where
   CatA f1 &&& CatA f2 = CatA ((f1 :***: f2) :.: DiagProd)
   CatA f1 *** CatA f2 = CatA (f1 :***: f2)
 
-type instance BinaryProduct Unit () () = ()
-
 -- | In the category of one object that object is its own product.
 instance HasBinaryProducts Unit where
+  type BinaryProduct Unit () () = ()
 
   proj1 Unit Unit = Unit
   proj2 Unit Unit = Unit
@@ -399,10 +378,9 @@ instance HasBinaryProducts Unit where
   Unit &&& Unit = Unit
   Unit *** Unit = Unit
 
-type instance BinaryProduct (c1 :**: c2) (x1, x2) (y1, y2) = (BinaryProduct c1 x1 y1, BinaryProduct c2 x2 y2)
-
 -- | The binary product of the product of 2 categories is the product of their binary products.
 instance (HasBinaryProducts c1, HasBinaryProducts c2) => HasBinaryProducts (c1 :**: c2) where
+  type BinaryProduct (c1 :**: c2) (x1, x2) (y1, y2) = (BinaryProduct c1 x1 y1, BinaryProduct c2 x2 y2)
   
   proj1 (x1 :**: x2) (y1 :**: y2) = proj1 x1 y1 :**: proj1 x2 y2
   proj2 (x1 :**: x2) (y1 :**: y2) = proj2 x1 y1 :**: proj2 x2 y2
@@ -410,13 +388,12 @@ instance (HasBinaryProducts c1, HasBinaryProducts c2) => HasBinaryProducts (c1 :
   (f1 :**: f2) &&& (g1 :**: g2) = (f1 &&& g1) :**: (f2 &&& g2)
   (f1 :**: f2) *** (g1 :**: g2) = (f1 *** g1) :**: (f2 *** g2)
 
-type instance BinaryProduct (c1 :>>: c2) (I1 a) (I1 b) = I1 (BinaryProduct c1 a b)
-type instance BinaryProduct (c1 :>>: c2) (I1 a) (I2 b) = I1 a
-type instance BinaryProduct (c1 :>>: c2) (I2 a) (I1 b) = I1 b
-type instance BinaryProduct (c1 :>>: c2) (I2 a) (I2 b) = I2 (BinaryProduct c2 a b)
-
 instance (HasBinaryProducts c1, HasBinaryProducts c2) => HasBinaryProducts (c1 :>>: c2) where
-
+  type BinaryProduct (c1 :>>: c2) (I1 a) (I1 b) = I1 (BinaryProduct c1 a b)
+  type BinaryProduct (c1 :>>: c2) (I1 a) (I2 b) = I1 a
+  type BinaryProduct (c1 :>>: c2) (I2 a) (I1 b) = I1 b
+  type BinaryProduct (c1 :>>: c2) (I2 a) (I2 b) = I2 (BinaryProduct c2 a b)
+  
   proj1 (I1A a) (I1A b) = I1A (proj1 a b)
   proj1 (I1A a) (I2A _) = I1A a
   proj1 (I2A a) (I1A b) = I12 b a
@@ -434,27 +411,28 @@ instance (HasBinaryProducts c1, HasBinaryProducts c2) => HasBinaryProducts (c1 :
 
 
 data ProductFunctor (k :: * -> * -> *) = ProductFunctor
-type instance Dom (ProductFunctor k) = k :**: k
-type instance Cod (ProductFunctor k) = k
-type instance ProductFunctor k :% (a, b) = BinaryProduct k a b
 -- | Binary product as a bifunctor.
 instance HasBinaryProducts k => Functor (ProductFunctor k) where
+  type Dom (ProductFunctor k) = k :**: k
+  type Cod (ProductFunctor k) = k
+  type ProductFunctor k :% (a, b) = BinaryProduct k a b
+
   ProductFunctor % (a1 :**: a2) = a1 *** a2
 
-data p :*: q where 
+data p :*: q where
   (:*:) :: (Functor p, Functor q, Dom p ~ Dom q, Cod p ~ k, Cod q ~ k, HasBinaryProducts k) => p -> q -> p :*: q
-type instance Dom (p :*: q) = Dom p
-type instance Cod (p :*: q) = Cod p
-type instance (p :*: q) :% a = BinaryProduct (Cod p) (p :% a) (q :% a)
 -- | The product of two functors, passing the same object to both functors and taking the product of the results.
 instance (Category (Dom p), Category (Cod p)) => Functor (p :*: q) where
-  (p :*: q) % f = (p % f) *** (q % f)
+  type Dom (p :*: q) = Dom p
+  type Cod (p :*: q) = Cod p
+  type (p :*: q) :% a = BinaryProduct (Cod p) (p :% a) (q :% a)
 
-type instance BinaryProduct (Nat c d) x y = x :*: y
+  (p :*: q) % f = (p % f) *** (q % f)
 
 -- | The functor product ':*:' is the binary product in functor categories.
 instance (Category c, HasBinaryProducts d) => HasBinaryProducts (Nat c d) where
-  
+  type BinaryProduct (Nat c d) x y = x :*: y
+    
   proj1 (Nat f _ _) (Nat g _ _) = Nat (f :*: g) f (\z -> proj1 (f % z) (g % z))
   proj2 (Nat f _ _) (Nat g _ _) = Nat (f :*: g) g (\z -> proj2 (f % z) (g % z))
   
@@ -463,9 +441,8 @@ instance (Category c, HasBinaryProducts d) => HasBinaryProducts (Nat c d) where
   
   
 
-type family BinaryCoproduct (k :: * -> * -> *) x y :: *
-
 class Category k => HasBinaryCoproducts k where
+  type BinaryCoproduct (k :: * -> * -> *) x y :: *
 
   inj1 :: Obj k x -> Obj k y -> k x (BinaryCoproduct k x y)
   inj2 :: Obj k x -> Obj k y -> k y (BinaryCoproduct k x y)
@@ -476,7 +453,7 @@ class Category k => HasBinaryCoproducts k where
   l +++ r = (inj1 (tgt l) (tgt r) . l) ||| (inj2 (tgt l) (tgt r) . r)
     
 
-type instance ColimitFam (i :++: j) k f = BinaryCoproduct k 
+type instance ColimitFam (i :++: j) k f = BinaryCoproduct k
   (ColimitFam i k (f :.: Inj1 i j))
   (ColimitFam j k (f :.: Inj2 i j))
 
@@ -496,27 +473,25 @@ instance (HasColimits i k, HasColimits j k, HasBinaryCoproducts k) => HasColimit
           h (I1 n) = Com (inj1 x y . col1 ! n)
           h (I2 n) = Com (inj2 x y . col2 ! n)
   
-  colimitFactorizer l@Nat{} c = 
+  colimitFactorizer l@Nat{} c =
     colimitFactorizer (l `o` natId Inj1) (constPostcomp (tgtF c) Inj1 . (c `o` natId Inj1))
-    ||| 
+    |||
     colimitFactorizer (l `o` natId Inj2) (constPostcomp (tgtF c) Inj2 . (c `o` natId Inj2))
 
 
-type instance BinaryCoproduct Cat (CatW c1) (CatW c2) = CatW (c1 :++: c2)
-
 -- | The coproduct of categories ':++:' is the binary coproduct in 'Cat'.
 instance HasBinaryCoproducts Cat where
-  
+  type BinaryCoproduct Cat (CatW c1) (CatW c2) = CatW (c1 :++: c2)
+    
   inj1 (CatA _) (CatA _) = CatA Inj1
   inj2 (CatA _) (CatA _) = CatA Inj2
   
   CatA f1 ||| CatA f2 = CatA (CodiagCoprod :.: (f1 :+++: f2))
   CatA f1 +++ CatA f2 = CatA (f1 :+++: f2)
 
-type instance BinaryCoproduct Unit () () = ()
-
 -- | In the category of one object that object is its own coproduct.
 instance HasBinaryCoproducts Unit where
+  type BinaryCoproduct Unit () () = ()
   
   inj1 Unit Unit = Unit
   inj2 Unit Unit = Unit
@@ -524,10 +499,9 @@ instance HasBinaryCoproducts Unit where
   Unit ||| Unit = Unit
   Unit +++ Unit = Unit
   
-type instance BinaryCoproduct (c1 :**: c2) (x1, x2) (y1, y2) = (BinaryCoproduct c1 x1 y1, BinaryCoproduct c2 x2 y2)
-
 -- | The binary coproduct of the product of 2 categories is the product of their binary coproducts.
 instance (HasBinaryCoproducts c1, HasBinaryCoproducts c2) => HasBinaryCoproducts (c1 :**: c2) where
+  type BinaryCoproduct (c1 :**: c2) (x1, x2) (y1, y2) = (BinaryCoproduct c1 x1 y1, BinaryCoproduct c2 x2 y2)
   
   inj1 (x1 :**: x2) (y1 :**: y2) = inj1 x1 y1 :**: inj1 x2 y2
   inj2 (x1 :**: x2) (y1 :**: y2) = inj2 x1 y1 :**: inj2 x2 y2
@@ -535,12 +509,11 @@ instance (HasBinaryCoproducts c1, HasBinaryCoproducts c2) => HasBinaryCoproducts
   (f1 :**: f2) ||| (g1 :**: g2) = (f1 ||| g1) :**: (f2 ||| g2)
   (f1 :**: f2) +++ (g1 :**: g2) = (f1 +++ g1) :**: (f2 +++ g2)
 
-type instance BinaryCoproduct (c1 :>>: c2) (I1 a) (I1 b) = I1 (BinaryCoproduct c1 a b)
-type instance BinaryCoproduct (c1 :>>: c2) (I1 a) (I2 b) = I2 b
-type instance BinaryCoproduct (c1 :>>: c2) (I2 a) (I1 b) = I2 a
-type instance BinaryCoproduct (c1 :>>: c2) (I2 a) (I2 b) = I2 (BinaryCoproduct c2 a b)
-
 instance (HasBinaryCoproducts c1, HasBinaryCoproducts c2) => HasBinaryCoproducts (c1 :>>: c2) where
+  type BinaryCoproduct (c1 :>>: c2) (I1 a) (I1 b) = I1 (BinaryCoproduct c1 a b)
+  type BinaryCoproduct (c1 :>>: c2) (I1 a) (I2 b) = I2 b
+  type BinaryCoproduct (c1 :>>: c2) (I2 a) (I1 b) = I2 a
+  type BinaryCoproduct (c1 :>>: c2) (I2 a) (I2 b) = I2 (BinaryCoproduct c2 a b)
 
   inj1 (I1A a) (I1A b) = I1A (inj1 a b)
   inj1 (I1A a) (I2A b) = I12 a b
@@ -559,26 +532,27 @@ instance (HasBinaryCoproducts c1, HasBinaryCoproducts c2) => HasBinaryCoproducts
 
 
 data CoproductFunctor (k :: * -> * -> *) = CoproductFunctor
-type instance Dom (CoproductFunctor k) = k :**: k
-type instance Cod (CoproductFunctor k) = k
-type instance CoproductFunctor k :% (a, b) = BinaryCoproduct k a b
 -- | Binary coproduct as a bifunctor.
 instance HasBinaryCoproducts k => Functor (CoproductFunctor k) where
+  type Dom (CoproductFunctor k) = k :**: k
+  type Cod (CoproductFunctor k) = k
+  type CoproductFunctor k :% (a, b) = BinaryCoproduct k a b
+
   CoproductFunctor % (a1 :**: a2) = a1 +++ a2
 
-data p :+: q where 
+data p :+: q where
   (:+:) :: (Functor p, Functor q, Dom p ~ Dom q, Cod p ~ k, Cod q ~ k, HasBinaryCoproducts k) => p -> q -> p :+: q
-type instance Dom (p :+: q) = Dom p
-type instance Cod (p :+: q) = Cod p
-type instance (p :+: q) :% a = BinaryCoproduct (Cod p) (p :% a) (q :% a)
 -- | The coproduct of two functors, passing the same object to both functors and taking the coproduct of the results.
 instance (Category (Dom p), Category (Cod p)) => Functor (p :+: q) where
-  (p :+: q) % f = (p % f) +++ (q % f)
+  type Dom (p :+: q) = Dom p
+  type Cod (p :+: q) = Cod p
+  type (p :+: q) :% a = BinaryCoproduct (Cod p) (p :% a) (q :% a)
 
-type instance BinaryCoproduct (Nat c d) x y = x :+: y
+  (p :+: q) % f = (p % f) +++ (q % f)
 
 -- | The functor coproduct ':+:' is the binary coproduct in functor categories.
 instance (Category c, HasBinaryCoproducts d) => HasBinaryCoproducts (Nat c d) where
+  type BinaryCoproduct (Nat c d) x y = x :+: y
   
   inj1 (Nat f _ _) (Nat g _ _) = Nat f (f :+: g) (\z -> inj1 (f % z) (g % z))
   inj2 (Nat f _ _) (Nat g _ _) = Nat g (f :+: g) (\z -> inj2 (f % z) (g % z))
@@ -598,17 +572,19 @@ instance HasTerminalObject k => HasInitialObject (Op k) where
   initialObject = Op terminalObject
   initialize (Op f) = Op (terminate f)
 
-type instance BinaryProduct (Op k) x y = BinaryCoproduct k x y
 -- | Binary products are the dual of binary coproducts.
 instance HasBinaryCoproducts k => HasBinaryProducts (Op k) where
+  type BinaryProduct (Op k) x y = BinaryCoproduct k x y
+
   proj1 (Op x) (Op y) = Op (inj1 x y)
   proj2 (Op x) (Op y) = Op (inj2 x y)
   Op f &&& Op g = Op (f ||| g)
   Op f *** Op g = Op (f +++ g)
 
-type instance BinaryCoproduct (Op k) x y = BinaryProduct k x y
 -- | Binary products are the dual of binary coproducts.
 instance HasBinaryProducts k => HasBinaryCoproducts (Op k) where
+  type BinaryCoproduct (Op k) x y = BinaryProduct k x y
+
   inj1 (Op x) (Op y) = Op (proj1 x y)
   inj2 (Op x) (Op y) = Op (proj2 x y)
   Op f ||| Op g = Op (f &&& g)

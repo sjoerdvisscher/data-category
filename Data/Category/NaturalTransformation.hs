@@ -53,10 +53,10 @@ infixl 9 !
 -- | @f :~> g@ is a natural transformation from functor f to functor g.
 type f :~> g = (c ~ Dom f, c ~ Dom g, d ~ Cod f, d ~ Cod g) => Nat c d f g
 
--- | Natural transformations are built up of components, 
+-- | Natural transformations are built up of components,
 -- one for each object @z@ in the domain category of @f@ and @g@.
 data Nat :: (* -> * -> *) -> (* -> * -> *) -> * -> * -> * where
-  Nat :: (Functor f, Functor g, c ~ Dom f, c ~ Dom g, d ~ Cod f, d ~ Cod g) 
+  Nat :: (Functor f, Functor g, c ~ Dom f, c ~ Dom g, d ~ Cod f, d ~ Cod g)
     => f -> g -> (forall z. Obj c z -> Component f g z) -> Nat c d f g
 
 
@@ -99,11 +99,11 @@ instance (Category c, Category d) => Category (Nat c d) where
   Nat _ h ngh . Nat f _ nfg = Nat f h (\i -> ngh i . nfg i)
 
 
-compAssoc :: (Functor f, Functor g, Functor h, Dom f ~ Cod g, Dom g ~ Cod h) 
+compAssoc :: (Functor f, Functor g, Functor h, Dom f ~ Cod g, Dom g ~ Cod h)
           => f -> g -> h -> Nat (Dom h) (Cod f) ((f :.: g) :.: h) (f :.: (g :.: h))
 compAssoc f g h = Nat ((f :.: g) :.: h) (f :.: (g :.: h)) (\i -> f % g % h % i)
 
-compAssocInv :: (Functor f, Functor g, Functor h, Dom f ~ Cod g, Dom g ~ Cod h) 
+compAssocInv :: (Functor f, Functor g, Functor h, Dom f ~ Cod g, Dom g ~ Cod h)
              => f -> g -> h -> Nat (Dom h) (Cod f) (f :.: (g :.: h)) ((f :.: g) :.: h)
 compAssocInv f g h = Nat (f :.: (g :.: h)) ((f :.: g) :.: h) (\i -> f % g % h % i)
 
@@ -140,48 +140,48 @@ type Endo k = Nat k k
 
 data FunctorCompose (k :: * -> * -> *) = FunctorCompose
 
-type instance Dom (FunctorCompose k) = Endo k :**: Endo k
-type instance Cod (FunctorCompose k) = Endo k
-type instance FunctorCompose k :% (f, g) = f :.: g
-
 -- | Composition of endofunctors is a functor.
 instance Category k => Functor (FunctorCompose k) where
+  type Dom (FunctorCompose k) = Endo k :**: Endo k
+  type Cod (FunctorCompose k) = Endo k
+  type FunctorCompose k :% (f, g) = f :.: g
+  
   FunctorCompose % (n1 :**: n2) = n1 `o` n2
 
 
 data Precompose :: * -> (* -> * -> *) -> * where
   Precompose :: f -> Precompose f d
 
-type instance Dom (Precompose f d) = Nat (Cod f) d
-type instance Cod (Precompose f d) = Nat (Dom f) d
-type instance Precompose f d :% g = g :.: f
-
--- | @Precompose f d@ is the functor such that @Precompose f d :% g = g :.: f@, 
+-- | @Precompose f d@ is the functor such that @Precompose f d :% g = g :.: f@,
 --   for functors @g@ that compose with @f@ and with codomain @d@.
 instance (Functor f, Category d) => Functor (Precompose f d) where
+  type Dom (Precompose f d) = Nat (Cod f) d
+  type Cod (Precompose f d) = Nat (Dom f) d
+  type Precompose f d :% g = g :.: f
+  
   Precompose f % n = n `o` natId f
 
 
 data Postcompose :: * -> (* -> * -> *) -> * where
   Postcompose :: f -> Postcompose f c
 
-type instance Dom (Postcompose f c) = Nat c (Dom f)
-type instance Cod (Postcompose f c) = Nat c (Cod f)
-type instance Postcompose f c :% g = f :.: g
-
--- | @Postcompose f c@ is the functor such that @Postcompose f c :% g = f :.: g@, 
+-- | @Postcompose f c@ is the functor such that @Postcompose f c :% g = f :.: g@,
 --   for functors @g@ that compose with @f@ and with domain @c@.
 instance (Functor f, Category c) => Functor (Postcompose f c) where
+  type Dom (Postcompose f c) = Nat c (Dom f)
+  type Cod (Postcompose f c) = Nat c (Cod f)
+  type Postcompose f c :% g = f :.: g
+  
   Postcompose f % n = natId f `o` n
 
 
 data Wrap f h = Wrap f h
 
-type instance Dom (Wrap f h) = Nat (Cod h) (Dom f)
-type instance Cod (Wrap f h) = Nat (Dom h) (Cod f)
-type instance Wrap f h :% g = f :.: g :.: h
-
--- | @Wrap f h@ is the functor such that @Wrap f h :% g = f :.: g :.: h@, 
+-- | @Wrap f h@ is the functor such that @Wrap f h :% g = f :.: g :.: h@,
 --   for functors @g@ that compose with @f@ and @h@.
 instance (Functor f, Functor h) => Functor (Wrap f h) where
+  type Dom (Wrap f h) = Nat (Cod h) (Dom f)
+  type Cod (Wrap f h) = Nat (Dom h) (Cod f)
+  type Wrap f h :% g = f :.: g :.: h
+  
   Wrap f h % n = natId f `o` n `o` natId h

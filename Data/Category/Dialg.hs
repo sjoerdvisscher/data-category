@@ -23,12 +23,12 @@ import qualified Data.Category.Adjunction as A
 
 -- | Objects of Dialg(F,G) are (F,G)-dialgebras.
 data Dialgebra f g a where
-  Dialgebra :: (Category c, Category d, Dom f ~ c, Dom g ~ c, Cod f ~ d, Cod g ~ d, Functor f, Functor g) 
+  Dialgebra :: (Category c, Category d, Dom f ~ c, Dom g ~ c, Cod f ~ d, Cod g ~ d, Functor f, Functor g)
     => Obj c a -> d (f :% a) (g :% a) -> Dialgebra f g a
 
 -- | Arrows of Dialg(F,G) are (F,G)-homomorphisms.
 data Dialg f g a b where
-  DialgA :: (Category c, Category d, Dom f ~ c, Dom g ~ c, Cod f ~ d, Cod g ~ d, Functor f, Functor g) 
+  DialgA :: (Category c, Category d, Dom f ~ c, Dom g ~ c, Cod f ~ d, Cod g ~ d, Functor f, Functor g)
     => Dialgebra f g a -> Dialgebra f g b -> c a b -> Dialg f g a b
 
 dialgId :: Dialgebra f g a -> Obj (Dialg f g) a
@@ -86,25 +86,25 @@ instance HasInitialObject (Dialg (Tuple1 (->) (->) ()) (DiagProd (->))) where
 
 
 data FreeAlg m = FreeAlg (Monad m)
-type instance Dom (FreeAlg m) = Dom m
-type instance Cod (FreeAlg m) = Alg m
-type instance FreeAlg m :% a = m :% a
 -- | @FreeAlg@ M takes @x@ to the free algebra @(M x, mu_x)@ of the monad @M@.
 instance (Functor m, Dom m ~ k, Cod m ~ k) => Functor (FreeAlg m) where
+  type Dom (FreeAlg m) = Dom m
+  type Cod (FreeAlg m) = Alg m
+  type FreeAlg m :% a = m :% a
   FreeAlg m % f = DialgA (alg (src f)) (alg (tgt f)) (monadFunctor m % f)
     where
       alg :: Obj k x -> Algebra m (m :% x)
       alg x = Dialgebra (monadFunctor m % x) (multiply m ! x)
 
 data ForgetAlg m = ForgetAlg
-type instance Dom (ForgetAlg m) = Alg m
-type instance Cod (ForgetAlg m) = Dom m
-type instance ForgetAlg m :% a = a
 -- | @ForgetAlg m@ is the forgetful functor for @Alg m@.
 instance (Functor m, Dom m ~ k, Cod m ~ k) => Functor (ForgetAlg m) where
+  type Dom (ForgetAlg m) = Alg m
+  type Cod (ForgetAlg m) = Dom m
+  type ForgetAlg m :% a = a
   ForgetAlg % DialgA _ _ f = f
 
-eilenbergMooreAdj :: (Functor m, Dom m ~ k, Cod m ~ k) 
+eilenbergMooreAdj :: (Functor m, Dom m ~ k, Cod m ~ k)
   => Monad m -> A.Adjunction (Alg m) k (FreeAlg m) (ForgetAlg m)
 eilenbergMooreAdj m = A.mkAdjunction (FreeAlg m) ForgetAlg
   (\x -> unit m ! x)

@@ -53,10 +53,10 @@ instance HasNaturalNumberObject Cat where
   primRec (CatA z) (CatA s) = CatA (PrimRec z s)
   
 data PrimRec z s = PrimRec z s
-type instance Dom (PrimRec z s) = Nat
-type instance Cod (PrimRec z s) = Cod z
-type instance PrimRec z s :% I1 () = z :% ()
-type instance PrimRec z s :% I2 n  = s :% PrimRec z s :% n
 instance (Functor z, Functor s, Dom z ~ Unit, Cod z ~ Dom s, Dom s ~ Cod s) => Functor (PrimRec z s) where
+  type Dom (PrimRec z s) = Nat
+  type Cod (PrimRec z s) = Cod z
+  type PrimRec z s :% I1 () = z :% ()
+  type PrimRec z s :% I2 n  = s :% PrimRec z s :% n
   PrimRec z s % Fix (I1 Unit) = z % Unit
   PrimRec z s % Fix (I2 n) = s % PrimRec z s % n

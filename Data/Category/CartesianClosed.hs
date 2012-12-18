@@ -19,10 +19,9 @@ import Data.Category.Adjunction
 import Data.Category.Monoidal as M
 
 
-type family Exponential (k :: * -> * -> *) y z :: *
-
 -- | A category is cartesian closed if it has all products and exponentials for all objects.
 class (HasTerminalObject k, HasBinaryProducts k) => CartesianClosed k where
+  type Exponential k y z :: *
   
   apply :: Obj k y -> Obj k z -> k (BinaryProduct k (Exponential k y z) y) z
   tuple :: Obj k y -> Obj k z -> k z (Exponential k y (BinaryProduct k z y))
@@ -30,19 +29,18 @@ class (HasTerminalObject k, HasBinaryProducts k) => CartesianClosed k where
 
 
 data ExpFunctor (k :: * -> * -> *) = ExpFunctor
-type instance Dom (ExpFunctor k) = Op k :**: k
-type instance Cod (ExpFunctor k) = k
-type instance (ExpFunctor k) :% (y, z) = Exponential k y z
 -- | The exponential as a bifunctor.
 instance CartesianClosed k => Functor (ExpFunctor k) where
+  type Dom (ExpFunctor k) = Op k :**: k
+  type Cod (ExpFunctor k) = k
+  type (ExpFunctor k) :% (y, z) = Exponential k y z
+
   ExpFunctor % (Op y :**: z) = z ^^^ y
 
 
-
-type instance Exponential (->) y z = y -> z
-
 -- | Exponentials in @Hask@ are functions.
 instance CartesianClosed (->) where
+  type Exponential (->) y z = y -> z
   
   apply _ _ (f, y) = f y
   tuple _ _ z      = \y -> (z, y)
@@ -51,34 +49,33 @@ instance CartesianClosed (->) where
 
 
 data Apply (y :: * -> * -> *) (z :: * -> * -> *) = Apply
-type instance Dom (Apply y z) = Nat y z :**: y
-type instance Cod (Apply y z) = z
-type instance Apply y z :% (f, a) = f :% a
 -- | 'Apply' is a bifunctor, @Apply :% (f, a)@ applies @f@ to @a@, i.e. @f :% a@.
 instance (Category y, Category z) => Functor (Apply y z) where
+  type Dom (Apply y z) = Nat y z :**: y
+  type Cod (Apply y z) = z
+  type Apply y z :% (f, a) = f :% a
   Apply % (l :**: r) = l ! r
 
 data ToTuple1 (y :: * -> * -> *) (z :: * -> * -> *) = ToTuple1
-type instance Dom (ToTuple1 y z) = z
-type instance Cod (ToTuple1 y z) = Nat y (z :**: y)
-type instance ToTuple1 y z :% a = Tuple1 z y a
 -- | 'ToTuple1' converts an object @a@ to the functor 'Tuple1' @a@.
 instance (Category y, Category z) => Functor (ToTuple1 y z) where
+  type Dom (ToTuple1 y z) = z
+  type Cod (ToTuple1 y z) = Nat y (z :**: y)
+  type ToTuple1 y z :% a = Tuple1 z y a
   ToTuple1 % f = Nat (Tuple1 (src f)) (Tuple1 (tgt f)) (\z -> f :**: z)
 
 data ToTuple2 (y :: * -> * -> *) (z :: * -> * -> *) = ToTuple2
-type instance Dom (ToTuple2 y z) = y
-type instance Cod (ToTuple2 y z) = Nat z (z :**: y)
-type instance ToTuple2 y z :% a = Tuple2 z y a
 -- | 'ToTuple2' converts an object @a@ to the functor 'Tuple2' @a@.
 instance (Category y, Category z) => Functor (ToTuple2 y z) where
+  type Dom (ToTuple2 y z) = y
+  type Cod (ToTuple2 y z) = Nat z (z :**: y)
+  type ToTuple2 y z :% a = Tuple2 z y a
   ToTuple2 % f = Nat (Tuple2 (src f)) (Tuple2 (tgt f)) (\y -> y :**: f)
 
 
-type instance Exponential Cat (CatW c) (CatW d) = CatW (Nat c d)
-
 -- | Exponentials in @Cat@ are the functor categories.
 instance CartesianClosed Cat where
+  type Exponential Cat (CatW c) (CatW d) = CatW (Nat c d)
   
   apply CatA{} CatA{}   = CatA Apply
   tuple CatA{} CatA{}   = CatA ToTuple1
@@ -86,10 +83,10 @@ instance CartesianClosed Cat where
 
 
 -- | The product functor is left adjoint the the exponential functor.
-curryAdj :: CartesianClosed k 
-         => Obj k y 
-         -> Adjunction k k 
-              (ProductFunctor k :.: Tuple2 k k y) 
+curryAdj :: CartesianClosed k
+         => Obj k y
+         -> Adjunction k k
+              (ProductFunctor k :.: Tuple2 k k y)
               (ExpFunctor k :.: Tuple1 (Op k) k y)
 curryAdj y = mkAdjunction (ProductFunctor :.: Tuple2 y) (ExpFunctor :.: Tuple1 (Op y)) (tuple y) (apply y)
 

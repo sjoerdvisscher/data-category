@@ -8,7 +8,7 @@
 -- Stability   :  experimental
 -- Portability :  non-portable
 --
--- /2/, or the Boolean category. 
+-- /2/, or the Boolean category.
 -- It contains 2 objects, one for true and one for false.
 -- It contains 3 arrows, 2 identity arrows and one from false to true.
 -----------------------------------------------------------------------------
@@ -63,13 +63,13 @@ instance HasTerminalObject Boolean where
   terminate Tru = Tru
 
 
-type instance BinaryProduct Boolean Fls Fls = Fls
-type instance BinaryProduct Boolean Fls Tru = Fls
-type instance BinaryProduct Boolean Tru Fls = Fls
-type instance BinaryProduct Boolean Tru Tru = Tru
-
 -- | Conjunction is the binary product in the Boolean category.
-instance HasBinaryProducts Boolean where 
+instance HasBinaryProducts Boolean where
+  
+  type BinaryProduct Boolean Fls Fls = Fls
+  type BinaryProduct Boolean Fls Tru = Fls
+  type BinaryProduct Boolean Tru Fls = Fls
+  type BinaryProduct Boolean Tru Tru = Tru
   
   proj1 Fls Fls = Fls
   proj1 Fls Tru = Fls
@@ -87,13 +87,13 @@ instance HasBinaryProducts Boolean where
   Tru &&& Tru = Tru
 
 
-type instance BinaryCoproduct Boolean Fls Fls = Fls
-type instance BinaryCoproduct Boolean Fls Tru = Tru
-type instance BinaryCoproduct Boolean Tru Fls = Tru
-type instance BinaryCoproduct Boolean Tru Tru = Tru
-
 -- | Disjunction is the binary coproduct in the Boolean category.
-instance HasBinaryCoproducts Boolean where 
+instance HasBinaryCoproducts Boolean where
+  
+  type BinaryCoproduct Boolean Fls Fls = Fls
+  type BinaryCoproduct Boolean Fls Tru = Tru
+  type BinaryCoproduct Boolean Tru Fls = Tru
+  type BinaryCoproduct Boolean Tru Tru = Tru
   
   inj1 Fls Fls = Fls
   inj1 Fls Tru = F2T
@@ -111,13 +111,13 @@ instance HasBinaryCoproducts Boolean where
   Tru ||| Tru = Tru
 
 
-type instance Exponential Boolean Fls Fls = Tru
-type instance Exponential Boolean Fls Tru = Tru
-type instance Exponential Boolean Tru Fls = Fls
-type instance Exponential Boolean Tru Tru = Tru
-
 -- | Implication makes the Boolean category cartesian closed.
 instance CartesianClosed Boolean where
+  
+  type Exponential Boolean Fls Fls = Tru
+  type Exponential Boolean Fls Tru = Tru
+  type Exponential Boolean Tru Fls = Fls
+  type Exponential Boolean Tru Tru = Tru
   
   apply Fls Fls = Fls
   apply Fls Tru = F2T

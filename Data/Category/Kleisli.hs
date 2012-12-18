@@ -8,7 +8,7 @@
 -- Stability   :  experimental
 -- Portability :  non-portable
 --
--- This is an attempt at the Kleisli category, and the construction 
+-- This is an attempt at the Kleisli category, and the construction
 -- of an adjunction for each monad.
 -----------------------------------------------------------------------------
 module Data.Category.Kleisli where
@@ -37,20 +37,20 @@ instance Category (Kleisli m) where
 
 
 data KleisliAdjF m = KleisliAdjF (Monad m)
-type instance Dom (KleisliAdjF m) = Dom m
-type instance Cod (KleisliAdjF m) = Kleisli m
-type instance KleisliAdjF m :% a = a
 instance (Functor m, Dom m ~ k, Cod m ~ k) => Functor (KleisliAdjF m) where
+  type Dom (KleisliAdjF m) = Dom m
+  type Cod (KleisliAdjF m) = Kleisli m
+  type KleisliAdjF m :% a = a
   KleisliAdjF m % f = Kleisli m (tgt f) ((unit m ! tgt f) . f)
    
 data KleisliAdjG m = KleisliAdjG (Monad m)
-type instance Dom (KleisliAdjG m) = Kleisli m
-type instance Cod (KleisliAdjG m) = Dom m
-type instance KleisliAdjG m :% a = m :% a
 instance (Functor m, Dom m ~ k, Cod m ~ k) => Functor (KleisliAdjG m) where
+  type Dom (KleisliAdjG m) = Kleisli m
+  type Cod (KleisliAdjG m) = Dom m
+  type KleisliAdjG m :% a = m :% a
   KleisliAdjG m % Kleisli _ b f = (multiply m ! b) . (monadFunctor m % f)
 
-kleisliAdj :: (Functor m, Dom m ~ k, Cod m ~ k) 
+kleisliAdj :: (Functor m, Dom m ~ k, Cod m ~ k)
   => Monad m -> A.Adjunction (Kleisli m) k (KleisliAdjF m) (KleisliAdjG m)
 kleisliAdj m = A.mkAdjunction (KleisliAdjF m) (KleisliAdjG m)
   (\x -> unit m ! x)

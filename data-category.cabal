@@ -1,5 +1,5 @@
 name:                data-category
-version:             0.5.0
+version:             0.5.1
 synopsis:            Category theory
 
 description:         Data-category is a collection of categories, and some categorical constructions on them.
@@ -27,7 +27,7 @@ build-type:          Simple
 cabal-version:       >= 1.10
 
 Library
-  exposed-modules:     
+  exposed-modules:
     Data.Category,
     Data.Category.Functor,
     Data.Category.NaturalTransformation,
