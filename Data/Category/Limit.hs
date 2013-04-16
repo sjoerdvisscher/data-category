@@ -9,7 +9,6 @@
   TypeFamilies,
   TypeSynonymInstances,
   UndecidableInstances,
-  LambdaCase,
   NoImplicitPrelude  #-}
 -----------------------------------------------------------------------------
 -- |
