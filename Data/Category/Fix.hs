@@ -13,6 +13,7 @@ module Data.Category.Fix where
 import Data.Category
 import Data.Category.Functor
 import Data.Category.Limit
+import Data.Category.CartesianClosed
 
 import Data.Category.Unit
 import Data.Category.Coproduct
@@ -52,6 +53,13 @@ instance HasBinaryCoproducts (f (Fix f)) => HasBinaryCoproducts (Fix f) where
   inj2 (Fix a) (Fix b) = Fix (inj2 a b)
   Fix a ||| Fix b = Fix (a ||| b)
 
+-- | @Fix f@ inherits its exponentials from @f (Fix f)@.
+instance CartesianClosed (f (Fix f)) => CartesianClosed (Fix f) where
+  type Exponential (Fix f) a b = Exponential (f (Fix f)) a b
+  apply (Fix a) (Fix b) = Fix (apply a b)
+  tuple (Fix a) (Fix b) = Fix (tuple a b)
+  Fix a ^^^ Fix b = Fix (a ^^^ b)
+  
 data Wrap (f :: (* -> * -> *) -> * -> * -> *) = Wrap
 -- | The `Wrap` functor wraps `Fix` around @f (Fix f)@.
 instance Category (f (Fix f)) => Functor (Wrap f) where
