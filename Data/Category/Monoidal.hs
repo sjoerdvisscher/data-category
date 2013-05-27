@@ -85,11 +85,25 @@ data MonoidObject f a = MonoidObject
   , multiply :: (Cod f ~ k) => k ((f :% (a, a))) a
   }
   
+trivialMonoid :: TensorProduct f => f -> MonoidObject f (Unit f)
+trivialMonoid f = MonoidObject (unitObject f) (leftUnitor f (unitObject f))
+
+coproductMonoid :: (HasInitialObject k, HasBinaryCoproducts k) => Obj k a -> MonoidObject (CoproductFunctor k) a
+coproductMonoid a = MonoidObject (initialize a) (a ||| a)
+
+
 -- | @ComonoidObject f a@ defines a comonoid @a@ in a comonoidal category with tensor product @f@.
 data ComonoidObject f a = ComonoidObject
   { counit     :: (Cod f ~ k) => k a (Unit f)
   , comultiply :: (Cod f ~ k) => k a (f :% (a, a))
   }
+
+trivialComonoid :: TensorProduct f => f -> ComonoidObject f (Unit f)
+trivialComonoid f = ComonoidObject (unitObject f) (leftUnitorInv f (unitObject f))
+  
+productComonoid :: (HasTerminalObject k, HasBinaryProducts k) => Obj k a -> ComonoidObject (ProductFunctor k) a
+productComonoid a = ComonoidObject (terminate a) (a &&& a)
+
 
 data MonoidAsCategory f m a b where
   MonoidValue :: (TensorProduct f, Dom f ~ (k :**: k), Cod f ~ k)
