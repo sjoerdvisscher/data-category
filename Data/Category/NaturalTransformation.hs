@@ -38,8 +38,11 @@ module Data.Category.NaturalTransformation (
     
   -- * Related functors
   , FunctorCompose(..)
-  , Precompose(..)
-  , Postcompose(..)
+  , EndoFunctorCompose
+  , Precompose
+  , precompose
+  , Postcompose
+  , postcompose
   , Wrap(..)
   
 ) where
@@ -133,46 +136,33 @@ constPostcompInv :: Functor f => Const (Cod f) c2 x -> f -> Nat (Dom f) c2 (Cons
 constPostcompInv (Const x) f = Nat (Const x) (Const x :.: f) (\_ -> x)
 
 
+data FunctorCompose (c :: * -> * -> *) (d :: * -> * -> *) (e :: * -> * -> *) = FunctorCompose
 
--- | The category of endofunctors.
-type Endo k = Nat k k
-
-
-data FunctorCompose (k :: * -> * -> *) = FunctorCompose
-
--- | Composition of endofunctors is a functor.
-instance Category k => Functor (FunctorCompose k) where
-  type Dom (FunctorCompose k) = Endo k :**: Endo k
-  type Cod (FunctorCompose k) = Endo k
-  type FunctorCompose k :% (f, g) = f :.: g
+-- | Composition of functors is a functor.
+instance (Category c, Category d, Category e) => Functor (FunctorCompose c d e) where
+  type Dom (FunctorCompose c d e) = Nat d e :**: Nat c d
+  type Cod (FunctorCompose c d e) = Nat c e
+  type FunctorCompose c d e :% (f, g) = f :.: g
   
   FunctorCompose % (n1 :**: n2) = n1 `o` n2
 
 
-data Precompose :: * -> (* -> * -> *) -> * where
-  Precompose :: f -> Precompose f d
+-- | The category of endofunctors.
+type Endo k = Nat k k
+-- | Composition of endofunctors is a functor.
+type EndoFunctorCompose k = FunctorCompose k k k
 
--- | @Precompose f d@ is the functor such that @Precompose f d :% g = g :.: f@,
---   for functors @g@ that compose with @f@ and with codomain @d@.
-instance (Functor f, Category d) => Functor (Precompose f d) where
-  type Dom (Precompose f d) = Nat (Cod f) d
-  type Cod (Precompose f d) = Nat (Dom f) d
-  type Precompose f d :% g = g :.: f
-  
-  Precompose f % n = n `o` natId f
-
-
-data Postcompose :: * -> (* -> * -> *) -> * where
-  Postcompose :: f -> Postcompose f c
+-- | @Precompose f e@ is the functor such that @Precompose f e :% g = g :.: f@,
+--   for functors @g@ that compose with @f@ and with codomain @e@.
+type Precompose f e = FunctorCompose (Dom f) (Cod f) e :.: Tuple2 (Nat (Cod f) e) (Nat (Dom f) (Cod f)) f
+precompose :: (Category e, Functor f) => f -> Precompose f e
+precompose f = FunctorCompose :.: Tuple2 (natId f)
 
 -- | @Postcompose f c@ is the functor such that @Postcompose f c :% g = f :.: g@,
 --   for functors @g@ that compose with @f@ and with domain @c@.
-instance (Functor f, Category c) => Functor (Postcompose f c) where
-  type Dom (Postcompose f c) = Nat c (Dom f)
-  type Cod (Postcompose f c) = Nat c (Cod f)
-  type Postcompose f c :% g = f :.: g
-  
-  Postcompose f % n = natId f `o` n
+type Postcompose f c = FunctorCompose c (Dom f) (Cod f) :.: Tuple1 (Nat (Dom f) (Cod f)) (Nat c (Dom f)) f
+postcompose :: (Category e, Functor f) => f -> Postcompose f e
+postcompose f = FunctorCompose :.: Tuple1 (natId f)
 
 
 data Wrap f h = Wrap f h

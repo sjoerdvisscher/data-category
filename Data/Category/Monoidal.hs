@@ -1,4 +1,13 @@
-{-# LANGUAGE TypeOperators, TypeFamilies, GADTs, Rank2Types, ViewPatterns, NoImplicitPrelude #-}
+{-# LANGUAGE 
+    TypeOperators
+  , TypeFamilies
+  , GADTs
+  , Rank2Types
+  , ViewPatterns
+  , TypeSynonymInstances
+  , FlexibleInstances
+  , NoImplicitPrelude 
+  #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category.Monoidal
@@ -65,9 +74,9 @@ instance (HasInitialObject k, HasBinaryCoproducts k) => TensorProduct (Coproduct
   associatorInv _ a b c = (inj1 (a +++ b) c . inj1 a b) ||| (inj2 a b +++ c)
   
 -- | Functor composition makes the category of endofunctors monoidal, with the identity functor as unit.
-instance Category k => TensorProduct (FunctorCompose k) where
+instance Category k => TensorProduct (EndoFunctorCompose k) where
   
-  type Unit (FunctorCompose k) = Id k
+  type Unit (EndoFunctorCompose k) = Id k
   unitObject _ = natId Id
   
   leftUnitor     _ (Nat g _ _) = idPostcomp g
@@ -119,7 +128,7 @@ instance Category (MonoidAsCategory f m) where
 
 
 -- | A monad is a monoid in the category of endofunctors.
-type Monad f = MonoidObject (FunctorCompose (Dom f)) f
+type Monad f = MonoidObject (EndoFunctorCompose (Dom f)) f
 
 mkMonad :: (Functor f, Dom f ~ k, Cod f ~ k, Category k) 
   => f 
@@ -136,7 +145,7 @@ monadFunctor (unit -> Nat _ f _) = f
 
 
 -- | A comonad is a comonoid in the category of endofunctors.
-type Comonad f = ComonoidObject (FunctorCompose (Dom f)) f
+type Comonad f = ComonoidObject (EndoFunctorCompose (Dom f)) f
 
 mkComonad :: (Functor f, Dom f ~ k, Cod f ~ k, Category k) 
   => f 

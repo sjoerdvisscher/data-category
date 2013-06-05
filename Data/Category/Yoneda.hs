@@ -19,7 +19,7 @@ type YonedaEmbedding k = Postcompose (Hom k) (Op k) :.: ToTuple2 k (Op k)
 
 -- | The Yoneda embedding functor, @C -> Set^(C^op)@.
 yonedaEmbedding :: Category k => YonedaEmbedding k
-yonedaEmbedding = Postcompose Hom :.: ToTuple2
+yonedaEmbedding = postcompose Hom :.: ToTuple2
 
 
 data Yoneda (k :: * -> * -> *) f = Yoneda

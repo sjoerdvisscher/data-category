@@ -31,6 +31,8 @@ module Data.Category.Adjunction (
   , adjunctionTerminalProp
   
   -- * Examples
+  , precomposeAdj
+  , postcomposeAdj
   , contAdj
   
 ) where
@@ -90,8 +92,8 @@ idAdj = mkAdjunction Id Id (\x -> x) (\x -> x)
 
 composeAdj :: Adjunction d e f g -> Adjunction c d f' g' -> Adjunction c e (f' :.: f) (g :.: g')
 composeAdj (Adjunction f g u c) (Adjunction f' g' u' c') = Adjunction (f' :.: f) (g :.: g') 
-  (compAssoc (g :.: g') f' f . Precompose f % (compAssocInv g g' f' . Postcompose g % u' . idPrecompInv g) . u)
-  (c' . Precompose g' % (idPrecomp f' . Postcompose f' % c . compAssoc f' f g) . compAssocInv (f' :.: f) g g')
+  (compAssoc (g :.: g') f' f . precompose f % (compAssocInv g g' f' . postcompose g % u' . idPrecompInv g) . u)
+  (c' . precompose g' % (idPrecomp f' . postcompose f' % c . compAssoc f' f g) . compAssocInv (f' :.: f) g g')
 
 
 data AdjArrow c d where
@@ -109,15 +111,15 @@ instance Category AdjArrow where
 
 precomposeAdj :: Category e => Adjunction c d f g -> Adjunction (Nat c e) (Nat d e) (Precompose g e) (Precompose f e)
 precomposeAdj (Adjunction f g un coun) = mkAdjunction 
-  (Precompose g)
-  (Precompose f)
+  (precompose g)
+  (precompose f)
   (\nh@(Nat h _ _) -> compAssocInv h g f . (nh `o` un) . idPrecompInv h)
   (\nh@(Nat h _ _) -> idPrecomp h . (nh `o` coun) . compAssoc h f g)
 
 postcomposeAdj :: Category e => Adjunction c d f g -> Adjunction (Nat e c) (Nat e d) (Postcompose f e) (Postcompose g e)
 postcomposeAdj (Adjunction f g un coun) = mkAdjunction 
-  (Postcompose f)
-  (Postcompose g)
+  (postcompose f)
+  (postcompose g)
   (\nh@(Nat h _ _) -> compAssoc g f h . (un `o` nh) . idPostcompInv h)
   (\nh@(Nat h _ _) -> idPostcomp h . (coun `o` nh) . compAssocInv f g h)
 
