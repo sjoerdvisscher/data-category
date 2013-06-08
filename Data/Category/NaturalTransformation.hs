@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeOperators, TypeFamilies, FlexibleInstances, FlexibleContexts, UndecidableInstances, RankNTypes, GADTs, NoImplicitPrelude #-}
+{-# LANGUAGE TypeOperators, TypeFamilies, FlexibleInstances, FlexibleContexts, UndecidableInstances, RankNTypes, GADTs, LiberalTypeSynonyms, NoImplicitPrelude #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category.NaturalTransformation
@@ -123,16 +123,20 @@ idPostcompInv :: Functor f => f -> Nat (Dom f) (Cod f) f (Id (Cod f) :.: f)
 idPostcompInv f = Nat f (Id :.: f) (f %)
 
 
-constPrecomp :: (Category c1, Functor f) => Const c1 (Dom f) x -> f -> Nat c1 (Cod f) (f :.: Const c1 (Dom f) x) (Const c1 (Cod f) (f :% x))
+constPrecomp :: (Category c1, Functor f) 
+             => Const c1 (Dom f) x -> f -> Nat c1 (Cod f) (f :.: Const c1 (Dom f) x) (Const c1 (Cod f) (f :% x))
 constPrecomp (Const x) f = let fx = f % x in Nat (f :.: Const x) (Const fx) (\_ -> fx)
 
-constPrecompInv :: (Category c1, Functor f) => Const c1 (Dom f) x -> f -> Nat c1 (Cod f) (Const c1 (Cod f) (f :% x)) (f :.: Const c1 (Dom f) x)
+constPrecompInv :: (Category c1, Functor f) 
+                => Const c1 (Dom f) x -> f -> Nat c1 (Cod f) (Const c1 (Cod f) (f :% x)) (f :.: Const c1 (Dom f) x)
 constPrecompInv (Const x) f = let fx = f % x in Nat (Const fx) (f :.: Const x) (\_ -> fx)
 
-constPostcomp :: Functor f => Const (Cod f) c2 x -> f -> Nat (Dom f) c2 (Const (Cod f) c2 x :.: f) (Const (Dom f) c2 x)
+constPostcomp :: (Category c2, Functor f) 
+              => Const (Cod f) c2 x -> f -> Nat (Dom f) c2 (Const (Cod f) c2 x :.: f) (Const (Dom f) c2 x)
 constPostcomp (Const x) f = Nat (Const x :.: f) (Const x) (\_ -> x)
 
-constPostcompInv :: Functor f => Const (Cod f) c2 x -> f -> Nat (Dom f) c2 (Const (Dom f) c2 x) (Const (Cod f) c2 x :.: f)
+constPostcompInv :: (Category c2, Functor f) 
+                 => Const (Cod f) c2 x -> f -> Nat (Dom f) c2 (Const (Dom f) c2 x) (Const (Cod f) c2 x :.: f)
 constPostcompInv (Const x) f = Nat (Const x) (Const x :.: f) (\_ -> x)
 
 
@@ -156,7 +160,7 @@ type EndoFunctorCompose k = FunctorCompose k k k
 --   for functors @g@ that compose with @f@ and with codomain @e@.
 type Precompose f e = FunctorCompose (Dom f) (Cod f) e :.: Tuple2 (Nat (Cod f) e) (Nat (Dom f) (Cod f)) f
 precompose :: (Category e, Functor f) => f -> Precompose f e
-precompose f = FunctorCompose :.: Tuple2 (natId f)
+precompose f = FunctorCompose :.: tuple2 (natId f)
 
 -- | @Postcompose f c@ is the functor such that @Postcompose f c :% g = f :.: g@,
 --   for functors @g@ that compose with @f@ and with domain @c@.

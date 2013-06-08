@@ -15,11 +15,13 @@ import Data.Category.Functor
 import Data.Category.NaturalTransformation
 import Data.Category.CartesianClosed
 
-type YonedaEmbedding k = Postcompose (Hom k) (Op k) :.: ToTuple2 k (Op k)
+type YonedaEmbedding k = 
+  Postcompose (Hom k) (Op k) :.: 
+  (Postcompose (Swap k (Op k)) (Op k) :.: Tuple k (Op k))
 
 -- | The Yoneda embedding functor, @C -> Set^(C^op)@.
 yonedaEmbedding :: Category k => YonedaEmbedding k
-yonedaEmbedding = postcompose Hom :.: ToTuple2
+yonedaEmbedding = postcompose Hom :.: (postcompose swap :.: Tuple)
 
 
 data Yoneda (k :: * -> * -> *) f = Yoneda

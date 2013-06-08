@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeOperators, TypeFamilies, TypeSynonymInstances, GADTs, FlexibleInstances, NoImplicitPrelude #-}
+{-# LANGUAGE TypeOperators, TypeFamilies, TypeSynonymInstances, GADTs, FlexibleInstances, UndecidableInstances, NoImplicitPrelude #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category.Presheaf
@@ -26,7 +26,7 @@ type PShExponential k y z = (Presheaves k :-*: z) :.: Opposite
   :.: YonedaEmbedding k
   )
 pshExponential :: Category k => Obj (Presheaves k) y -> Obj (Presheaves k) z -> PShExponential k y z
-pshExponential y z = hom_X z :.: Opposite (ProductFunctor :.: Tuple2 y :.: yonedaEmbedding)
+pshExponential y z = hom_X z :.: Opposite (ProductFunctor :.: tuple2 y :.: yonedaEmbedding)
 
 -- | The category of presheaves on a category @C@ is cartesian closed for any @C@.
 instance Category k => CartesianClosed (Presheaves k) where

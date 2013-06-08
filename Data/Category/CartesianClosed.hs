@@ -48,29 +48,21 @@ instance CartesianClosed (->) where
 
 
 
-data Apply (y :: * -> * -> *) (z :: * -> * -> *) = Apply
+data Apply (c1 :: * -> * -> *) (c2 :: * -> * -> *) = Apply
 -- | 'Apply' is a bifunctor, @Apply :% (f, a)@ applies @f@ to @a@, i.e. @f :% a@.
-instance (Category y, Category z) => Functor (Apply y z) where
-  type Dom (Apply y z) = Nat y z :**: y
-  type Cod (Apply y z) = z
-  type Apply y z :% (f, a) = f :% a
+instance (Category c1, Category c2) => Functor (Apply c1 c2) where
+  type Dom (Apply c1 c2) = Nat c2 c1 :**: c2
+  type Cod (Apply c1 c2) = c1
+  type Apply c1 c2 :% (f, a) = f :% a
   Apply % (l :**: r) = l ! r
 
-data ToTuple1 (y :: * -> * -> *) (z :: * -> * -> *) = ToTuple1
--- | 'ToTuple1' converts an object @a@ to the functor 'Tuple1' @a@.
-instance (Category y, Category z) => Functor (ToTuple1 y z) where
-  type Dom (ToTuple1 y z) = z
-  type Cod (ToTuple1 y z) = Nat y (z :**: y)
-  type ToTuple1 y z :% a = Tuple1 z y a
-  ToTuple1 % f = Nat (Tuple1 (src f)) (Tuple1 (tgt f)) (\z -> f :**: z)
-
-data ToTuple2 (y :: * -> * -> *) (z :: * -> * -> *) = ToTuple2
--- | 'ToTuple2' converts an object @a@ to the functor 'Tuple2' @a@.
-instance (Category y, Category z) => Functor (ToTuple2 y z) where
-  type Dom (ToTuple2 y z) = y
-  type Cod (ToTuple2 y z) = Nat z (z :**: y)
-  type ToTuple2 y z :% a = Tuple2 z y a
-  ToTuple2 % f = Nat (Tuple2 (src f)) (Tuple2 (tgt f)) (\y -> y :**: f)
+data Tuple (c1 :: * -> * -> *) (c2 :: * -> * -> *) = Tuple
+-- | 'Tuple' converts an object @a@ to the functor 'Tuple1' @a@.
+instance (Category c1, Category c2) => Functor (Tuple c1 c2) where
+  type Dom (Tuple c1 c2) = c1
+  type Cod (Tuple c1 c2) = Nat c2 (c1 :**: c2)
+  type Tuple c1 c2 :% a = Tuple1 c1 c2 a
+  Tuple % f = Nat (Tuple1 (src f)) (Tuple1 (tgt f)) (\z -> f :**: z)
 
 
 -- | Exponentials in @Cat@ are the functor categories.
@@ -78,7 +70,7 @@ instance CartesianClosed Cat where
   type Exponential Cat (CatW c) (CatW d) = CatW (Nat c d)
   
   apply CatA{} CatA{}   = CatA Apply
-  tuple CatA{} CatA{}   = CatA ToTuple1
+  tuple CatA{} CatA{}   = CatA Tuple
   (CatA f) ^^^ (CatA h) = CatA (Wrap f h)
 
 
@@ -88,7 +80,7 @@ curryAdj :: CartesianClosed k
          -> Adjunction k k
               (ProductFunctor k :.: Tuple2 k k y)
               (ExpFunctor k :.: Tuple1 (Op k) k y)
-curryAdj y = mkAdjunction (ProductFunctor :.: Tuple2 y) (ExpFunctor :.: Tuple1 (Op y)) (tuple y) (apply y)
+curryAdj y = mkAdjunction (ProductFunctor :.: tuple2 y) (ExpFunctor :.: Tuple1 (Op y)) (tuple y) (apply y)
 
 -- | From the adjunction between the product functor and the exponential functor we get the curry and uncurry functions,
 --   generalized to any cartesian closed category.

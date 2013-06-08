@@ -31,7 +31,8 @@ module Data.Category.Functor (
   , (:***:)(..)
   , DiagProd(..)
   , Tuple1(..)
-  , Tuple2(..)
+  , Swap, swap
+  , Tuple2, tuple2
 
   -- *** Hom functors
   , Hom(..)
@@ -110,7 +111,7 @@ instance (Category (Cod g), Category (Dom h)) => Functor (g :.: h) where
 
 
 data Const (c1 :: * -> * -> *) (c2 :: * -> * -> *) x where
-  Const :: Category c2 => Obj c2 x -> Const c1 c2 x
+  Const :: Obj c2 x -> Const c1 c2 x
 
 -- | The constant functor.
 instance (Category c1, Category c2) => Functor (Const c1 c2 x) where
@@ -212,16 +213,16 @@ instance (Category c1, Category c2) => Functor (Tuple1 c1 c2 a1) where
   
   Tuple1 a % f = a :**: f
 
+type Swap (c1 :: * -> * -> *) (c2 :: * -> * -> *) = (Proj2 c1 c2 :***: Proj1 c1 c2) :.: DiagProd (c1 :**: c2)
+-- | 'swap' swaps the 2 categories of the product of categories.
+swap :: (Category c1, Category c2) => Swap c1 c2
+swap = (Proj2 :***: Proj1) :.: DiagProd
 
-data Tuple2 (c1 :: * -> * -> *) (c2 :: * -> * -> *) a = Tuple2 (Obj c2 a)
-
+type Tuple2 c1 c2 a = Swap c2 c1 :.: Tuple1 c2 c1 a
 -- | 'Tuple2' tuples with a fixed object on the right.
-instance (Category c1, Category c2) => Functor (Tuple2 c1 c2 a2) where
-  type Dom (Tuple2 c1 c2 a2) = c1
-  type Cod (Tuple2 c1 c2 a2) = c1 :**: c2
-  type Tuple2 c1 c2 a2 :% a1 = (a1, a2)
-  
-  Tuple2 a % f = f :**: a
+tuple2 :: (Category c1, Category c2) => Obj c2 a -> Tuple2 c1 c2 a
+tuple2 a = swap :.: Tuple1 a
+
 
 
 data Hom (k :: * -> * -> *) = Hom
@@ -243,4 +244,4 @@ homX_ x = Hom :.: Tuple1 (Op x)
 type k :-*: x = Hom k :.: Tuple2 (Op k) k x
 -- | The contravariant functor Hom(--,X)
 hom_X :: Category k => Obj k x -> k :-*: x
-hom_X x = Hom :.: Tuple2 x
+hom_X x = Hom :.: tuple2 x
