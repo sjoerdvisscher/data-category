@@ -56,9 +56,11 @@ module Data.Category.Limit (
   , HasBinaryProducts(..)
   , ProductFunctor(..)
   , (:*:)(..)
+  , prodAdj
   , HasBinaryCoproducts(..)
   , CoproductFunctor(..)
   , (:+:)(..)
+  , coprodAdj
   
 ) where
 
@@ -418,6 +420,10 @@ instance HasBinaryProducts k => Functor (ProductFunctor k) where
 
   ProductFunctor % (a1 :**: a2) = a1 *** a2
 
+-- | A specialisation of the limit adjunction to products.
+prodAdj :: HasBinaryProducts k => Adjunction (k :**: k) k (DiagProd k) (ProductFunctor k)
+prodAdj = mkAdjunction DiagProd ProductFunctor (\x -> x &&& x) (\(l :**: r) -> proj1 l r :**: proj2 l r)
+
 data p :*: q where
   (:*:) :: (Functor p, Functor q, Dom p ~ Dom q, Cod p ~ k, Cod q ~ k, HasBinaryProducts k) => p -> q -> p :*: q
 -- | The product of two functors, passing the same object to both functors and taking the product of the results.
@@ -438,7 +444,7 @@ instance (Category c, HasBinaryProducts d) => HasBinaryProducts (Nat c d) where
   Nat a f af &&& Nat _ g ag = Nat a (f :*: g) (\z -> af z &&& ag z)
   Nat f1 f2 f *** Nat g1 g2 g = Nat (f1 :*: g1) (f2 :*: g2) (\z -> f z *** g z)
   
-  
+
 
 class Category k => HasBinaryCoproducts k where
   type BinaryCoproduct (k :: * -> * -> *) x y :: *
@@ -538,6 +544,10 @@ instance HasBinaryCoproducts k => Functor (CoproductFunctor k) where
   type CoproductFunctor k :% (a, b) = BinaryCoproduct k a b
 
   CoproductFunctor % (a1 :**: a2) = a1 +++ a2
+
+-- | A specialisation of the colimit adjunction to coproducts.
+coprodAdj :: HasBinaryCoproducts k => Adjunction k (k :**: k) (CoproductFunctor k) (DiagProd k)
+coprodAdj = mkAdjunction CoproductFunctor DiagProd (\(l :**: r) -> inj1 l r :**: inj2 l r) (\x -> x ||| x)
 
 data p :+: q where
   (:+:) :: (Functor p, Functor q, Dom p ~ Dom q, Cod p ~ k, Cod q ~ k, HasBinaryCoproducts k) => p -> q -> p :+: q
