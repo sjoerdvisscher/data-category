@@ -68,11 +68,11 @@ instance Category Simplex where
   tgt (Y f) = suc (tgt f)
   tgt (X f) = tgt f
   
-  Z     .    f  = f
-  f     .    Z  = f
-  (Y f) .    g  = Y (f . g)
-  (X f) . (Y g) = f . g
-  (X f) . (X g) = X ((X f) . g)
+  Z   .   f = f
+  f   .   Z = f
+  Y f .   g = Y (f . g)
+  X f . Y g = f . g
+  X f . X g = X (X f . g)
 
 
 -- | The ordinal @0@ is the initial object of the simplex category.
@@ -94,45 +94,6 @@ instance HasTerminalObject Simplex where
   terminate (X (Y f)) = X (terminate f)
 
 
-
-type Merge m n = BinaryCoproduct Simplex m n
-
-mergeLS :: Obj Simplex m -> Obj Simplex n -> Simplex (Merge (S m) n) (S (Merge m n))
-mergeLS Z Z = X (Y Z)
-mergeLS Z (X (Y n)) = X (Y (X (Y (Z +++ n))))
-mergeLS (X (Y m)) Z = X (Y (X (Y (m +++ Z))))
-mergeLS (X (Y m)) (X (Y n)) = X (Y (X (Y (mergeLS m n))))
-
-mergeRS :: Obj Simplex m -> Obj Simplex n -> Simplex (Merge m (S n)) (S (Merge m n))
-mergeRS Z Z = X (Y Z)
-mergeRS Z (X (Y n)) = X (Y (X (Y (Z +++ n))))
-mergeRS (X (Y m)) Z = X (Y (X (Y (m +++ Z))))
-mergeRS (X (Y m)) (X (Y n)) = X (Y (X (Y (mergeRS m n))))
-
--- | The coproduct in the simplex category is a merge operation.
-instance HasBinaryCoproducts Simplex where
-  type BinaryCoproduct Simplex  Z       Z  = Z
-  type BinaryCoproduct Simplex  Z    (S n) = S (Merge Z n)
-  type BinaryCoproduct Simplex (S m)    Z  = S (Merge m Z)
-  type BinaryCoproduct Simplex (S m) (S n) = S (S (Merge m n))
-
-  inj1       Z         Z   = Z
-  inj1       Z   (X (Y n)) = Y (inj1 Z n)
-  inj1 (X (Y m))       Z   = X (Y (inj1 m Z))
-  inj1 (X (Y m)) (X (Y n)) = X (Y (Y (inj1 m n)))
-
-  inj2       Z         Z   = Z
-  inj2       Z   (X (Y n)) = X (Y (inj2 Z n))
-  inj2 (X (Y m))       Z   = Y (inj2 m Z)
-  inj2 (X (Y m)) (X (Y n)) = Y (X (Y (inj2 m n)))
-
-  Z   ||| Z   = Z
-  X f ||| X g = X (X (f ||| g))
-  X f ||| Y g = X (f ||| Y g) . mergeLS (src f) (src g)
-  Y f ||| X g = X (Y f ||| g) . mergeRS (src f) (src g)
-  Y f ||| Y g = Y (f ||| g)
-
-
 data Fin :: * -> * where
   Fz ::          Fin (S n)
   Fs :: Fin n -> Fin (S n)
@@ -143,9 +104,9 @@ instance Functor Forget where
   type Dom Forget = Simplex
   type Cod Forget = (->)
   type Forget :% n = Fin n
-  Forget %  Z    = \x -> x
-  Forget % (Y f) = \x -> Fs ((Forget % f) x)
-  Forget % (X f) = \x -> case x of
+  Forget % Z   = \x -> x
+  Forget % Y f = \x -> Fs ((Forget % f) x)
+  Forget % X f = \x -> case x of
     Fz -> Fz
     Fs n -> (Forget % f) n
 
@@ -181,7 +142,7 @@ instance TensorProduct Add where
 
 
 -- | The maps @0 -> 1@ and @2 -> 1@ form a monoid, which is universal, c.f. `Replicate`.
-universalMonoid :: MonoidObject (CoproductFunctor Simplex) (S Z)
+universalMonoid :: MonoidObject Add (S Z)
 universalMonoid = MonoidObject { unit = Y Z, multiply = X (X (Y Z)) }
 
 data Replicate f a = Replicate f (MonoidObject f a)
