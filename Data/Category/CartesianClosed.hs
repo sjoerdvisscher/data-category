@@ -1,4 +1,13 @@
-{-# LANGUAGE TypeOperators, TypeFamilies, GADTs, Rank2Types, ScopedTypeVariables, UndecidableInstances, TypeSynonymInstances, NoImplicitPrelude #-}
+{-# LANGUAGE
+  TypeOperators,
+  TypeFamilies,
+  GADTs,
+  Rank2Types,
+  ScopedTypeVariables,
+  UndecidableInstances,
+  TypeSynonymInstances,
+  FlexibleInstances,
+  NoImplicitPrelude #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category.CartesianClosed
@@ -9,7 +18,7 @@
 -- Portability :  non-portable
 -----------------------------------------------------------------------------
 module Data.Category.CartesianClosed where
-  
+
 import Data.Category
 import Data.Category.Functor
 import Data.Category.NaturalTransformation
@@ -17,12 +26,13 @@ import Data.Category.Product
 import Data.Category.Limit
 import Data.Category.Adjunction
 import Data.Category.Monoidal as M
+import Data.Category.Yoneda
 
 
 -- | A category is cartesian closed if it has all products and exponentials for all objects.
 class (HasTerminalObject k, HasBinaryProducts k) => CartesianClosed k where
   type Exponential k y z :: *
-  
+
   apply :: Obj k y -> Obj k z -> k (BinaryProduct k (Exponential k y z) y) z
   tuple :: Obj k y -> Obj k z -> k z (Exponential k y (BinaryProduct k z y))
   (^^^) :: k z1 z2 -> k y2 y1 -> k (Exponential k y1 z1) (Exponential k y2 z2)
@@ -41,37 +51,38 @@ instance CartesianClosed k => Functor (ExpFunctor k) where
 -- | Exponentials in @Hask@ are functions.
 instance CartesianClosed (->) where
   type Exponential (->) y z = y -> z
-  
+
   apply _ _ (f, y) = f y
   tuple _ _ z      = \y -> (z, y)
   f ^^^ h          = \g -> f . g . h
 
 
 
-data Apply (c1 :: * -> * -> *) (c2 :: * -> * -> *) = Apply
--- | 'Apply' is a bifunctor, @Apply :% (f, a)@ applies @f@ to @a@, i.e. @f :% a@.
-instance (Category c1, Category c2) => Functor (Apply c1 c2) where
-  type Dom (Apply c1 c2) = Nat c2 c1 :**: c2
-  type Cod (Apply c1 c2) = c1
-  type Apply c1 c2 :% (f, a) = f :% a
-  Apply % (l :**: r) = l ! r
-
-data Tuple (c1 :: * -> * -> *) (c2 :: * -> * -> *) = Tuple
--- | 'Tuple' converts an object @a@ to the functor 'Tuple1' @a@.
-instance (Category c1, Category c2) => Functor (Tuple c1 c2) where
-  type Dom (Tuple c1 c2) = c1
-  type Cod (Tuple c1 c2) = Nat c2 (c1 :**: c2)
-  type Tuple c1 c2 :% a = Tuple1 c1 c2 a
-  Tuple % f = Nat (Tuple1 (src f)) (Tuple1 (tgt f)) (\z -> f :**: z)
-
-
 -- | Exponentials in @Cat@ are the functor categories.
 instance CartesianClosed Cat where
   type Exponential Cat (CatW c) (CatW d) = CatW (Nat c d)
-  
+
   apply CatA{} CatA{}   = CatA Apply
   tuple CatA{} CatA{}   = CatA Tuple
   (CatA f) ^^^ (CatA h) = CatA (Wrap f h)
+
+
+type PShExponential k y z = (Presheaves k :-*: z) :.: Opposite
+  (   ProductFunctor (Presheaves k)
+  :.: Tuple2 (Presheaves k) (Presheaves k) y
+  :.: YonedaEmbedding k
+  )
+pshExponential :: Category k => Obj (Presheaves k) y -> Obj (Presheaves k) z -> PShExponential k y z
+pshExponential y z = hom_X z :.: Opposite (ProductFunctor :.: tuple2 y :.: yonedaEmbedding)
+
+-- | The category of presheaves on a category @C@ is cartesian closed for any @C@.
+instance Category k => CartesianClosed (Presheaves k) where
+  type Exponential (Presheaves k) y z = PShExponential k y z
+
+  apply yn@(Nat y _ _) zn@(Nat z _ _) = Nat (pshExponential yn zn :*: y) z (\(Op i) (n, yi) -> (n ! Op i) (i, yi))
+  tuple yn zn@(Nat z _ _) = Nat z (pshExponential yn (zn *** yn)) (\(Op i) zi -> (Nat (hom_X i) z (\_ j2i -> (z % Op j2i) zi) *** yn))
+  zn ^^^ yn = Nat (pshExponential (tgt yn) (src zn)) (pshExponential (src yn) (tgt zn)) (\(Op i) n -> zn . n . (natId (hom_X i) *** yn))
+
 
 
 -- | The product functor is left adjoint the the exponential functor.
@@ -107,4 +118,3 @@ contextComonadExtract s a = M.counit (adjunctionComonad (curryAdj s)) ! a
 
 contextComonadDuplicate :: CartesianClosed k => Obj k s -> Obj k a -> k (Context k s a) (Context k s (Context k s a))
 contextComonadDuplicate s a = M.comultiply (adjunctionComonad (curryAdj s)) ! a
-

@@ -23,7 +23,8 @@ module Data.Category.NaturalTransformation (
   -- * Functor category
   , Nat(..)
   , Endo
-  
+  , Presheaves
+
   -- * Functor isomorphisms
   , compAssoc
   , compAssocInv
@@ -35,7 +36,7 @@ module Data.Category.NaturalTransformation (
   , constPrecompInv
   , constPostcomp
   , constPostcompInv
-    
+
   -- * Related functors
   , FunctorCompose(..)
   , EndoFunctorCompose
@@ -44,9 +45,11 @@ module Data.Category.NaturalTransformation (
   , Postcompose
   , postcompose
   , Wrap(..)
-  
+  , Apply(..)
+  , Tuple(..)
+
 ) where
-  
+
 import Data.Category
 import Data.Category.Functor
 import Data.Category.Product
@@ -54,7 +57,7 @@ import Data.Category.Product
 infixl 9 !
 
 -- | @f :~> g@ is a natural transformation from functor f to functor g.
-type f :~> g = (c ~ Dom f, c ~ Dom g, d ~ Cod f, d ~ Cod g) => Nat c d f g
+type f :~> g = forall c d. (c ~ Dom f, c ~ Dom g, d ~ Cod f, d ~ Cod g) => Nat c d f g
 
 -- | Natural transformations are built up of components,
 -- one for each object @z@ in the domain category of @f@ and @g@.
@@ -94,11 +97,11 @@ tgtF (Nat _ g _) = g
 -- | Functor category D^C.
 -- Objects of D^C are functors from C to D.
 -- Arrows of D^C are natural transformations.
-instance (Category c, Category d) => Category (Nat c d) where
-  
+instance Category d => Category (Nat c d) where
+
   src (Nat f _ _)           = natId f
   tgt (Nat _ g _)           = natId g
-  
+
   Nat _ h ngh . Nat f _ nfg = Nat f h (\i -> ngh i . nfg i)
 
 
@@ -123,19 +126,19 @@ idPostcompInv :: Functor f => f -> Nat (Dom f) (Cod f) f (Id (Cod f) :.: f)
 idPostcompInv f = Nat f (Id :.: f) (f %)
 
 
-constPrecomp :: (Category c1, Functor f) 
+constPrecomp :: (Category c1, Functor f)
              => Const c1 (Dom f) x -> f -> Nat c1 (Cod f) (f :.: Const c1 (Dom f) x) (Const c1 (Cod f) (f :% x))
 constPrecomp (Const x) f = let fx = f % x in Nat (f :.: Const x) (Const fx) (\_ -> fx)
 
-constPrecompInv :: (Category c1, Functor f) 
+constPrecompInv :: (Category c1, Functor f)
                 => Const c1 (Dom f) x -> f -> Nat c1 (Cod f) (Const c1 (Cod f) (f :% x)) (f :.: Const c1 (Dom f) x)
 constPrecompInv (Const x) f = let fx = f % x in Nat (Const fx) (f :.: Const x) (\_ -> fx)
 
-constPostcomp :: (Category c2, Functor f) 
+constPostcomp :: (Category c2, Functor f)
               => Const (Cod f) c2 x -> f -> Nat (Dom f) c2 (Const (Cod f) c2 x :.: f) (Const (Dom f) c2 x)
 constPostcomp (Const x) f = Nat (Const x :.: f) (Const x) (\_ -> x)
 
-constPostcompInv :: (Category c2, Functor f) 
+constPostcompInv :: (Category c2, Functor f)
                  => Const (Cod f) c2 x -> f -> Nat (Dom f) c2 (Const (Dom f) c2 x) (Const (Cod f) c2 x :.: f)
 constPostcompInv (Const x) f = Nat (Const x) (Const x :.: f) (\_ -> x)
 
@@ -147,7 +150,7 @@ instance (Category c, Category d, Category e) => Functor (FunctorCompose c d e) 
   type Dom (FunctorCompose c d e) = Nat d e :**: Nat c d
   type Cod (FunctorCompose c d e) = Nat c e
   type FunctorCompose c d e :% (f, g) = f :.: g
-  
+
   FunctorCompose % (n1 :**: n2) = n1 `o` n2
 
 
@@ -155,6 +158,8 @@ instance (Category c, Category d, Category e) => Functor (FunctorCompose c d e) 
 type Endo k = Nat k k
 -- | Composition of endofunctors is a functor.
 type EndoFunctorCompose k = FunctorCompose k k k
+
+type Presheaves k = Nat (Op k) (->)
 
 -- | @Precompose f e@ is the functor such that @Precompose f e :% g = g :.: f@,
 --   for functors @g@ that compose with @f@ and with codomain @e@.
@@ -177,5 +182,22 @@ instance (Functor f, Functor h) => Functor (Wrap f h) where
   type Dom (Wrap f h) = Nat (Cod h) (Dom f)
   type Cod (Wrap f h) = Nat (Dom h) (Cod f)
   type Wrap f h :% g = f :.: g :.: h
-  
+
   Wrap f h % n = natId f `o` n `o` natId h
+
+
+data Apply (c1 :: * -> * -> *) (c2 :: * -> * -> *) = Apply
+-- | 'Apply' is a bifunctor, @Apply :% (f, a)@ applies @f@ to @a@, i.e. @f :% a@.
+instance (Category c1, Category c2) => Functor (Apply c1 c2) where
+  type Dom (Apply c1 c2) = Nat c2 c1 :**: c2
+  type Cod (Apply c1 c2) = c1
+  type Apply c1 c2 :% (f, a) = f :% a
+  Apply % (l :**: r) = l ! r
+
+data Tuple (c1 :: * -> * -> *) (c2 :: * -> * -> *) = Tuple
+-- | 'Tuple' converts an object @a@ to the functor 'Tuple1' @a@.
+instance (Category c1, Category c2) => Functor (Tuple c1 c2) where
+  type Dom (Tuple c1 c2) = c1
+  type Cod (Tuple c1 c2) = Nat c2 (c1 :**: c2)
+  type Tuple c1 c2 :% a = Tuple1 c1 c2 a
+  Tuple % f = Nat (Tuple1 (src f)) (Tuple1 (tgt f)) (\z -> f :**: z)

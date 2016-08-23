@@ -13,10 +13,9 @@ module Data.Category.Yoneda where
 import Data.Category
 import Data.Category.Functor
 import Data.Category.NaturalTransformation
-import Data.Category.CartesianClosed
 
-type YonedaEmbedding k = 
-  Postcompose (Hom k) (Op k) :.: 
+type YonedaEmbedding k =
+  Postcompose (Hom k) (Op k) :.:
   (Postcompose (Swap k (Op k)) (Op k) :.: Tuple k (Op k))
 
 -- | The Yoneda embedding functor, @C -> Set^(C^op)@.
@@ -31,11 +30,11 @@ instance (Category k, Functor f, Dom f ~ Op k, Cod f ~ (->)) => Functor (Yoneda 
   type Cod (Yoneda k f) = (->)
   type Yoneda k f :% a = Nat (Op k) (->) (k :-*: a) f
   Yoneda % Op ab = \n -> n . yonedaEmbedding % ab
-      
-  
+
+
 -- | 'fromYoneda' and 'toYoneda' are together the isomophism from the Yoneda lemma.
-fromYoneda :: (Category k, Functor f, Dom f ~ Op k, Cod f ~ (->)) => f -> Yoneda k f :~> f
+fromYoneda :: (Category k, Functor f, Dom f ~ Op k, Cod f ~ (->)) => f -> Nat (Op k) (->) (Yoneda k f) f
 fromYoneda f = Nat Yoneda f (\(Op a) n -> (n ! Op a) a)
 
-toYoneda   :: (Category k, Functor f, Dom f ~ Op k, Cod f ~ (->)) => f -> f :~> Yoneda k f
+toYoneda   :: (Category k, Functor f, Dom f ~ Op k, Cod f ~ (->)) => f -> Nat (Op k) (->) f (Yoneda k f)
 toYoneda   f = Nat f Yoneda (\(Op a) fa -> Nat (hom_X a) f (\_ h -> (f % Op h) fa))

@@ -1,4 +1,4 @@
-{-# LANGUAGE GADTs, TypeFamilies, NoImplicitPrelude #-}
+{-# LANGUAGE EmptyCase, LambdaCase, TypeOperators, GADTs, TypeFamilies, NoImplicitPrelude #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category.Void
@@ -18,7 +18,7 @@ import Data.Category.NaturalTransformation
 data Void a b
 
 magic :: Void a b -> x
-magic x = magic x
+magic = \case { }
 
 -- | `Void` is the category with no objects.
 instance Category Void where
@@ -29,7 +29,7 @@ instance Category Void where
   (.) = magic
 
 
-voidNat :: (Functor f, Functor g, Category d, Dom f ~ Void, Dom g ~ Void, Cod f ~ d, Cod g ~ d)
+voidNat :: (Functor f, Functor g, Dom f ~ Void, Dom g ~ Void, Cod f ~ d, Cod g ~ d)
   => f -> g -> Nat Void d f g
 voidNat f g = Nat f g magic
 

@@ -16,27 +16,27 @@ module Data.Category.Adjunction (
 
   , leftAdjunct
   , rightAdjunct
-  
+
   -- * Adjunctions as a category
   , idAdj
   , composeAdj
   , AdjArrow(..)
-  
+
   -- * Adjunctions from universal morphisms
   , initialPropAdjunction
   , terminalPropAdjunction
-  
+
   -- * Universal morphisms from adjunctions
   , adjunctionInitialProp
   , adjunctionTerminalProp
-  
+
   -- * Examples
   , precomposeAdj
   , postcomposeAdj
   , contAdj
-  
+
 ) where
-  
+
 import Data.Category
 import Data.Category.Functor
 import Data.Category.NaturalTransformation
@@ -50,9 +50,9 @@ data Adjunction c d f g = (Functor f, Functor g, Category c, Category d, Dom f ~
   , counit       :: Nat c c (f :.: g) (Id c)
   }
 
-mkAdjunction :: (Functor f, Functor g, Category c, Category d, Dom f ~ d, Cod f ~ c, Dom g ~ c, Cod g ~ d)
-  => f -> g 
-  -> (forall a. Obj d a -> Component (Id d) (g :.: f) a) 
+mkAdjunction :: (Functor f, Functor g, Dom f ~ d, Cod f ~ c, Dom g ~ c, Cod g ~ d)
+  => f -> g
+  -> (forall a. Obj d a -> Component (Id d) (g :.: f) a)
   -> (forall a. Obj c a -> Component (f :.: g) (Id c) a)
   -> Adjunction c d f g
 mkAdjunction f g un coun = Adjunction f g (Nat Id (g :.: f) un) (Nat (f :.: g) Id coun)
@@ -74,24 +74,24 @@ adjunctionTerminalProp adj@(Adjunction f g _ coun) x = terminalUniversal f (g % 
 
 
 
-initialPropAdjunction :: forall f g c d. (Functor f, Functor g, Category c, Category d, Dom f ~ d, Cod f ~ c, Dom g ~ c, Cod g ~ d)
+initialPropAdjunction :: forall f g c d. (Functor f, Functor g, Dom f ~ d, Cod f ~ c, Dom g ~ c, Cod g ~ d)
   => f -> g -> (forall y. Obj d y -> InitialUniversal y g (f :% y)) -> Adjunction c d f g
-initialPropAdjunction f g univ = mkAdjunction f g 
+initialPropAdjunction f g univ = mkAdjunction f g
   (universalElement . univ)
   (\a -> represent (univ (g % a)) a (g % a))
-   
-terminalPropAdjunction :: forall f g c d. (Functor f, Functor g, Category c, Category d, Dom f ~ d, Cod f ~ c, Dom g ~ c, Cod g ~ d)
+
+terminalPropAdjunction :: forall f g c d. (Functor f, Functor g, Dom f ~ d, Cod f ~ c, Dom g ~ c, Cod g ~ d)
   => f -> g -> (forall x. Obj c x -> TerminalUniversal x f (g :% x)) -> Adjunction c d f g
-terminalPropAdjunction f g univ = mkAdjunction f g 
+terminalPropAdjunction f g univ = mkAdjunction f g
   (\a -> unOp (represent (univ (f % a)) (Op a) (f % a)))
   (universalElement . univ)
-    
+
 
 idAdj :: Category k => Adjunction k k (Id k) (Id k)
 idAdj = mkAdjunction Id Id (\x -> x) (\x -> x)
 
 composeAdj :: Adjunction d e f g -> Adjunction c d f' g' -> Adjunction c e (f' :.: f) (g :.: g')
-composeAdj (Adjunction f g u c) (Adjunction f' g' u' c') = Adjunction (f' :.: f) (g :.: g') 
+composeAdj (Adjunction f g u c) (Adjunction f' g' u' c') = Adjunction (f' :.: f) (g :.: g')
   (compAssoc (g :.: g') f' f . precompose f % (compAssocInv g g' f' . postcompose g % u' . idPrecompInv g) . u)
   (c' . precompose g' % (idPrecomp f' . postcompose f' % c . compAssoc f' f g) . compAssocInv (f' :.: f) g g')
 
@@ -101,23 +101,23 @@ data AdjArrow c d where
 
 -- | The category with categories as objects and adjunctions as arrows.
 instance Category AdjArrow where
-  
+
   src (AdjArrow (Adjunction _ _ _ _)) = AdjArrow idAdj
   tgt (AdjArrow (Adjunction _ _ _ _)) = AdjArrow idAdj
-  
+
   AdjArrow x . AdjArrow y = AdjArrow (composeAdj x y)
 
 
 
 precomposeAdj :: Category e => Adjunction c d f g -> Adjunction (Nat c e) (Nat d e) (Precompose g e) (Precompose f e)
-precomposeAdj (Adjunction f g un coun) = mkAdjunction 
+precomposeAdj (Adjunction f g un coun) = mkAdjunction
   (precompose g)
   (precompose f)
   (\nh@(Nat h _ _) -> compAssocInv h g f . (nh `o` un) . idPrecompInv h)
   (\nh@(Nat h _ _) -> idPrecomp h . (nh `o` coun) . compAssoc h f g)
 
 postcomposeAdj :: Category e => Adjunction c d f g -> Adjunction (Nat e c) (Nat e d) (Postcompose f e) (Postcompose g e)
-postcomposeAdj (Adjunction f g un coun) = mkAdjunction 
+postcomposeAdj (Adjunction f g un coun) = mkAdjunction
   (postcompose f)
   (postcompose g)
   (\nh@(Nat h _ _) -> compAssoc g f h . (un `o` nh) . idPostcompInv h)

@@ -1,5 +1,5 @@
 name:                data-category
-version:             0.6.1
+version:             0.6.2
 synopsis:            Category theory
 
 description:         Data-category is a collection of categories, and some categorical constructions on them.
@@ -41,7 +41,6 @@ Library
     Data.Category.Monoidal,
     Data.Category.CartesianClosed,
     Data.Category.Yoneda,
-    Data.Category.Presheaf,
     Data.Category.Boolean,
     Data.Category.Fix,
     Data.Category.Kleisli,
