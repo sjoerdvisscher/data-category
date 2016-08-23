@@ -317,9 +317,9 @@ class Category k => HasBinaryProducts k where
   proj1 :: Obj k x -> Obj k y -> k (BinaryProduct k x y) x
   proj2 :: Obj k x -> Obj k y -> k (BinaryProduct k x y) y
 
-  (&&&) :: (k a x) -> (k a y) -> (k a (BinaryProduct k x y))
+  (&&&) :: k a x -> k a y -> k a (BinaryProduct k x y)
 
-  (***) :: (k a1 b1) -> (k a2 b2) -> (k (BinaryProduct k a1 a2) (BinaryProduct k b1 b2))
+  (***) :: k a1 b1 -> k a2 b2 -> k (BinaryProduct k a1 a2) (BinaryProduct k b1 b2)
   l *** r = (l . proj1 (src l) (src r)) &&& (r . proj2 (src l) (src r))
 
 
@@ -453,9 +453,9 @@ class Category k => HasBinaryCoproducts k where
   inj1 :: Obj k x -> Obj k y -> k x (BinaryCoproduct k x y)
   inj2 :: Obj k x -> Obj k y -> k y (BinaryCoproduct k x y)
 
-  (|||) :: (k x a) -> (k y a) -> (k (BinaryCoproduct k x y) a)
+  (|||) :: k x a -> k y a -> k (BinaryCoproduct k x y) a
 
-  (+++) :: (k a1 b1) -> (k a2 b2) -> (k (BinaryCoproduct k a1 a2) (BinaryCoproduct k b1 b2))
+  (+++) :: k a1 b1 -> k a2 b2 -> k (BinaryCoproduct k a1 a2) (BinaryCoproduct k b1 b2)
   l +++ r = (inj1 (tgt l) (tgt r) . l) ||| (inj2 (tgt l) (tgt r) . r)
 
 
