@@ -143,6 +143,9 @@ mkMonad f ret join = MonoidObject
 monadFunctor :: Monad f -> f
 monadFunctor (unit -> Nat _ f _) = f
 
+idMonad :: Category k => Monad (Id k)
+idMonad = MonoidObject (natId Id) (idPrecomp Id)
+
 
 -- | A comonad is a comonoid in the category of endofunctors.
 type Comonad f = ComonoidObject (EndoFunctorCompose (Dom f)) f
@@ -157,11 +160,28 @@ mkComonad f extr dupl = ComonoidObject
   , comultiply = Nat f (f :.: f) dupl
   }
 
+idComonad :: Category k => Comonad (Id k)
+idComonad = ComonoidObject (natId Id) (idPrecompInv Id)
+
 
 -- | Every adjunction gives rise to an associated monad.
 adjunctionMonad :: Adjunction c d f g -> Monad (g :.: f)
-adjunctionMonad (Adjunction f g un coun) = mkMonad (g :.: f) (un !) ((Wrap g f % coun) !)
+adjunctionMonad adj@(Adjunction f g _ _) = 
+  let MonoidObject ret mult = adjunctionMonadT adj idMonad 
+  in mkMonad (g :.: f) (ret !) (mult !)
+
+-- | Every adjunction gives rise to an associated monad transformer.
+adjunctionMonadT :: (Dom m ~ c) => Adjunction c d f g -> Monad m -> Monad (g :.: m :.: f)
+adjunctionMonadT (Adjunction f g un coun) (MonoidObject ret@(Nat _ m _) mult) = mkMonad (g :.: m :.: f) 
+  ((Wrap g f % ret . idPrecompInv g `o` natId f . un) !) ((Wrap g f % (mult . idPrecomp m `o` natId m . Wrap m m % coun)) !)
 
 -- | Every adjunction gives rise to an associated comonad.
 adjunctionComonad :: Adjunction c d f g -> Comonad (f :.: g)
-adjunctionComonad (Adjunction f g un coun) = mkComonad (f :.: g) (coun !) ((Wrap f g % un) !)
+adjunctionComonad adj@(Adjunction f g _ _) = 
+  let ComonoidObject extr dupl = adjunctionComonadT adj idComonad
+  in mkComonad (f :.: g) (extr !) (dupl !)
+
+-- | Every adjunction gives rise to an associated comonad transformer.
+adjunctionComonadT :: (Dom w ~ d) => Adjunction c d f g -> Comonad w -> Comonad (f :.: w :.: g)
+adjunctionComonadT (Adjunction f g un coun) (ComonoidObject extr@(Nat w _ _) dupl) = mkComonad (f :.: w :.: g) 
+  ((coun . idPrecomp f `o` natId g . Wrap f g % extr) !)((Wrap f g % (Wrap w w % un . idPrecompInv w `o` natId w . dupl)) !)
