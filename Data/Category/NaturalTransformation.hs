@@ -13,7 +13,6 @@ module Data.Category.NaturalTransformation (
   -- * Natural transformations
     (:~>)
   , Component
-  , Com(..)
   , (!)
   , o
   , natId
@@ -24,6 +23,7 @@ module Data.Category.NaturalTransformation (
   , Nat(..)
   , Endo
   , Presheaves
+  , Profunctors
 
   -- * Functor isomorphisms
   , compAssoc
@@ -68,10 +68,6 @@ data Nat :: (* -> * -> *) -> (* -> * -> *) -> * -> * -> * where
 
 -- | A component for an object @z@ is an arrow from @F z@ to @G z@.
 type Component f g z = Cod f (f :% z) (g :% z)
-
--- | A newtype wrapper for components,
---   which can be useful for helper functions dealing with components.
-newtype Com f g z = Com { unCom :: Component f g z }
 
 -- | 'n ! a' returns the component for the object @a@ of a natural transformation @n@.
 --   This can be generalized to any arrow (instead of just identity arrows).
@@ -161,6 +157,8 @@ type EndoFunctorCompose k = FunctorCompose k k k
 
 type Presheaves k = Nat (Op k) (->)
 
+type Profunctors c d = Nat (Op d :**: c) (->)
+
 -- | @Precompose f e@ is the functor such that @Precompose f e :% g = g :.: f@,
 --   for functors @g@ that compose with @f@ and with codomain @e@.
 type Precompose f e = FunctorCompose (Dom f) (Cod f) e :.: Tuple2 (Nat (Cod f) e) (Nat (Dom f) (Cod f)) f
@@ -171,7 +169,7 @@ precompose f = FunctorCompose :.: tuple2 (natId f)
 --   for functors @g@ that compose with @f@ and with domain @c@.
 type Postcompose f c = FunctorCompose c (Dom f) (Cod f) :.: Tuple1 (Nat (Dom f) (Cod f)) (Nat c (Dom f)) f
 postcompose :: (Category e, Functor f) => f -> Postcompose f e
-postcompose f = FunctorCompose :.: Tuple1 (natId f)
+postcompose f = FunctorCompose :.: tuple1 (natId f)
 
 
 data Wrap f h = Wrap f h
@@ -200,4 +198,4 @@ instance (Category c1, Category c2) => Functor (Tuple c1 c2) where
   type Dom (Tuple c1 c2) = c1
   type Cod (Tuple c1 c2) = Nat c2 (c1 :**: c2)
   type Tuple c1 c2 :% a = Tuple1 c1 c2 a
-  Tuple % f = Nat (Tuple1 (src f)) (Tuple1 (tgt f)) (\z -> f :**: z)
+  Tuple % f = Nat (tuple1 (src f)) (tuple1 (tgt f)) (\z -> f :**: z)

@@ -333,15 +333,15 @@ instance (HasLimits i k, HasLimits j k, HasBinaryProducts k) => HasLimits (i :++
   limit = limit'
     where
       limit' :: forall f. Obj (Nat (i :++: j) k) f -> Cone f (Limit f)
-      limit' l@Nat{} = Nat (Const (x *** y)) (srcF l) (\z -> unCom (h z))
+      limit' l@Nat{} = Nat (Const (x *** y)) (srcF l) h
         where
           x = coneVertex lim1
           y = coneVertex lim2
           lim1 = limit (l `o` natId Inj1)
           lim2 = limit (l `o` natId Inj2)
-          h :: Obj (i :++: j) z -> Com (ConstF f (LimitFam (i :++: j) k f)) f z
-          h (I1 n) = Com (lim1 ! n . proj1 x y)
-          h (I2 n) = Com (lim2 ! n . proj2 x y)
+          h :: Obj (i :++: j) z -> Component (ConstF f (LimitFam (i :++: j) k f)) f z
+          h (I1 n) = lim1 ! n . proj1 x y
+          h (I2 n) = lim2 ! n . proj2 x y
 
   limitFactorizer l@Nat{} c =
     limitFactorizer (l `o` natId Inj1) ((c `o` natId Inj1) . constPostcompInv (srcF c) Inj1)
@@ -469,15 +469,15 @@ instance (HasColimits i k, HasColimits j k, HasBinaryCoproducts k) => HasColimit
   colimit = colimit'
     where
       colimit' :: forall f. Obj (Nat (i :++: j) k) f -> Cocone f (Colimit f)
-      colimit' l@Nat{} = Nat (srcF l) (Const (x +++ y)) (\z -> unCom (h z))
+      colimit' l@Nat{} = Nat (srcF l) (Const (x +++ y)) h
         where
           x = coconeVertex col1
           y = coconeVertex col2
           col1 = colimit (l `o` natId Inj1)
           col2 = colimit (l `o` natId Inj2)
-          h :: Obj (i :++: j) z -> Com f (ConstF f (ColimitFam (i :++: j) k f)) z
-          h (I1 n) = Com (inj1 x y . col1 ! n)
-          h (I2 n) = Com (inj2 x y . col2 ! n)
+          h :: Obj (i :++: j) z -> Component f (ConstF f (ColimitFam (i :++: j) k f)) z
+          h (I1 n) = inj1 x y . col1 ! n
+          h (I2 n) = inj2 x y . col2 ! n
 
   colimitFactorizer l@Nat{} c =
     colimitFactorizer (l `o` natId Inj1) (constPostcomp (tgtF c) Inj1 . (c `o` natId Inj1))
