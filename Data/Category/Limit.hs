@@ -636,3 +636,19 @@ instance (HasTerminalObject (i :>>: j), Category k) => HasColimits (i :>>: j) k 
 
   colimit (Nat f _ _) = Nat f (Const (f % terminalObject)) (\z -> f % terminate z)
   colimitFactorizer Nat{} n = n ! terminalObject
+
+
+data ForAll f = ForAll (forall a. Obj (->) a -> f :% a)
+type instance LimitFam (->) (->) f = ForAll f
+
+instance HasLimits (->) (->) where
+  limit (Nat f _ _) = Nat (Const (\x -> x)) f (\z (ForAll f) -> f z)
+  limitFactorizer Nat{} n = \o -> ForAll (\a -> (n ! a) o)
+
+
+data Exists f = forall a. Exists (Obj (->) a) (f :% a)
+type instance ColimitFam (->) (->) f = Exists f
+
+instance HasColimits (->) (->) where
+  colimit (Nat f _ _) = Nat f (Const (\x -> x)) Exists
+  colimitFactorizer Nat{} n = \(Exists a fa) -> (n ! a) fa
