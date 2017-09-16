@@ -91,7 +91,7 @@ curryAdj :: CartesianClosed k
          -> Adjunction k k
               (ProductFunctor k :.: Tuple2 k k y)
               (ExpFunctor k :.: Tuple1 (Op k) k y)
-curryAdj y = mkAdjunction (ProductFunctor :.: tuple2 y) (ExpFunctor :.: Tuple1 (Op y)) (tuple y) (apply y)
+curryAdj y = mkAdjunction (ProductFunctor :.: tuple2 y) (ExpFunctor :.: tuple1 (Op y)) (tuple y) (apply y)
 
 -- | From the adjunction between the product functor and the exponential functor we get the curry and uncurry functions,
 --   generalized to any cartesian closed category.

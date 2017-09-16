@@ -39,6 +39,7 @@ module Data.Category.Adjunction (
 
 import Data.Category
 import Data.Category.Functor
+import Data.Category.Product
 import Data.Category.NaturalTransformation
 import Data.Category.RepresentableFunctor
 
@@ -62,6 +63,10 @@ leftAdjunct (Adjunction _ g un _) i h = (g % h) . (un ! i)
 rightAdjunct :: Adjunction c d f g -> Obj c b -> d a (g :% b) -> c (f :% a) b
 rightAdjunct (Adjunction f _ _ coun) i h = (coun ! i) . (f % h)
 
+leftAdjunctN :: Adjunction c d f g -> Profunctors c d (Costar f) (Star g)
+leftAdjunctN (Adjunction f g un _) = Nat (costar f) (star g) (\(Op a :**: _) h -> (g % h) . (un ! a))
+rightAdjunctN :: Adjunction c d f g -> Profunctors c d (Star g) (Costar f)
+rightAdjunctN (Adjunction f g _ coun) = Nat (star g) (costar f) (\(_ :**: b) h -> (coun ! b) . (f % h))
 
 
 -- Each pair (FY, unit_Y) is an initial morphism from Y to G.
