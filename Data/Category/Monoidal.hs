@@ -22,7 +22,7 @@ module Data.Category.Monoidal where
 import Data.Category
 import Data.Category.Functor
 import Data.Category.NaturalTransformation
-import Data.Category.Adjunction (Adjunction(Adjunction))
+import Data.Category.Adjunction
 import Data.Category.Limit
 import Data.Category.Product
 
@@ -172,8 +172,9 @@ adjunctionMonad adj@(Adjunction f g _ _) =
 
 -- | Every adjunction gives rise to an associated monad transformer.
 adjunctionMonadT :: (Dom m ~ c) => Adjunction c d f g -> Monad m -> Monad (g :.: m :.: f)
-adjunctionMonadT (Adjunction f g un coun) (MonoidObject ret@(Nat _ m _) mult) = mkMonad (g :.: m :.: f) 
-  ((Wrap g f % ret . idPrecompInv g `o` natId f . un) !) ((Wrap g f % (mult . idPrecomp m `o` natId m . Wrap m m % coun)) !)
+adjunctionMonadT adj@(Adjunction f g _ _) (MonoidObject ret@(Nat _ m _) mult) = mkMonad (g :.: m :.: f) 
+  ((Wrap g f % ret . idPrecompInv g `o` natId f . adjunctionUnit adj) !) 
+  ((Wrap g f % (mult . idPrecomp m `o` natId m . Wrap m m % adjunctionCounit adj)) !)
 
 -- | Every adjunction gives rise to an associated comonad.
 adjunctionComonad :: Adjunction c d f g -> Comonad (f :.: g)
@@ -183,5 +184,6 @@ adjunctionComonad adj@(Adjunction f g _ _) =
 
 -- | Every adjunction gives rise to an associated comonad transformer.
 adjunctionComonadT :: (Dom w ~ d) => Adjunction c d f g -> Comonad w -> Comonad (f :.: w :.: g)
-adjunctionComonadT (Adjunction f g un coun) (ComonoidObject extr@(Nat w _ _) dupl) = mkComonad (f :.: w :.: g) 
-  ((coun . idPrecomp f `o` natId g . Wrap f g % extr) !)((Wrap f g % (Wrap w w % un . idPrecompInv w `o` natId w . dupl)) !)
+adjunctionComonadT adj@(Adjunction f g _ _) (ComonoidObject extr@(Nat w _ _) dupl) = mkComonad (f :.: w :.: g) 
+  ((adjunctionCounit adj . idPrecomp f `o` natId g . Wrap f g % extr) !)
+  ((Wrap f g % (Wrap w w % adunctionUnit adj . idPrecompInv w `o` natId w . dupl)) !)

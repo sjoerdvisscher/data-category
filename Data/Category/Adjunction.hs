@@ -13,9 +13,12 @@ module Data.Category.Adjunction (
   -- * Adjunctions
     Adjunction(..)
   , mkAdjunction
+  , mkAdjunctionUnits
 
   , leftAdjunct
   , rightAdjunct
+  , adjunctionUnit
+  , adjunctionCounit
 
   -- * Adjunctions as a category
   , idAdj
@@ -47,58 +50,63 @@ data Adjunction c d f g = (Functor f, Functor g, Category c, Category d, Dom f ~
   => Adjunction
   { leftAdjoint  :: f
   , rightAdjoint :: g
-  , unit         :: Nat d d (Id d) (g :.: f)
-  , counit       :: Nat c c (f :.: g) (Id c)
+  , leftAdjunctN  :: Profunctors c d (Costar f) (Star g)
+  , rightAdjunctN :: Profunctors c d (Star g) (Costar f)
   }
 
 mkAdjunction :: (Functor f, Functor g, Dom f ~ d, Cod f ~ c, Dom g ~ c, Cod g ~ d)
   => f -> g
+  -> (forall a b. Obj d a -> c (f :% a) b -> d a (g :% b))
+  -> (forall a b. Obj c b -> d a (g :% b) -> c (f :% a) b)
+  -> Adjunction c d f g
+mkAdjunction f g l r = Adjunction f g (Nat (costar f) (star g) (\(Op a :**: _) -> l a)) (Nat (star g) (costar f) (\(_ :**: b) -> r b))
+
+mkAdjunctionUnits :: (Functor f, Functor g, Dom f ~ d, Cod f ~ c, Dom g ~ c, Cod g ~ d)
+  => f -> g
   -> (forall a. Obj d a -> Component (Id d) (g :.: f) a)
   -> (forall a. Obj c a -> Component (f :.: g) (Id c) a)
   -> Adjunction c d f g
-mkAdjunction f g un coun = Adjunction f g (Nat Id (g :.: f) un) (Nat (f :.: g) Id coun)
+mkAdjunctionUnits f g un coun = mkAdjunction f g (\a h -> (g % h) . un a) (\b h -> coun b . (f % h))
 
 leftAdjunct :: Adjunction c d f g -> Obj d a -> c (f :% a) b -> d a (g :% b)
-leftAdjunct (Adjunction _ g un _) i h = (g % h) . (un ! i)
+leftAdjunct (Adjunction _ _ l _) a h = (l ! (Op a :**: tgt h)) h
 rightAdjunct :: Adjunction c d f g -> Obj c b -> d a (g :% b) -> c (f :% a) b
-rightAdjunct (Adjunction f _ _ coun) i h = (coun ! i) . (f % h)
+rightAdjunct (Adjunction _ _ _ r) b h = (r ! (Op (src h) :**: b)) h
 
-leftAdjunctN :: Adjunction c d f g -> Profunctors c d (Costar f) (Star g)
-leftAdjunctN (Adjunction f g un _) = Nat (costar f) (star g) (\(Op a :**: _) h -> (g % h) . (un ! a))
-rightAdjunctN :: Adjunction c d f g -> Profunctors c d (Star g) (Costar f)
-rightAdjunctN (Adjunction f g _ coun) = Nat (star g) (costar f) (\(_ :**: b) h -> (coun ! b) . (f % h))
-
+adjunctionUnit :: Adjunction c d f g -> Nat d d (Id d) (g :.: f)
+adjunctionUnit adj@(Adjunction f g _ _) = Nat Id (g :.: f) (\a -> leftAdjunct adj a (f % a))
+adjunctionCounit :: Adjunction c d f g -> Nat c c (f :.: g) (Id c)
+adjunctionCounit adj@(Adjunction f g _ _) = Nat (f :.: g) Id (\b -> rightAdjunct adj b (g % b))
 
 -- Each pair (FY, unit_Y) is an initial morphism from Y to G.
 adjunctionInitialProp :: Adjunction c d f g -> Obj d y -> InitialUniversal y g (f :% y)
-adjunctionInitialProp adj@(Adjunction f g un _) y = initialUniversal g (f % y) (un ! y) (rightAdjunct adj)
+adjunctionInitialProp adj@(Adjunction f g _ _) y = initialUniversal g (f % y) (adjunctionUnit adj ! y) (rightAdjunct adj)
 
 -- Each pair (GX, counit_X) is a terminal morphism from F to X.
 adjunctionTerminalProp :: Adjunction c d f g -> Obj c x -> TerminalUniversal x f (g :% x)
-adjunctionTerminalProp adj@(Adjunction f g _ coun) x = terminalUniversal f (g % x) (coun ! x) (leftAdjunct adj)
+adjunctionTerminalProp adj@(Adjunction f g _ _) x = terminalUniversal f (g % x) (adjunctionCounit adj ! x) (leftAdjunct adj)
 
 
 
 initialPropAdjunction :: forall f g c d. (Functor f, Functor g, Dom f ~ d, Cod f ~ c, Dom g ~ c, Cod g ~ d)
   => f -> g -> (forall y. Obj d y -> InitialUniversal y g (f :% y)) -> Adjunction c d f g
-initialPropAdjunction f g univ = mkAdjunction f g
+initialPropAdjunction f g univ = mkAdjunctionUnits f g
   (universalElement . univ)
   (\a -> represent (univ (g % a)) a (g % a))
 
 terminalPropAdjunction :: forall f g c d. (Functor f, Functor g, Dom f ~ d, Cod f ~ c, Dom g ~ c, Cod g ~ d)
   => f -> g -> (forall x. Obj c x -> TerminalUniversal x f (g :% x)) -> Adjunction c d f g
-terminalPropAdjunction f g univ = mkAdjunction f g
+terminalPropAdjunction f g univ = mkAdjunctionUnits f g
   (\a -> unOp (represent (univ (f % a)) (Op a) (f % a)))
   (universalElement . univ)
 
 
 idAdj :: Category k => Adjunction k k (Id k) (Id k)
-idAdj = mkAdjunction Id Id (\x -> x) (\x -> x)
+idAdj = mkAdjunction Id Id (\_ f -> f) (\_ f -> f)
 
 composeAdj :: Adjunction d e f g -> Adjunction c d f' g' -> Adjunction c e (f' :.: f) (g :.: g')
-composeAdj (Adjunction f g u c) (Adjunction f' g' u' c') = Adjunction (f' :.: f) (g :.: g')
-  (compAssoc (g :.: g') f' f . precompose f % (compAssocInv g g' f' . postcompose g % u' . idPrecompInv g) . u)
-  (c' . precompose g' % (idPrecomp f' . postcompose f' % c . compAssoc f' f g) . compAssocInv (f' :.: f) g g')
+composeAdj l@(Adjunction f g _ _) r@(Adjunction f' g' _ _) = mkAdjunction (f' :.: f) (g :.: g')
+  (\a -> leftAdjunct l a . leftAdjunct r (f % a)) (\b -> rightAdjunct r b . rightAdjunct l (g' % b))
 
 
 data AdjArrow c d where
@@ -115,22 +123,22 @@ instance Category AdjArrow where
 
 
 precomposeAdj :: Category e => Adjunction c d f g -> Adjunction (Nat c e) (Nat d e) (Precompose g e) (Precompose f e)
-precomposeAdj (Adjunction f g un coun) = mkAdjunction
+precomposeAdj adj@(Adjunction f g _ _) = mkAdjunctionUnits
   (precompose g)
   (precompose f)
-  (\nh@(Nat h _ _) -> compAssocInv h g f . (nh `o` un) . idPrecompInv h)
-  (\nh@(Nat h _ _) -> idPrecomp h . (nh `o` coun) . compAssoc h f g)
+  (\nh@(Nat h _ _) -> compAssocInv h g f . (nh `o` adjunctionUnit adj) . idPrecompInv h)
+  (\nh@(Nat h _ _) -> idPrecomp h . (nh `o` adjunctionCounit adj) . compAssoc h f g)
 
 postcomposeAdj :: Category e => Adjunction c d f g -> Adjunction (Nat e c) (Nat e d) (Postcompose f e) (Postcompose g e)
-postcomposeAdj (Adjunction f g un coun) = mkAdjunction
+postcomposeAdj adj@(Adjunction f g _ _) = mkAdjunctionUnits
   (postcompose f)
   (postcompose g)
-  (\nh@(Nat h _ _) -> compAssoc g f h . (un `o` nh) . idPostcompInv h)
-  (\nh@(Nat h _ _) -> idPostcomp h . (coun `o` nh) . compAssocInv f g h)
+  (\nh@(Nat h _ _) -> compAssoc g f h . (adjunctionUnit adj `o` nh) . idPostcompInv h)
+  (\nh@(Nat h _ _) -> idPostcomp h . (adjunctionCounit adj `o` nh) . compAssocInv f g h)
 
 contAdj :: Adjunction (Op (->)) (->) (Opposite ((->) :-*: r) :.: OpOpInv (->)) ((->) :-*: r)
 contAdj = mkAdjunction
   (Opposite (hom_X (\x -> x)) :.: OpOpInv)
   (hom_X (\x -> x))
-  (\_ x f -> f x)
-  (\_ -> Op (\x f -> f x))
+  (\_ -> \(Op f) -> \b a -> f a b)
+  (\_ -> \f -> Op (\b a -> f a b))

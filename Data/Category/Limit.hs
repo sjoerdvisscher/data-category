@@ -138,7 +138,7 @@ instance HasLimits j k => Functor (LimitFunctor j k) where
 
 -- | The limit functor is right adjoint to the diagonal functor.
 limitAdj :: forall j k. HasLimits j k => Adjunction (Nat j k) k (Diag j k) (LimitFunctor j k)
-limitAdj = mkAdjunction diag LimitFunctor (\a -> limitFactorizer (diag % a) (diag % a)) (\f @ Nat{} -> limit f)
+limitAdj = mkAdjunctionUnits diag LimitFunctor (\a -> limitFactorizer (diag % a) (diag % a)) (\f @ Nat{} -> limit f)
   where diag = Diag :: Diag j k -- Forces the type of all Diags to be the same.
 
 rightAdjointPreservesLimits 
@@ -180,7 +180,7 @@ instance HasColimits j k => Functor (ColimitFunctor j k) where
 
 -- | The colimit functor is left adjoint to the diagonal functor.
 colimitAdj :: forall j k. HasColimits j k => Adjunction k (Nat j k) (ColimitFunctor j k) (Diag j k)
-colimitAdj = mkAdjunction ColimitFunctor diag (\f @ Nat{} -> colimit f) (\a -> colimitFactorizer (diag % a) (diag % a))
+colimitAdj = mkAdjunctionUnits ColimitFunctor diag (\f @ Nat{} -> colimit f) (\a -> colimitFactorizer (diag % a) (diag % a))
   where diag = Diag :: Diag j k -- Forces the type of all Diags to be the same.
 
 
@@ -435,7 +435,7 @@ instance HasBinaryProducts k => Functor (ProductFunctor k) where
 
 -- | A specialisation of the limit adjunction to products.
 prodAdj :: HasBinaryProducts k => Adjunction (k :**: k) k (DiagProd k) (ProductFunctor k)
-prodAdj = mkAdjunction DiagProd ProductFunctor (\x -> x &&& x) (\(l :**: r) -> proj1 l r :**: proj2 l r)
+prodAdj = mkAdjunctionUnits DiagProd ProductFunctor (\x -> x &&& x) (\(l :**: r) -> proj1 l r :**: proj2 l r)
 
 data p :*: q where
   (:*:) :: (Functor p, Functor q, Dom p ~ Dom q, Cod p ~ k, Cod q ~ k, HasBinaryProducts k) => p -> q -> p :*: q
@@ -561,7 +561,7 @@ instance HasBinaryCoproducts k => Functor (CoproductFunctor k) where
 
 -- | A specialisation of the colimit adjunction to coproducts.
 coprodAdj :: HasBinaryCoproducts k => Adjunction k (k :**: k) (CoproductFunctor k) (DiagProd k)
-coprodAdj = mkAdjunction CoproductFunctor DiagProd (\(l :**: r) -> inj1 l r :**: inj2 l r) (\x -> x ||| x)
+coprodAdj = mkAdjunctionUnits CoproductFunctor DiagProd (\(l :**: r) -> inj1 l r :**: inj2 l r) (\x -> x ||| x)
 
 data p :+: q where
   (:+:) :: (Functor p, Functor q, Dom p ~ Dom q, Cod p ~ k, Cod q ~ k, HasBinaryCoproducts k) => p -> q -> p :+: q
@@ -654,9 +654,8 @@ data ForAll f = ForAll (forall a. Obj (->) a -> f :% a)
 type instance LimitFam (->) (->) f = ForAll f
 
 instance HasLimits (->) (->) where
-  limit (Nat f _ _) = Nat (Const (\x -> x)) f (\z (ForAll f) -> f z)
-  limitFactorizer Nat{} n = \o -> ForAll (\a -> (n ! a) o)
-
+  limit (Nat f _ _) = Nat (Const (\x -> x)) f (\a (ForAll g) -> g a)
+  limitFactorizer Nat{} n = \z -> ForAll (\a -> (n ! a) z)
 
 data Exists f = forall a. Exists (Obj (->) a) (f :% a)
 type instance ColimitFam (->) (->) f = Exists f
