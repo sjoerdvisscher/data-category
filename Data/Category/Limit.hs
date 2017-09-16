@@ -141,7 +141,19 @@ limitAdj :: forall j k. HasLimits j k => Adjunction (Nat j k) k (Diag j k) (Limi
 limitAdj = mkAdjunction diag LimitFunctor (\a -> limitFactorizer (diag % a) (diag % a)) (\f @ Nat{} -> limit f)
   where diag = Diag :: Diag j k -- Forces the type of all Diags to be the same.
 
-
+rightAdjointPreservesLimits 
+  :: forall c d f g j t. (HasLimits j c, HasLimits j d, Functor t, Dom t ~ j, Cod t ~ c) 
+  => Adjunction c d f g -> t -> d (Limit (g :.: t)) (g :% Limit t)
+rightAdjointPreservesLimits adj@(Adjunction _ g _ _) t = c1 (h c2)
+  where
+    c2 :: Nat j c (f :.: Const j d (Limit (g :.: t))) t
+    c2 = rightAdjunct (composeAdj limitAdj (postcomposeAdj adj)) (natId t) l
+    c1 :: Nat j c (Const j c (f :% Limit (g :.: t))) t -> d (Limit (g :.: t)) (g :% Limit t)
+    c1 = leftAdjunct (composeAdj adj limitAdj) l
+    h :: Nat j c (f :.: Const j d a) t -> Nat j c (Const j c (f :% a)) t
+    h (Nat (f :.: Const a) _ n) = Nat (Const (f % a)) t n
+    l :: Obj d (Limit (g :.: t))
+    l = coneVertex (limit (natId (g :.: t)))
 
 -- | Colimits in a category @k@ by means of a diagram of type @j@, which is a functor from @j@ to @k@.
 type family ColimitFam (j :: * -> * -> *) (k :: * -> * -> *) (f :: *) :: *
