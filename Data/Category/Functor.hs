@@ -38,6 +38,7 @@ module Data.Category.Functor (
   , Hom(..)
   , (:*-:), homX_
   , (:-*:), hom_X
+  , HomF, homF
   , Star, star
   , Costar, costar
 

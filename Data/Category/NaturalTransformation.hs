@@ -32,10 +32,10 @@ module Data.Category.NaturalTransformation (
   , idPrecompInv
   , idPostcomp
   , idPostcompInv
-  , constPrecomp
-  , constPrecompInv
-  , constPostcomp
-  , constPostcompInv
+  , constPrecompIn
+  , constPrecompOut
+  , constPostcompIn
+  , constPostcompOut
 
   -- * Related functors
   , FunctorCompose(..)
@@ -122,21 +122,17 @@ idPostcompInv :: Functor f => f -> Nat (Dom f) (Cod f) f (Id (Cod f) :.: f)
 idPostcompInv f = Nat f (Id :.: f) (f %)
 
 
-constPrecomp :: (Category c1, Functor f)
-             => Const c1 (Dom f) x -> f -> Nat c1 (Cod f) (f :.: Const c1 (Dom f) x) (Const c1 (Cod f) (f :% x))
-constPrecomp (Const x) f = let fx = f % x in Nat (f :.: Const x) (Const fx) (\_ -> fx)
+constPrecompIn :: Nat j d (f :.: Const j c x) g -> Nat j d (Const j d (f :% x)) g
+constPrecompIn (Nat (f :.: Const x) g n) = Nat (Const (f % x)) g n
 
-constPrecompInv :: (Category c1, Functor f)
-                => Const c1 (Dom f) x -> f -> Nat c1 (Cod f) (Const c1 (Cod f) (f :% x)) (f :.: Const c1 (Dom f) x)
-constPrecompInv (Const x) f = let fx = f % x in Nat (Const fx) (f :.: Const x) (\_ -> fx)
+constPrecompOut :: Nat j d f (g :.: Const j c x) -> Nat j d f (Const j d (g :% x))
+constPrecompOut (Nat f (g :.: Const x) n) = Nat f (Const (g % x)) n
 
-constPostcomp :: (Category c2, Functor f)
-              => Const (Cod f) c2 x -> f -> Nat (Dom f) c2 (Const (Cod f) c2 x :.: f) (Const (Dom f) c2 x)
-constPostcomp (Const x) f = Nat (Const x :.: f) (Const x) (\_ -> x)
+constPostcompIn :: Nat j d (Const k d x :.: f) g -> Nat j d (Const j d x) g
+constPostcompIn (Nat (Const x :.: _) g n) = Nat (Const x) g n
 
-constPostcompInv :: (Category c2, Functor f)
-                 => Const (Cod f) c2 x -> f -> Nat (Dom f) c2 (Const (Dom f) c2 x) (Const (Cod f) c2 x :.: f)
-constPostcompInv (Const x) f = Nat (Const x) (Const x :.: f) (\_ -> x)
+constPostcompOut :: Nat j d f (Const k d x :.: g) -> Nat j d f (Const j d x)
+constPostcompOut (Nat f (Const x :.: _) n) = Nat f (Const x) n
 
 
 data FunctorCompose (c :: * -> * -> *) (d :: * -> * -> *) (e :: * -> * -> *) = FunctorCompose

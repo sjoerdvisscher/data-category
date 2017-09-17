@@ -39,6 +39,8 @@ module Data.Category.Limit (
   , HasLimits(..)
   , LimitFunctor(..)
   , limitAdj
+  , rightAdjointPreservesLimits
+  , rightAdjointPreservesLimitsInv
 
   -- * Colimits
   , ColimitFam
@@ -46,6 +48,8 @@ module Data.Category.Limit (
   , HasColimits(..)
   , ColimitFunctor(..)
   , colimitAdj
+  , leftAdjointPreservesColimits
+  , leftAdjointPreservesColimitsInv
 
   -- ** Limits of type Void
   , HasTerminalObject(..)
@@ -141,19 +145,30 @@ limitAdj :: forall j k. HasLimits j k => Adjunction (Nat j k) k (Diag j k) (Limi
 limitAdj = mkAdjunctionUnits diag LimitFunctor (\a -> limitFactorizer (diag % a) (diag % a)) (\f @ Nat{} -> limit f)
   where diag = Diag :: Diag j k -- Forces the type of all Diags to be the same.
 
-rightAdjointPreservesLimits 
-  :: forall c d f g j t. (HasLimits j c, HasLimits j d, Functor t, Dom t ~ j, Cod t ~ c) 
-  => Adjunction c d f g -> t -> d (Limit (g :.: t)) (g :% Limit t)
-rightAdjointPreservesLimits adj@(Adjunction _ g _ _) t = c1 (h c2)
-  where
-    c2 :: Nat j c (f :.: Const j d (Limit (g :.: t))) t
-    c2 = rightAdjunct (composeAdj limitAdj (postcomposeAdj adj)) (natId t) l
-    c1 :: Nat j c (Const j c (f :% Limit (g :.: t))) t -> d (Limit (g :.: t)) (g :% Limit t)
-    c1 = leftAdjunct (composeAdj adj limitAdj) l
-    h :: Nat j c (f :.: Const j d a) t -> Nat j c (Const j c (f :% a)) t
-    h (Nat (f :.: Const a) _ n) = Nat (Const (f % a)) t n
-    l :: Obj d (Limit (g :.: t))
-    l = coneVertex (limit (natId (g :.: t)))
+-- Cone (g :.: t) (Limit (g :.: t))
+-- Obj j z -> d (Limit (g :.: t)) ((g :.: t) :% z)
+-- Obj j z -> d (f :% Limit (g :.: t)) (t :% z)
+-- Cone t (f :% Limit (g :.: t))
+-- d (f :% Limit (g :.: t)) (Limit t)
+-- d (Limit (g :.: t)) (g :% Limit t)
+rightAdjointPreservesLimits
+  :: (HasLimits j c, HasLimits j d) 
+  => Adjunction c d f g -> Obj (Nat j c) t -> d (Limit (g :.: t)) (g :% Limit t)
+rightAdjointPreservesLimits adj@(Adjunction f g _ _) (Nat t _ _) = 
+  leftAdjunct adj x (limitFactorizer (natId t) cone)
+    where
+      l = limit (natId (g :.: t))
+      x = coneVertex l
+      -- cone :: Cone t (f :% Limit (g :.: t))
+      cone = Nat (Const (f % x)) t (\z -> rightAdjunct adj (t % z) (l ! z))
+      
+-- Cone t (Limit t)
+-- Cone (g :.: t) (g :% Limit t)
+-- d (g :% Limit t) (Limit (g :.: t))
+rightAdjointPreservesLimitsInv
+  :: (HasLimits j c, HasLimits j d)
+  => Obj (Nat c d) g -> Obj (Nat j c) t -> d (g :% Limit t) (Limit (g :.: t))
+rightAdjointPreservesLimitsInv g@Nat{} t@Nat{} = limitFactorizer (g `o` t) (constPrecompIn (g `o` limit t))
 
 -- | Colimits in a category @k@ by means of a diagram of type @j@, which is a functor from @j@ to @k@.
 type family ColimitFam (j :: * -> * -> *) (k :: * -> * -> *) (f :: *) :: *
@@ -183,6 +198,21 @@ colimitAdj :: forall j k. HasColimits j k => Adjunction k (Nat j k) (ColimitFunc
 colimitAdj = mkAdjunctionUnits ColimitFunctor diag (\f @ Nat{} -> colimit f) (\a -> colimitFactorizer (diag % a) (diag % a))
   where diag = Diag :: Diag j k -- Forces the type of all Diags to be the same.
 
+
+leftAdjointPreservesColimits
+  :: (HasColimits j c, HasColimits j d) 
+  => Adjunction c d f g -> Obj (Nat j d) t -> c (f :% Colimit t) (Colimit (f :.: t))
+leftAdjointPreservesColimits adj@(Adjunction f g _ _) (Nat t _ _) = 
+  rightAdjunct adj x (colimitFactorizer (natId t) cocone)
+    where
+      l = colimit (natId (f :.: t))
+      x = coconeVertex l
+      cocone = Nat t (Const (g % x)) (\z -> leftAdjunct adj (t % z) (l ! z))
+
+leftAdjointPreservesColimitsInv
+  :: (HasColimits j c, HasColimits j d) 
+  => Obj (Nat d c) f -> Obj (Nat j d) t -> c (Colimit (f :.: t)) (f :% Colimit t)
+leftAdjointPreservesColimitsInv f@Nat{} t@Nat{} = colimitFactorizer (f `o` t) (constPrecompOut (f `o` colimit t))
 
 
 class Category k => HasTerminalObject k where
@@ -356,9 +386,9 @@ instance (HasLimits i k, HasLimits j k, HasBinaryProducts k) => HasLimits (i :++
           h (I2 n) = lim2 ! n . proj2 x y
 
   limitFactorizer l@Nat{} c =
-    limitFactorizer (l `o` natId Inj1) ((c `o` natId Inj1) . constPostcompInv (srcF c) Inj1)
+    limitFactorizer (l `o` natId Inj1) (constPostcompIn (c `o` natId Inj1))
     &&&
-    limitFactorizer (l `o` natId Inj2) ((c `o` natId Inj2) . constPostcompInv (srcF c) Inj2)
+    limitFactorizer (l `o` natId Inj2) (constPostcompIn (c `o` natId Inj2))
 
 
 -- | The tuple is the binary product in @Hask@.
@@ -492,9 +522,9 @@ instance (HasColimits i k, HasColimits j k, HasBinaryCoproducts k) => HasColimit
           h (I2 n) = inj2 x y . col2 ! n
 
   colimitFactorizer l@Nat{} c =
-    colimitFactorizer (l `o` natId Inj1) (constPostcomp (tgtF c) Inj1 . (c `o` natId Inj1))
+    colimitFactorizer (l `o` natId Inj1) (constPostcompOut (c `o` natId Inj1))
     |||
-    colimitFactorizer (l `o` natId Inj2) (constPostcomp (tgtF c) Inj2 . (c `o` natId Inj2))
+    colimitFactorizer (l `o` natId Inj2) (constPostcompOut (c `o` natId Inj2))
 
 
 -- | The coproduct of categories ':++:' is the binary coproduct in 'Cat'.
