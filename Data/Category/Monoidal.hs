@@ -186,4 +186,4 @@ adjunctionComonad adj@(Adjunction f g _ _) =
 adjunctionComonadT :: (Dom w ~ d) => Adjunction c d f g -> Comonad w -> Comonad (f :.: w :.: g)
 adjunctionComonadT adj@(Adjunction f g _ _) (ComonoidObject extr@(Nat w _ _) dupl) = mkComonad (f :.: w :.: g) 
   ((adjunctionCounit adj . idPrecomp f `o` natId g . Wrap f g % extr) !)
-  ((Wrap f g % (Wrap w w % adunctionUnit adj . idPrecompInv w `o` natId w . dupl)) !)
+  ((Wrap f g % (Wrap w w % adjunctionUnit adj . idPrecompInv w `o` natId w . dupl)) !)

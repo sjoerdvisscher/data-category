@@ -52,6 +52,6 @@ instance (Functor m, Dom m ~ k, Cod m ~ k) => Functor (KleisliAdjG m) where
 
 kleisliAdj :: (Functor m, Dom m ~ k, Cod m ~ k)
   => Monad m -> A.Adjunction (Kleisli m) k (KleisliAdjF m) (KleisliAdjG m)
-kleisliAdj m = A.mkAdjunction (KleisliAdjF m) (KleisliAdjG m)
+kleisliAdj m = A.mkAdjunctionUnits (KleisliAdjF m) (KleisliAdjG m)
   (\x -> unit m ! x)
   (\(Kleisli _ x _) -> Kleisli m x (monadFunctor m % x))

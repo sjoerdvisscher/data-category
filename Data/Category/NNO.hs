@@ -10,7 +10,6 @@
 -----------------------------------------------------------------------------
 module Data.Category.NNO where
 
-import Data.Category
 import Data.Category.Functor
 import Data.Category.Limit
 import Data.Category.Unit
@@ -58,5 +57,5 @@ instance (Functor z, Functor s, Dom z ~ Unit, Cod z ~ Dom s, Dom s ~ Cod s) => F
   type Cod (PrimRec z s) = Cod z
   type PrimRec z s :% I1 () = z :% ()
   type PrimRec z s :% I2 n  = s :% PrimRec z s :% n
-  PrimRec z s % Fix (I1 Unit) = z % Unit
+  PrimRec z _ % Fix (I1 Unit) = z % Unit
   PrimRec z s % Fix (I2 n) = s % PrimRec z s % n

@@ -106,6 +106,6 @@ instance (Functor m, Dom m ~ k, Cod m ~ k) => Functor (ForgetAlg m) where
 
 eilenbergMooreAdj :: (Functor m, Dom m ~ k, Cod m ~ k)
   => Monad m -> A.Adjunction (Alg m) k (FreeAlg m) (ForgetAlg m)
-eilenbergMooreAdj m = A.mkAdjunction (FreeAlg m) ForgetAlg
+eilenbergMooreAdj m = A.mkAdjunctionUnits (FreeAlg m) ForgetAlg
   (\x -> unit m ! x)
   (\(DialgA (Dialgebra _ h) _ _) -> DialgA (Dialgebra (src h) (monadFunctor m % h)) (Dialgebra (tgt h) h) h)
