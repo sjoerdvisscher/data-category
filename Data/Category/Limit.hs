@@ -277,10 +277,10 @@ instance (HasTerminalObject c1, HasTerminalObject c2) => HasTerminalObject (c1 :
 instance (Category c1, HasTerminalObject c2) => HasTerminalObject (c1 :>>: c2) where
   type TerminalObject (c1 :>>: c2) = I2 (TerminalObject c2)
 
-  terminalObject = I2A terminalObject
+  terminalObject = DC (I2A terminalObject)
 
-  terminate (I1A a) = I12 a terminalObject
-  terminate (I2A a) = I2A (terminate a)
+  terminate (DC (I1A a)) = DC (I12 a terminalObject (Const (\() -> ())) ())
+  terminate (DC (I2A a)) = DC (I2A (terminate a))
 
 
 
@@ -347,10 +347,10 @@ instance HasInitialObject Unit where
 instance (HasInitialObject c1, Category c2) => HasInitialObject (c1 :>>: c2) where
   type InitialObject (c1 :>>: c2) = I1 (InitialObject c1)
 
-  initialObject = I1A initialObject
+  initialObject = DC (I1A initialObject)
 
-  initialize (I1A a) = I1A (initialize a)
-  initialize (I2A a) = I12 initialObject a
+  initialize (DC (I1A a)) = DC (I1A (initialize a))
+  initialize (DC (I2A a)) = DC (I12 initialObject a (Const (\() -> ())) ())
 
 
 class Category k => HasBinaryProducts k where
@@ -437,21 +437,21 @@ instance (HasBinaryProducts c1, HasBinaryProducts c2) => HasBinaryProducts (c1 :
   type BinaryProduct (c1 :>>: c2) (I2 a) (I1 b) = I1 b
   type BinaryProduct (c1 :>>: c2) (I2 a) (I2 b) = I2 (BinaryProduct c2 a b)
 
-  proj1 (I1A a) (I1A b) = I1A (proj1 a b)
-  proj1 (I1A a) (I2A _) = I1A a
-  proj1 (I2A a) (I1A b) = I12 b a
-  proj1 (I2A a) (I2A b) = I2A (proj1 a b)
+  proj1 (DC (I1A a)) (DC (I1A b)) = DC (I1A (proj1 a b))
+  proj1 (DC (I1A a)) (DC (I2A _)) = DC (I1A a)
+  proj1 (DC (I2A a)) (DC (I1A b)) = DC (I12 b a (Const (\() -> ())) ())
+  proj1 (DC (I2A a)) (DC (I2A b)) = DC (I2A (proj1 a b))
 
-  proj2 (I1A a) (I1A b) = I1A (proj2 a b)
-  proj2 (I1A a) (I2A b) = I12 a b
-  proj2 (I2A _) (I1A b) = I1A b
-  proj2 (I2A a) (I2A b) = I2A (proj2 a b)
+  proj2 (DC (I1A a)) (DC (I1A b)) = DC (I1A (proj2 a b))
+  proj2 (DC (I1A a)) (DC (I2A b)) = DC (I12 a b (Const (\() -> ())) ())
+  proj2 (DC (I2A _)) (DC (I1A b)) = DC (I1A b)
+  proj2 (DC (I2A a)) (DC (I2A b)) = DC (I2A (proj2 a b))
 
-  I1A a &&& I1A b = I1A (a &&& b)
-  I1A a &&& I12 _ _ = I1A a
-  I12 _ _ &&& I1A b = I1A b
-  I2A a &&& I2A b = I2A (a &&& b)
-  I12 a b1 &&& I12 _ b2 = I12 a (b1 *** b2)
+  DC (I1A a) &&& DC (I1A b) = DC (I1A (a &&& b))
+  DC (I1A a) &&& DC (I12 _ _ _ _) = DC (I1A a)
+  DC (I12 _ _ _ _) &&& DC (I1A b) = DC (I1A b)
+  DC (I2A a) &&& DC (I2A b) = DC (I2A (a &&& b))
+  DC (I12 a b1 _ _) &&& DC (I12 _ b2 _ _) = DC (I12 a (b1 *** b2) (Const (\() -> ())) ())
 
 
 data ProductFunctor (k :: * -> * -> *) = ProductFunctor
@@ -563,21 +563,21 @@ instance (HasBinaryCoproducts c1, HasBinaryCoproducts c2) => HasBinaryCoproducts
   type BinaryCoproduct (c1 :>>: c2) (I2 a) (I1 b) = I2 a
   type BinaryCoproduct (c1 :>>: c2) (I2 a) (I2 b) = I2 (BinaryCoproduct c2 a b)
 
-  inj1 (I1A a) (I1A b) = I1A (inj1 a b)
-  inj1 (I1A a) (I2A b) = I12 a b
-  inj1 (I2A a) (I1A _) = I2A a
-  inj1 (I2A a) (I2A b) = I2A (inj1 a b)
+  inj1 (DC (I1A a)) (DC (I1A b)) = DC (I1A (inj1 a b))
+  inj1 (DC (I1A a)) (DC (I2A b)) = DC (I12 a b (Const (\() -> ())) ())
+  inj1 (DC (I2A a)) (DC (I1A _)) = DC (I2A a)
+  inj1 (DC (I2A a)) (DC (I2A b)) = DC (I2A (inj1 a b))
 
-  inj2 (I1A a) (I1A b) = I1A (inj2 a b)
-  inj2 (I1A _) (I2A b) = I2A b
-  inj2 (I2A a) (I1A b) = I12 b a
-  inj2 (I2A a) (I2A b) = I2A (inj2 a b)
+  inj2 (DC (I1A a)) (DC (I1A b)) = DC (I1A (inj2 a b))
+  inj2 (DC (I1A _)) (DC (I2A b)) = DC (I2A b)
+  inj2 (DC (I2A a)) (DC (I1A b)) = DC (I12 b a (Const (\() -> ())) ())
+  inj2 (DC (I2A a)) (DC (I2A b)) = DC (I2A (inj2 a b))
 
-  I1A a ||| I1A b = I1A (a ||| b)
-  I2A a ||| I12 _ _ = I2A a
-  I12 _ _ ||| I2A b = I2A b
-  I2A a ||| I2A b = I2A (a ||| b)
-  I12 a1 b ||| I12 a2 _ = I12 (a1 +++ a2) b
+  DC (I1A a) ||| DC (I1A b) = DC (I1A (a ||| b))
+  DC (I2A a) ||| DC (I12 _ _ _ _) = DC (I2A a)
+  DC (I12 _ _ _ _) ||| DC (I2A b) = DC (I2A b)
+  DC (I2A a) ||| DC (I2A b) = DC (I2A (a ||| b))
+  DC (I12 a1 b _ _) ||| DC (I12 a2 _ _ _) = DC (I12 (a1 +++ a2) b (Const (\() -> ())) ())
 
 
 data CoproductFunctor (k :: * -> * -> *) = CoproductFunctor

@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeOperators, TypeFamilies, UndecidableInstances, NoImplicitPrelude #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving, StandaloneDeriving, PatternSynonyms, TypeOperators, TypeFamilies, UndecidableInstances, NoImplicitPrelude #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category.AddObject
@@ -19,46 +19,25 @@ import Data.Category.Unit
 import Data.Category.Coproduct
 
 
-newtype Fix f a b = Fix (f (Fix f) a b)
+newtype Fix f a b = Fix (f (Fix f) a b) 
 
 -- | @`Fix` f@ is the fixed point category for a category combinator `f`.
-instance Category (f (Fix f)) => Category (Fix f) where
-  src (Fix a) = Fix (src a)
-  tgt (Fix a) = Fix (tgt a)
-  Fix a . Fix b = Fix (a . b)
+deriving instance Category (f (Fix f)) => Category (Fix f)
 
 -- | @Fix f@ inherits its (co)limits from @f (Fix f)@.
-instance HasInitialObject (f (Fix f)) => HasInitialObject (Fix f) where
-  type InitialObject (Fix f) = InitialObject (f (Fix f))
-  initialObject = Fix initialObject
-  initialize (Fix o) = Fix (initialize o)
+deriving instance HasInitialObject (f (Fix f)) => HasInitialObject (Fix f)
 
 -- | @Fix f@ inherits its (co)limits from @f (Fix f)@.
-instance HasTerminalObject (f (Fix f)) => HasTerminalObject (Fix f) where
-  type TerminalObject (Fix f) = TerminalObject (f (Fix f))
-  terminalObject = Fix terminalObject
-  terminate (Fix o) = Fix (terminate o)
+deriving instance HasTerminalObject (f (Fix f)) => HasTerminalObject (Fix f)
 
 -- | @Fix f@ inherits its (co)limits from @f (Fix f)@.
-instance HasBinaryProducts (f (Fix f)) => HasBinaryProducts (Fix f) where
-  type BinaryProduct (Fix f) a b = BinaryProduct (f (Fix f)) a b
-  proj1 (Fix a) (Fix b) = Fix (proj1 a b)
-  proj2 (Fix a) (Fix b) = Fix (proj2 a b)
-  Fix a &&& Fix b = Fix (a &&& b)
+deriving instance HasBinaryProducts (f (Fix f)) => HasBinaryProducts (Fix f)
   
 -- | @Fix f@ inherits its (co)limits from @f (Fix f)@.
-instance HasBinaryCoproducts (f (Fix f)) => HasBinaryCoproducts (Fix f) where
-  type BinaryCoproduct (Fix f) a b = BinaryCoproduct (f (Fix f)) a b
-  inj1 (Fix a) (Fix b) = Fix (inj1 a b)
-  inj2 (Fix a) (Fix b) = Fix (inj2 a b)
-  Fix a ||| Fix b = Fix (a ||| b)
+deriving instance HasBinaryCoproducts (f (Fix f)) => HasBinaryCoproducts (Fix f)
 
 -- | @Fix f@ inherits its exponentials from @f (Fix f)@.
-instance CartesianClosed (f (Fix f)) => CartesianClosed (Fix f) where
-  type Exponential (Fix f) a b = Exponential (f (Fix f)) a b
-  apply (Fix a) (Fix b) = Fix (apply a b)
-  tuple (Fix a) (Fix b) = Fix (tuple a b)
-  Fix a ^^^ Fix b = Fix (a ^^^ b)
+deriving instance CartesianClosed (f (Fix f)) => CartesianClosed (Fix f)
   
 data Wrap (f :: (* -> * -> *) -> * -> * -> *) = Wrap
 -- | The `Wrap` functor wraps `Fix` around @f (Fix f)@.
@@ -71,3 +50,12 @@ instance Category (f (Fix f)) => Functor (Wrap f) where
 -- | Take the `Omega` category, add a new disctinct object, and an arrow from that object to every object in `Omega`,
 --   and you get `Omega` again.
 type Omega = Fix ((:>>:) Unit)
+
+type Z = I1 ()
+type S n = I2 n
+pattern Z :: Obj Omega Z
+pattern Z = Fix (DC (I1A Unit))
+pattern S :: Omega a b -> Omega (S a) (S b)
+pattern S n = Fix (DC (I2A n))
+z2s :: Obj Omega n -> Omega Z (S n)
+z2s n = Fix (DC (I12 Unit n (Const (\() -> ())) ()))

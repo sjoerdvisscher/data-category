@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeFamilies, TypeOperators, GADTs, FlexibleContexts, NoImplicitPrelude #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving, TypeFamilies, TypeOperators, UndecidableInstances, GADTs, FlexibleContexts, NoImplicitPrelude #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category.Coproduct
@@ -96,27 +96,28 @@ instance (Category c1, Category c2) => Functor (Cotuple2 c1 c2 a2) where
   Cotuple2 _ % I2 f = f
 
 
-data (:>>:) :: (* -> * -> *) -> (* -> * -> *) -> * -> * -> * where
-  I1A :: c1 a1 b1 -> (:>>:) c1 c2 (I1 a1) (I1 b1)
-  I12 :: Obj c1 a -> Obj c2 b -> (:>>:) c1 c2 (I1 a) (I2 b)
-  I2A :: c2 a2 b2 -> (:>>:) c1 c2 (I2 a2) (I2 b2)
+data Cograph f :: * -> * -> * where
+  I1A :: Dom f ~ (Op c :**: d) => c a1 b1 -> Cograph f (I1 a1) (I1 b1)
+  I2A :: Dom f ~ (Op c :**: d) => d a2 b2 -> Cograph f (I2 a2) (I2 b2)
+  I12 :: Dom f ~ (Op c :**: d) => Obj c a -> Obj d b -> f -> f :% (a, b) -> Cograph f (I1 a) (I2 b)
+  
+-- | The cograph of the profunctor @f@.
+instance (Functor f, Dom f ~ (Op c :**: d), Cod f ~ (->), Category c, Category d) => Category (Cograph f) where
 
--- | The directed coproduct category of categories @c1@ and @c2@.
-instance (Category c1, Category c2) => Category (c1 :>>: c2) where
-
-  src (I1A a)   = I1A (src a)
-  src (I12 a _) = I1A a
-  src (I2A a)   = I2A (src a)
-  tgt (I1A a)   = I1A (tgt a)
-  tgt (I12 _ b) = I2A b
-  tgt (I2A a)   = I2A (tgt a)
+  src (I1A a)       = I1A (src a)
+  src (I2A a)       = I2A (src a)
+  src (I12 a _ _ _) = I1A a
+  tgt (I1A a)       = I1A (tgt a)
+  tgt (I2A a)       = I2A (tgt a)
+  tgt (I12 _ b _ _) = I2A b
 
   (I1A a) . (I1A b) = I1A (a . b)
-  (I12 _ a) . (I1A b) = I12 (src b) a
-  (I2A a) . (I12 b _) = I12 b (tgt a)
+  (I12 _ b f ab) . (I1A a) = I12 (src a) b f ((f % (Op a :**: b)) ab)
+  (I2A b) . (I12 a _ f ab) = I12 a (tgt b) f ((f % (Op a :**: b)) ab)
   (I2A a) . (I2A b) = I2A (a . b)
 
-
+-- | The directed coproduct category of categories @c1@ and @c2@.
+newtype (c1 :>>: c2) a b = DC (Cograph (Const (Op c1 :**: c2) (->) ()) a b) deriving Category
 
 
 data NatAsFunctor f g = NatAsFunctor (Nat (Dom f) (Cod f) f g)
@@ -124,11 +125,11 @@ data NatAsFunctor f g = NatAsFunctor (Nat (Dom f) (Cod f) f g)
 -- | A natural transformation @Nat c d@ is isomorphic to a functor from @c :**: 2@ to @d@.
 instance (Functor f, Functor g, Dom f ~ Dom g, Cod f ~ Cod g) => Functor (NatAsFunctor f g) where
   
-  type Dom (NatAsFunctor f g) = Dom f :**: (Unit :>>: Unit)
+  type Dom (NatAsFunctor f g) = Dom f :**: Cograph (Hom Unit)
   type Cod (NatAsFunctor f g) = Cod f
   type NatAsFunctor f g :% (a, I1 ()) = f :% a
   type NatAsFunctor f g :% (a, I2 ()) = g :% a
   
   NatAsFunctor (Nat f _ _) % (a :**: I1A Unit) = f % a
   NatAsFunctor (Nat _ g _) % (a :**: I2A Unit) = g % a
-  NatAsFunctor n           % (a :**: I12 Unit Unit) = n ! a
+  NatAsFunctor n           % (a :**: I12 Unit Unit Hom Unit) = n ! a
