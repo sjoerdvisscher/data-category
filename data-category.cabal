@@ -40,6 +40,7 @@ Library
     Data.Category.Limit,
     Data.Category.Monoidal,
     Data.Category.CartesianClosed,
+    Data.Category.Enriched,
     Data.Category.Yoneda,
     Data.Category.Boolean,
     Data.Category.Fix,
