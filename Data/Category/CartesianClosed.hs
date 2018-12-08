@@ -27,6 +27,7 @@ import Data.Category.Limit
 import Data.Category.Adjunction
 import Data.Category.Monoidal as M
 import Data.Category.Yoneda
+import qualified Data.Category.Unit as U
 
 
 -- | A category is cartesian closed if it has all products and exponentials for all objects.
@@ -56,6 +57,12 @@ instance CartesianClosed (->) where
   tuple _ _ z      = \y -> (z, y)
   f ^^^ h          = \g -> f . g . h
 
+
+instance CartesianClosed U.Unit where
+  type Exponential U.Unit () () = ()
+  apply U.Unit U.Unit = U.Unit
+  tuple U.Unit U.Unit = U.Unit
+  U.Unit ^^^ U.Unit = U.Unit
 
 
 -- | Exponentials in @Cat@ are the functor categories.
