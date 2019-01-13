@@ -42,6 +42,8 @@ class (Functor f, Dom f ~ (Cod f :**: Cod f)) => TensorProduct f where
   associator     :: Cod f ~ k => f -> Obj k a -> Obj k b -> Obj k c -> k (f :% (f :% (a, b), c)) (f :% (a, f :% (b, c)))
   associatorInv  :: Cod f ~ k => f -> Obj k a -> Obj k b -> Obj k c -> k (f :% (a, f :% (b, c))) (f :% (f :% (a, b), c))
 
+class TensorProduct f => SymmetricTensorProduct f where
+  swap :: Cod f ~ k => f -> Obj k a -> Obj k b -> k (f :% (a, b)) (f :% (b, a))
 
 -- | If a category has all products, then the product functor makes it a monoidal category,
 --   with the terminal object as unit.
@@ -58,6 +60,9 @@ instance (HasTerminalObject k, HasBinaryProducts k) => TensorProduct (ProductFun
   associator    _ a b c = (proj1 a b . proj1 (a *** b) c) &&& (proj2 a b *** c)
   associatorInv _ a b c = (a *** proj1 b c) &&& (proj2 b c . proj2 a (b *** c))
 
+instance (HasTerminalObject k, HasBinaryProducts k) => SymmetricTensorProduct (ProductFunctor k) where
+  swap _ a b = proj2 a b &&& proj1 a b
+
 -- | If a category has all coproducts, then the coproduct functor makes it a monoidal category,
 --   with the initial object as unit.
 instance (HasInitialObject k, HasBinaryCoproducts k) => TensorProduct (CoproductFunctor k) where
@@ -72,6 +77,9 @@ instance (HasInitialObject k, HasBinaryCoproducts k) => TensorProduct (Coproduct
 
   associator    _ a b c = (a +++ inj1 b c) ||| (inj2 a (b +++ c) . inj2 b c)
   associatorInv _ a b c = (inj1 (a +++ b) c . inj1 a b) ||| (inj2 a b +++ c)
+
+instance (HasInitialObject k, HasBinaryCoproducts k) => SymmetricTensorProduct (CoproductFunctor k) where
+  swap _ a b = inj2 b a ||| inj1 b a
 
 -- | Functor composition makes the category of endofunctors monoidal, with the identity functor as unit.
 instance Category k => TensorProduct (EndoFunctorCompose k) where

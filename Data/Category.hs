@@ -43,7 +43,7 @@ instance Category (->) where
   f . g = \x -> f (g x)
 
 
-data Op k a b = Op { unOp :: k b a }
+newtype Op k a b = Op { unOp :: k b a }
 
 -- | @Op k@ is opposite category of the category @k@.
 instance Category k => Category (Op k) where
