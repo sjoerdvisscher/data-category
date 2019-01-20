@@ -22,7 +22,6 @@ module Data.Category.Enriched where
 import Data.Category (Category(..), Obj, Op(..))
 import Data.Category.Product
 import Data.Category.Functor (Functor(..), Hom(..))
-import Data.Category.NaturalTransformation (Nat(..), (!))
 import Data.Category.Limit
 import Data.Category.CartesianClosed
 import Data.Category.Boolean
@@ -56,7 +55,8 @@ instance ECategory k => ECategory (EOp k) where
   id (EOp a) = id a
   comp (EOp a) (EOp b) (EOp c) = comp c b a . (proj2 (hom c b) (hom b a) &&& proj1 (hom c b) (hom b a))
 
-newtype Self v a b = Self (v a b)
+
+newtype Self v a b = Self { getSelf :: v a b }
 -- | Self enrichment
 instance CartesianClosed v => ECategory (Self v) where
   type V (Self v) = v
@@ -103,7 +103,7 @@ class (ECategory (EDom ftag), ECategory (ECod ftag), V (EDom ftag) ~ V (ECod fta
   -- | `map` maps arrows.
   map :: (EDom ftag ~ k) => ftag -> Obj k a -> Obj k b -> V k (k $ (a, b)) (ECod ftag $ (ftag :%% a, ftag :%% b))
 
-  
+
 -- | Enriched natural transformations.
 data ENat :: (* -> * -> *) -> (* -> * -> *) -> * -> * -> * where
   ENat :: (EFunctor f, EFunctor g, c ~ EDom f, c ~ EDom g, d ~ ECod f, d ~ ECod g)
@@ -130,22 +130,13 @@ instance ECategory k => EFunctor (EHom_X k x) where
   map (EHom_X x) a b = curry (hom a b) (hom x a) (hom x b) (comp x a b)
 
 
+yoneda :: forall f k x. (EFunctor f, EDom f ~ k, ECod f ~ Self (V k)) 
+       => Obj k x -> ENat k (Self (V k)) (EHomX_ k x) f -> Elem k (f :%% x)
+yoneda x (ENat _ f n) = fromSelf (hom x x) (getSelf (f %% x)) (n x) . id x
 
-yoneda :: forall f k x. (EFunctor f, EDom f ~ k, ECod f ~ Self (V k)) => Obj k x -> ENat k (Self (V k)) (EHomX_ k x) f -> Elem k (f :%% x)
-yoneda x (ENat _ f n) = nx . id x
-  where 
-    fx :: Obj (V k) (f :%% x)
-    Self fx = f %% x
-    nx :: V k (k $ (x, x)) (f :%% x)
-    nx = fromSelf (hom x x) fx (n x)
-
-yonedaInv :: forall f k x. (EFunctor f, EDom f ~ k, ECod f ~ Self (V k)) => f -> Obj k x -> Elem k (f :%% x) -> ENat k (Self (V k)) (EHomX_ k x) f
-yonedaInv f x fx = ENat (EHomX_ x) f (\a -> toSelf (c a))
-  where
-    c :: forall a. Obj k a -> V k (k $ (x, a)) (f :%% a)
-    c a = apply (tgt fx) fa . (map f x a *** fx) . (hom x a &&& terminate (hom x a))
-      where
-        Self fa = f %% a
+yonedaInv :: forall f k x. (EFunctor f, EDom f ~ k, ECod f ~ Self (V k)) 
+          => f -> Obj k x -> Elem k (f :%% x) -> ENat k (Self (V k)) (EHomX_ k x) f
+yonedaInv f x fx = ENat (EHomX_ x) f (\a -> toSelf (apply (tgt fx) (getSelf (f %% a)) . (map f x a &&& fx . terminate (hom x a))))
 
 
 
