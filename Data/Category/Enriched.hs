@@ -21,7 +21,7 @@ module Data.Category.Enriched where
 
 import Data.Category (Category(..), Obj, Op(..))
 import Data.Category.Product
-import Data.Category.Functor (Functor(..), Hom(..))
+import Data.Category.Functor (Functor(..), Hom(..), (:*-:))
 import Data.Category.Limit
 import Data.Category.CartesianClosed
 import Data.Category.Boolean
@@ -40,20 +40,53 @@ class CartesianClosed (V k) => ECategory (k :: * -> * -> *) where
   comp :: Obj k a -> Obj k b -> Obj k c -> V k (BinaryProduct (V k) (k $ (b, c)) (k $ (a, b))) (k $ (a, c))
 
 
-type Elem k a = V k (TerminalObject (V k)) a
+-- | The elements of @k@
+type Elem k = TerminalObject (V k) :*-: (V k)
 
-type Arr k a b = Elem k (k $ (a, b))
+-- | Arrows as elements of @k@
+type Arr k a b = Elem k :% (k $ (a, b))
+
 compArr :: ECategory k => Obj k a -> Obj k b -> Obj k c -> Arr k b c -> Arr k a b -> Arr k a c
 compArr a b c f g = comp a b c . (f &&& g)
 
 
+data Underlying k a b = Underlying (Obj k a) (Arr k a b) (Obj k b)
+-- | The underlying category of an enriched category
+instance ECategory k => Category (Underlying k) where
+  src (Underlying a _ _) = Underlying a (id a) a
+  tgt (Underlying _ _ b) = Underlying b (id b) b
+  Underlying b f c . Underlying a g _ = Underlying a (compArr a b c f g) c
+
+
 newtype EOp k a b = EOp (k b a)
+-- | The opposite of an enriched category
 instance ECategory k => ECategory (EOp k) where
   type V (EOp k) = V k
   type EOp k $ (a, b) = k $ (b, a)
   hom (EOp a) (EOp b) = hom b a
   id (EOp a) = id a
   comp (EOp a) (EOp b) (EOp c) = comp c b a . (proj2 (hom c b) (hom b a) &&& proj1 (hom c b) (hom b a))
+
+
+data (:<>:) :: (* -> * -> *) -> (* -> * -> *) -> * -> * -> * where
+  (:<>:) :: (V k1 ~ V k2) => Obj k1 a1 -> Obj k2 a2 -> (:<>:) k1 k2 (a1, a2) (a1, a2)
+  
+-- | The enriched product category of enriched categories @c1@ and @c2@.
+instance (ECategory k1, ECategory k2, V k1 ~ V k2) => ECategory (k1 :<>: k2) where
+  type V (k1 :<>: k2) = V k1
+  type (k1 :<>: k2) $ ((a1, a2), (b1, b2)) = BinaryProduct (V k1) (k1 $ (a1, b1)) (k2 $ (a2, b2))
+  hom (a1 :<>: a2) (b1 :<>: b2) = hom a1 b1 *** hom a2 b2
+  id (a1 :<>: a2) = id a1 &&& id a2
+  comp (a1 :<>: a2) (b1 :<>: b2) (c1 :<>: c2) = 
+    comp a1 b1 c1 . (proj1 bc1 bc2 . proj1 l r &&& proj1 ab1 ab2 . proj2 l r) &&& 
+    comp a2 b2 c2 . (proj2 bc1 bc2 . proj1 l r &&& proj2 ab1 ab2 . proj2 l r)
+    where 
+      ab1 = hom a1 b1
+      ab2 = hom a2 b2
+      bc1 = hom b1 c1
+      bc2 = hom b2 c2
+      l = bc1 *** bc2
+      r = ab1 *** ab2
 
 
 newtype Self v a b = Self { getSelf :: v a b }
@@ -104,6 +137,14 @@ class (ECategory (EDom ftag), ECategory (ECod ftag), V (EDom ftag) ~ V (ECod fta
   map :: (EDom ftag ~ k) => ftag -> Obj k a -> Obj k b -> V k (k $ (a, b)) (ECod ftag $ (ftag :%% a, ftag :%% b))
 
 
+newtype UnderlyingF f = UnderlyingF f
+instance EFunctor f => Functor (UnderlyingF f) where
+  type Dom (UnderlyingF f) = Underlying (EDom f)
+  type Cod (UnderlyingF f) = Underlying (ECod f)
+  type UnderlyingF f :% a = f :%% a
+  UnderlyingF f % Underlying a ab b = Underlying (f %% a) (map f a b . ab) (f %% b)
+  
+
 -- | Enriched natural transformations.
 data ENat :: (* -> * -> *) -> (* -> * -> *) -> * -> * -> * where
   ENat :: (EFunctor f, EFunctor g, c ~ EDom f, c ~ EDom g, d ~ ECod f, d ~ ECod g)
@@ -131,11 +172,11 @@ instance ECategory k => EFunctor (EHom_X k x) where
 
 
 yoneda :: forall f k x. (EFunctor f, EDom f ~ k, ECod f ~ Self (V k)) 
-       => Obj k x -> ENat k (Self (V k)) (EHomX_ k x) f -> Elem k (f :%% x)
+       => Obj k x -> ENat k (Self (V k)) (EHomX_ k x) f -> Elem k :% (f :%% x)
 yoneda x (ENat _ f n) = fromSelf (hom x x) (getSelf (f %% x)) (n x) . id x
 
 yonedaInv :: forall f k x. (EFunctor f, EDom f ~ k, ECod f ~ Self (V k)) 
-          => f -> Obj k x -> Elem k (f :%% x) -> ENat k (Self (V k)) (EHomX_ k x) f
+          => f -> Obj k x -> Elem k :% (f :%% x) -> ENat k (Self (V k)) (EHomX_ k x) f
 yonedaInv f x fx = ENat (EHomX_ x) f (\a -> toSelf (apply (tgt fx) (getSelf (f %% a)) . (map f x a &&& fx . terminate (hom x a))))
 
 
