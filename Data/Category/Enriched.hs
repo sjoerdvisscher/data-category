@@ -7,6 +7,7 @@
   , NoImplicitPrelude
   , UndecidableInstances
   , ScopedTypeVariables
+  , ConstraintKinds
   #-}
 -----------------------------------------------------------------------------
 -- |
@@ -136,8 +137,68 @@ class (ECategory (EDom ftag), ECategory (ECod ftag), V (EDom ftag) ~ V (ECod fta
   -- | `map` maps arrows.
   map :: (EDom ftag ~ k) => ftag -> Obj k a -> Obj k b -> V k (k $ (a, b)) (ECod ftag $ (ftag :%% a, ftag :%% b))
 
+type EFunctorOf a b t = (EFunctor t, EDom t ~ a, ECod t ~ b)
+
+
+data Id (k :: * -> * -> *) = Id
+-- | The identity functor on k
+instance ECategory k => EFunctor (Id k) where
+  type EDom (Id k) = k
+  type ECod (Id k) = k
+  type Id k :%% a = a
+  Id %% a = a
+  map Id = hom
+
+data (g :.: h) where
+  (:.:) :: (EFunctor g, EFunctor h, ECod h ~ EDom g) => g -> h -> g :.: h
+-- | The composition of two functors.
+instance (ECategory (ECod g), ECategory (EDom h), V (EDom h) ~ V (ECod g)) => EFunctor (g :.: h) where
+  type EDom (g :.: h) = EDom h
+  type ECod (g :.: h) = ECod g
+  type (g :.: h) :%% a = g :%% (h :%% a)
+  (g :.: h) %% a = g %% (h %% a)
+  map (g :.: h) a b = map g (h %% a) (h %% b) . map h a b
+
+data Const (c1 :: * -> * -> *) (c2 :: * -> * -> *) x where
+  Const :: Obj c2 x -> Const c1 c2 x
+-- | The constant functor.
+instance (ECategory c1, ECategory c2, V c1 ~ V c2) => EFunctor (Const c1 c2 x) where
+  type EDom (Const c1 c2 x) = c1
+  type ECod (Const c1 c2 x) = c2
+  type Const c1 c2 x :%% a = x
+  Const x %% _ = x
+  map (Const x) a b = id x . terminate (hom a b)
+
+data Opposite f where
+  Opposite :: EFunctor f => f -> Opposite f
+-- | The dual of a functor
+instance (EFunctor f) => EFunctor (Opposite f) where
+  type EDom (Opposite f) = EOp (EDom f)
+  type ECod (Opposite f) = EOp (ECod f)
+  type Opposite f :%% a = f :%% a
+  Opposite f %% EOp a = EOp (f %% a)
+  map (Opposite f) (EOp a) (EOp b) = map f b a
+
+data f1 :<*>: f2 = f1 :<*>: f2
+-- | @f1 :<*>: f2@ is the product of the functors @f1@ and @f2@.
+instance (EFunctor f1, EFunctor f2, V (ECod f1) ~ V (ECod f2)) => EFunctor (f1 :<*>: f2) where
+  type EDom (f1 :<*>: f2) = EDom f1 :<>: EDom f2
+  type ECod (f1 :<*>: f2) = ECod f1 :<>: ECod f2
+  type (f1 :<*>: f2) :%% (a1, a2) = (f1 :%% a1, f2 :%% a2)
+  (f1 :<*>: f2) %% (a1 :<>: a2) = (f1 %% a1) :<>: (f2 %% a2)
+  map (f1 :<*>: f2) (a1 :<>: a2) (b1 :<>: b2) = map f1 a1 b1 *** map f2 a2 b2
+
+data DiagProd (k :: * -> * -> *) = DiagProd
+-- | 'DiagProd' is the diagonal functor for products.
+instance ECategory k => EFunctor (DiagProd k) where
+  type EDom (DiagProd k) = k
+  type ECod (DiagProd k) = k :<>: k
+  type DiagProd k :%% a = (a, a)
+  DiagProd %% a = a :<>: a
+  map DiagProd a b = hom a b &&& hom a b
 
 newtype UnderlyingF f = UnderlyingF f
+-- | The underlying functor of an enriched functor @f@
 instance EFunctor f => Functor (UnderlyingF f) where
   type Dom (UnderlyingF f) = Underlying (EDom f)
   type Cod (UnderlyingF f) = Underlying (ECod f)
@@ -145,12 +206,18 @@ instance EFunctor f => Functor (UnderlyingF f) where
   UnderlyingF f % Underlying a ab b = Underlying (f %% a) (map f a b . ab) (f %% b)
   
 
--- | Enriched natural transformations.
-data ENat :: (* -> * -> *) -> (* -> * -> *) -> * -> * -> * where
-  ENat :: (EFunctor f, EFunctor g, c ~ EDom f, c ~ EDom g, d ~ ECod f, d ~ ECod g)
-    => f -> g -> (forall z. Obj c z -> Arr d (f :%% z) (g :%% z)) -> ENat c d f g
-
-
+data EHom (k :: * -> * -> *) = EHom
+instance ECategory k => EFunctor (EHom k) where
+  type EDom (EHom k) = EOp k :<>: k
+  type ECod (EHom k) = Self (V k)
+  type EHom k :%% (a, b) = k $ (a, b)
+  EHom %% (EOp a :<>: b) = Self (hom a b)
+  map EHom (EOp a1 :<>: a2) (EOp b1 :<>: b2) = curry (ba *** ab) a b (comp b1 a1 b2 . (comp a1 a2 b2 . (proj2 ba ab *** a) &&& proj1 ba ab . proj1 (ba *** ab) a))
+    where
+      a = hom a1 a2
+      b = hom b1 b2
+      ba = hom b1 a1
+      ab = hom a2 b2
 
 -- | The enriched functor @k(x, -)@
 data EHomX_ k x = EHomX_ (Obj k x)
@@ -171,14 +238,56 @@ instance ECategory k => EFunctor (EHom_X k x) where
   map (EHom_X x) a b = curry (hom a b) (hom x a) (hom x b) (comp x a b)
 
 
-yoneda :: forall f k x. (EFunctor f, EDom f ~ k, ECod f ~ Self (V k)) 
-       => Obj k x -> ENat k (Self (V k)) (EHomX_ k x) f -> Elem k :% (f :%% x)
-yoneda x (ENat _ f n) = fromSelf (hom x x) (getSelf (f %% x)) (n x) . id x
+-- | Enriched natural transformations.
+data ENat :: (* -> * -> *) -> (* -> * -> *) -> * -> * -> * where
+  ENat :: (EFunctorOf c d f, EFunctorOf c d g)
+    => f -> g -> (forall z. Obj c z -> Arr d (f :%% z) (g :%% z)) -> ENat c d f g
 
-yonedaInv :: forall f k x. (EFunctor f, EDom f ~ k, ECod f ~ Self (V k)) 
-          => f -> Obj k x -> Elem k :% (f :%% x) -> ENat k (Self (V k)) (EHomX_ k x) f
-yonedaInv f x fx = ENat (EHomX_ x) f (\a -> toSelf (apply (tgt fx) (getSelf (f %% a)) . (map f x a &&& fx . terminate (hom x a))))
 
+type VProfunctor k t = EFunctorOf (EOp k :<>: k) (Self (V k)) t
+
+type family End (v :: * -> * -> *) t :: *
+class CartesianClosed v => HasEnds v where
+  end :: (VProfunctor k t, V k ~ v) => t -> Obj v (End v t)
+  endCounit :: (VProfunctor k t, V k ~ v) => t -> Obj k a -> v (End v t) (t :%% (a, a))
+  endFactorizer :: (VProfunctor k t, V k ~ v) => t -> (forall a. Obj k a -> v x (t :%% (a, a))) -> v x (End v t)
+
+newtype HaskEnd t = HaskEnd { getHaskEnd :: forall k a. VProfunctor k t => t -> Obj k a -> t :%% (a, a) }
+type instance End (->) t = HaskEnd t
+instance HasEnds (->) where
+  end _ e = e
+  endCounit t a (HaskEnd e) = e t a
+  endFactorizer _ e x = HaskEnd (\_ a -> e a x)
+
+
+data FunCat a b t s where
+  FArr :: (EFunctorOf a b t, EFunctorOf a b s) => t -> s -> FunCat a b t s
+
+type t :->>: s = EHom (ECod t) :.: (Opposite t :<*>: s)
+(->>) :: (EFunctor t, EFunctor s, ECod t ~ ECod s, V (ECod t) ~ V (ECod s)) => t -> s -> t :->>: s
+t ->> s = EHom :.: (Opposite t :<*>: s)
+-- | The enriched functor category @[a, b]@
+instance (HasEnds (V a), V a ~ V b) => ECategory (FunCat a b) where
+  type V (FunCat a b) = V a
+  type FunCat a b $ (t, s) = End (V a) (t :->>: s)
+  hom (FArr t _) (FArr s _) = end (t ->> s)
+  id (FArr t _) = endFactorizer (t ->> t) (\a -> id (t %% a))
+  comp (FArr t _) (FArr s _) (FArr r _) = endFactorizer (t ->> r) 
+    (\a -> comp (t %% a) (s %% a) (r %% a) . (endCounit (s ->> r) a *** endCounit (t ->> s) a))
+
+
+yoneda    :: forall f k x. (HasEnds (V k), EFunctorOf k (Self (V k)) f) => f -> Obj k x -> V k (End (V k) (EHomX_ k x :->>: f)) (f :%% x)
+yoneda f x = apply (hom x x) (getSelf (f %% x)) . (endCounit (EHomX_ x ->> f) x &&& id x . terminate (end (EHomX_ x ->> f)))
+
+yonedaInv :: forall f k x. (HasEnds (V k), EFunctorOf k (Self (V k)) f) => f -> Obj k x -> V k (f :%% x) (End (V k) (EHomX_ k x :->>: f))
+yonedaInv f x = endFactorizer (EHomX_ x ->> f) h
+  where
+    h :: Obj k a -> V k (f :%% x) (Exponential (V k) (k $ (x, a)) (f :%% a))
+    h a = curry fx xa fa (apply fx fa . (map f x a . proj2 fx xa &&& proj1 fx xa))
+      where
+        xa = hom x a
+        Self fx = f %% x
+        Self fa = f %% a
 
 
 data One
