@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeOperators, TypeFamilies, FlexibleContexts, FlexibleInstances, UndecidableInstances, GADTs, RankNTypes, NoImplicitPrelude #-}
+{-# LANGUAGE TypeOperators, TypeFamilies, FlexibleContexts, FlexibleInstances, UndecidableInstances, GADTs, RankNTypes, ConstraintKinds, NoImplicitPrelude #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category.Functor
@@ -16,6 +16,7 @@ module Data.Category.Functor (
 
   -- * Functors
   , Functor(..)
+  , FunctorOf
 
   -- ** Functor instances
   , Id(..)
@@ -66,7 +67,7 @@ class (Category (Dom ftag), Category (Cod ftag)) => Functor ftag where
   -- | @%@ maps arrows.
   (%)  :: ftag -> Dom ftag a b -> Cod ftag (ftag :% a) (ftag :% b)
 
-
+type FunctorOf a b t = (Functor t, Dom t ~ a, Cod t ~ b)
 
 
 -- | Functors are arrows in the category Cat.
