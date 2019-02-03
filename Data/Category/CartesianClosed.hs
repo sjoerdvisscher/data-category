@@ -49,6 +49,10 @@ instance CartesianClosed k => Functor (ExpFunctor k) where
   ExpFunctor % (Op y :**: z) = z ^^^ y
 
 
+flip :: CartesianClosed k => Obj k a -> Obj k b -> Obj k c -> k (Exponential k a (Exponential k b c)) (Exponential k b (Exponential k a c))
+flip a b c = flip a b c -- TODO
+
+
 -- | Exponentials in @Hask@ are functions.
 instance CartesianClosed (->) where
   type Exponential (->) y z = y -> z

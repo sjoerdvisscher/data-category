@@ -128,7 +128,7 @@ class (Category j, Category k) => HasLimits j k where
   limit           :: Obj (Nat j k) f -> Cone f (Limit f)
   -- | 'limitFactorizer' shows that the limiting cone is universal – i.e. any other cone of @f@ factors through it
   --   by returning the morphism between the vertices of the cones.
-  limitFactorizer :: Obj (Nat j k) f -> (forall n. Cone f n -> k n (Limit f))
+  limitFactorizer :: Obj (Nat j k) f -> Cone f n -> k n (Limit f)
 
 data LimitFunctor (j :: * -> * -> *) (k  :: * -> * -> *) = LimitFunctor
 -- | If every diagram of type @j@ has a limit in @k@ there exists a limit functor.
@@ -181,7 +181,7 @@ class (Category j, Category k) => HasColimits j k where
   colimit           :: Obj (Nat j k) f -> Cocone f (Colimit f)
   -- | 'colimitFactorizer' shows that the limiting co-cone is universal – i.e. any other co-cone of @f@ factors through it
   --   by returning the morphism between the vertices of the cones.
-  colimitFactorizer :: Obj (Nat j k) f -> (forall n. Cocone f n -> k (Colimit f) n)
+  colimitFactorizer :: Obj (Nat j k) f -> Cocone f n -> k (Colimit f) n
 
 data ColimitFunctor (j :: * -> * -> *) (k  :: * -> * -> *) = ColimitFunctor
 -- | If every diagram of type @j@ has a colimit in @k@ there exists a colimit functor.
