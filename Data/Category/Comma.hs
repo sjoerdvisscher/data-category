@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeOperators, TypeFamilies, MultiParamTypeClasses, GADTs, FlexibleContexts, FlexibleInstances, ScopedTypeVariables, NoImplicitPrelude #-}
+{-# LANGUAGE TypeOperators, TypeFamilies, MultiParamTypeClasses, GADTs, FlexibleContexts, FlexibleInstances, ScopedTypeVariables, UndecidableInstances, NoImplicitPrelude #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category.Comma
