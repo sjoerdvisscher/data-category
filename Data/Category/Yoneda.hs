@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeOperators, RankNTypes, TypeFamilies, NoImplicitPrelude #-}
+{-# LANGUAGE TypeOperators, RankNTypes, TypeFamilies, PatternSynonyms, UndecidableInstances, NoImplicitPrelude #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category.Yoneda
@@ -13,14 +13,15 @@ module Data.Category.Yoneda where
 import Data.Category
 import Data.Category.Functor
 import Data.Category.NaturalTransformation
+import Data.Category.Adjunction
 
 type YonedaEmbedding k =
   Postcompose (Hom k) (Op k) :.:
   (Postcompose (Swap k (Op k)) (Op k) :.: Tuple k (Op k))
 
 -- | The Yoneda embedding functor, @C -> Set^(C^op)@.
-yonedaEmbedding :: Category k => YonedaEmbedding k
-yonedaEmbedding = postcompose Hom :.: (postcompose swap :.: Tuple)
+pattern YonedaEmbedding :: Category k => YonedaEmbedding k
+pattern YonedaEmbedding = Postcompose Hom :.: (Postcompose Swap :.: Tuple)
 
 
 data Yoneda (k :: * -> * -> *) f = Yoneda
@@ -29,7 +30,7 @@ instance (Category k, Functor f, Dom f ~ Op k, Cod f ~ (->)) => Functor (Yoneda 
   type Dom (Yoneda k f) = Op k
   type Cod (Yoneda k f) = (->)
   type Yoneda k f :% a = Nat (Op k) (->) (k :-*: a) f
-  Yoneda % Op ab = \n -> n . yonedaEmbedding % ab
+  Yoneda % Op ab = \n -> n . YonedaEmbedding % ab
 
 
 -- | 'fromYoneda' and 'toYoneda' are together the isomophism from the Yoneda lemma.
@@ -37,4 +38,14 @@ fromYoneda :: (Category k, Functor f, Dom f ~ Op k, Cod f ~ (->)) => f -> Nat (O
 fromYoneda f = Nat Yoneda f (\(Op a) n -> (n ! Op a) a)
 
 toYoneda   :: (Category k, Functor f, Dom f ~ Op k, Cod f ~ (->)) => f -> Nat (Op k) (->) f (Yoneda k f)
-toYoneda   f = Nat f Yoneda (\(Op a) fa -> Nat (hom_X a) f (\_ h -> (f % Op h) fa))
+toYoneda   f = Nat f Yoneda (\(Op a) fa -> Nat (Hom_X a) f (\_ h -> (f % Op h) fa))
+
+data M1 = M1
+instance Functor M1 where
+  type Dom M1 = Nat (Op (->)) (->)
+  type Cod M1 = (->)
+  type M1 :% f = f :% ()
+  M1 % n = n ! Op (\() -> ())
+
+haskIsTotal :: Adjunction (->) (Nat (Op (->)) (->)) M1 (YonedaEmbedding (->))
+haskIsTotal = mkAdjunction M1 YonedaEmbedding (\(Nat f _ _) fu2b -> Nat f (Hom :.: (Swap :.: Tuple1 (\x -> x))) (\_ y _ -> fu2b y)) (\_ n@(Nat _ () _) -> (n ! Op (\x -> x)) _)

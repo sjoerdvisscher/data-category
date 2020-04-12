@@ -26,7 +26,7 @@ unrepresent rep h = (representedFunctor rep % h) (universalElement rep)
 
 covariantHomRepr :: Category k => Obj k x -> Representable (x :*-: k) x
 covariantHomRepr x = Representable
-  { representedFunctor = homX_ x
+  { representedFunctor = HomX_ x
   , representingObject = x
   , represent          = \_ h -> h
   , universalElement   = x
@@ -34,7 +34,7 @@ covariantHomRepr x = Representable
 
 contravariantHomRepr :: Category k => Obj k x -> Representable (k :-*: x) x
 contravariantHomRepr x = Representable
-  { representedFunctor = hom_X x
+  { representedFunctor = Hom_X x
   , representingObject = Op x
   , represent          = \_ h -> Op h
   , universalElement   = x
@@ -49,7 +49,7 @@ initialUniversal :: Functor u
                  -> (forall y. Obj (Dom u) y -> Cod u x (u :% y) -> Dom u a y)
                  -> InitialUniversal x u a
 initialUniversal u obj mor factorizer = Representable
-  { representedFunctor = homX_ (src mor) :.: u
+  { representedFunctor = HomX_ (src mor) :.: u
   , representingObject = obj
   , represent          = factorizer
   , universalElement   = mor
@@ -64,7 +64,7 @@ terminalUniversal :: Functor u
                   -> (forall y. Obj (Dom u) y -> Cod u (u :% y) x -> Dom u y a)
                   -> TerminalUniversal x u a
 terminalUniversal u obj mor factorizer = Representable
-  { representedFunctor = hom_X (tgt mor) :.: Opposite u
+  { representedFunctor = Hom_X (tgt mor) :.: Opposite u
   , representingObject = Op obj
   , represent          = \(Op y) f -> Op (factorizer y f)
   , universalElement   = mor

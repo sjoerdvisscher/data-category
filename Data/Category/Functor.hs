@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeOperators, TypeFamilies, FlexibleContexts, FlexibleInstances, UndecidableInstances, GADTs, RankNTypes, ConstraintKinds, NoImplicitPrelude #-}
+{-# LANGUAGE TypeOperators, TypeFamilies, PatternSynonyms, FlexibleContexts, FlexibleInstances, UndecidableInstances, GADTs, RankNTypes, ConstraintKinds, NoImplicitPrelude #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category.Functor
@@ -31,17 +31,17 @@ module Data.Category.Functor (
   , Proj2(..)
   , (:***:)(..)
   , DiagProd(..)
-  , Tuple1, tuple1
-  , Tuple2, tuple2
-  , Swap, swap
+  , Tuple1, pattern Tuple1
+  , Tuple2, pattern Tuple2
+  , Swap, pattern Swap
 
   -- *** Hom functors
   , Hom(..)
-  , (:*-:), homX_
-  , (:-*:), hom_X
-  , HomF, homF
-  , Star, star
-  , Costar, costar
+  , (:*-:), pattern HomX_
+  , (:-*:), pattern Hom_X
+  , HomF, pattern HomF
+  , Star, pattern Star
+  , Costar, pattern Costar
 
 ) where
 
@@ -138,7 +138,7 @@ instance (Category (Dom f), Category (Cod f)) => Functor (Opposite f) where
 
   Opposite f % Op a = Op (f % a)
 
-
+  
 data OpOp (k :: * -> * -> *) = OpOp
 
 -- | The @Op (Op x) = x@ functor.
@@ -183,7 +183,7 @@ instance (Category c1, Category c2) => Functor (Proj2 c1 c2) where
   Proj2 % (_ :**: f2) = f2
 
 
-data f1 :***: f2 = f1 :***: f2
+data f1 :***: f2 where (:***:) :: (Functor f1, Functor f2) => f1 -> f2 -> f1 :***: f2
 
 -- | @f1 :***: f2@ is the product of the functors @f1@ and @f2@.
 instance (Functor f1, Functor f2) => Functor (f1 :***: f2) where
@@ -208,8 +208,8 @@ instance Category k => Functor (DiagProd k) where
 type Tuple1 c1 c2 a = (Const c2 c1 a :***: Id c2) :.: DiagProd c2
 
 -- | 'Tuple1' tuples with a fixed object on the left.
-tuple1 :: (Category c1, Category c2) => Obj c1 a -> Tuple1 c1 c2 a
-tuple1 a = (Const a :***: Id) :.: DiagProd
+pattern Tuple1 :: (Category c1, Category c2) => Obj c1 a -> Tuple1 c1 c2 a
+pattern Tuple1 a = (Const a :***: Id) :.: DiagProd
 
 -- type Tuple2 c1 c2 a = (Id c1 :***: Const c1 c2 a) :.: DiagProd c1
 --
@@ -219,13 +219,13 @@ tuple1 a = (Const a :***: Id) :.: DiagProd
 
 type Swap (c1 :: * -> * -> *) (c2 :: * -> * -> *) = (Proj2 c1 c2 :***: Proj1 c1 c2) :.: DiagProd (c1 :**: c2)
 -- | 'swap' swaps the 2 categories of the product of categories.
-swap :: (Category c1, Category c2) => Swap c1 c2
-swap = (Proj2 :***: Proj1) :.: DiagProd
+pattern Swap :: (Category c1, Category c2) => Swap c1 c2
+pattern Swap = (Proj2 :***: Proj1) :.: DiagProd
 
 type Tuple2 c1 c2 a = Swap c2 c1 :.: Tuple1 c2 c1 a
 -- | 'Tuple2' tuples with a fixed object on the right.
-tuple2 :: (Category c1, Category c2) => Obj c2 a -> Tuple2 c1 c2 a
-tuple2 a = swap :.: tuple1 a
+pattern Tuple2 :: (Category c1, Category c2) => Obj c2 a -> Tuple2 c1 c2 a
+pattern Tuple2 a = Swap :.: Tuple1 a
 
 
 
@@ -242,23 +242,23 @@ instance Category k => Functor (Hom k) where
 
 type x :*-: k = Hom k :.: Tuple1 (Op k) k x
 -- | The covariant functor Hom(X,--)
-homX_ :: Category k => Obj k x -> x :*-: k
-homX_ x = Hom :.: tuple1 (Op x)
+pattern HomX_ :: Category k => Obj k x -> x :*-: k
+pattern HomX_ x = Hom :.: Tuple1 (Op x)
 
 type k :-*: x = Hom k :.: Tuple2 (Op k) k x
 -- | The contravariant functor Hom(--,X)
-hom_X :: Category k => Obj k x -> k :-*: x
-hom_X x = Hom :.: tuple2 x
+pattern Hom_X :: Category k => Obj k x -> k :-*: x
+pattern Hom_X x = Hom :.: Tuple2 x
 
 
 type HomF f g = Hom (Cod f) :.: (Opposite f :***: g)
-homF :: (Functor f, Functor g, Cod f ~ Cod g) => f -> g -> HomF f g
-homF f g = Hom :.: (Opposite f :***: g)
+pattern HomF :: (Functor f, Functor g, Cod f ~ Cod g) => f -> g -> HomF f g
+pattern HomF f g = Hom :.: (Opposite f :***: g)
 
 type Star f = HomF (Id (Cod f)) f
-star :: Functor f => f -> Star f
-star f = homF Id f
+pattern Star :: Functor f => f -> Star f
+pattern Star f = HomF Id f
 
 type Costar f = HomF f (Id (Cod f))
-costar :: Functor f => f -> Costar f
-costar f = homF f Id
+pattern Costar :: Functor f => f -> Costar f
+pattern Costar f = HomF f Id

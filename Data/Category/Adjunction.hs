@@ -59,7 +59,7 @@ mkAdjunction :: (Functor f, Functor g, Dom f ~ d, Cod f ~ c, Dom g ~ c, Cod g ~ 
   -> (forall a b. Obj d a -> c (f :% a) b -> d a (g :% b))
   -> (forall a b. Obj c b -> d a (g :% b) -> c (f :% a) b)
   -> Adjunction c d f g
-mkAdjunction f g l r = Adjunction f g (Nat (costar f) (star g) (\(Op a :**: _) -> l a)) (Nat (star g) (costar f) (\(_ :**: b) -> r b))
+mkAdjunction f g l r = Adjunction f g (Nat (Costar f) (Star g) (\(Op a :**: _) -> l a)) (Nat (Star g) (Costar f) (\(_ :**: b) -> r b))
 
 mkAdjunctionUnits :: (Functor f, Functor g, Dom f ~ d, Cod f ~ c, Dom g ~ c, Cod g ~ d)
   => f -> g
@@ -124,21 +124,21 @@ instance Category AdjArrow where
 
 precomposeAdj :: Category e => Adjunction c d f g -> Adjunction (Nat c e) (Nat d e) (Precompose g e) (Precompose f e)
 precomposeAdj adj@(Adjunction f g _ _) = mkAdjunctionUnits
-  (precompose g)
-  (precompose f)
+  (Precompose g)
+  (Precompose f)
   (\nh@(Nat h _ _) -> compAssocInv h g f . (nh `o` adjunctionUnit adj) . idPrecompInv h)
   (\nh@(Nat h _ _) -> idPrecomp h . (nh `o` adjunctionCounit adj) . compAssoc h f g)
 
 postcomposeAdj :: Category e => Adjunction c d f g -> Adjunction (Nat e c) (Nat e d) (Postcompose f e) (Postcompose g e)
 postcomposeAdj adj@(Adjunction f g _ _) = mkAdjunctionUnits
-  (postcompose f)
-  (postcompose g)
+  (Postcompose f)
+  (Postcompose g)
   (\nh@(Nat h _ _) -> compAssoc g f h . (adjunctionUnit adj `o` nh) . idPostcompInv h)
   (\nh@(Nat h _ _) -> idPostcomp h . (adjunctionCounit adj `o` nh) . compAssocInv f g h)
 
 contAdj :: Adjunction (Op (->)) (->) (Opposite ((->) :-*: r) :.: OpOpInv (->)) ((->) :-*: r)
 contAdj = mkAdjunction
-  (Opposite (hom_X (\x -> x)) :.: OpOpInv)
-  (hom_X (\x -> x))
+  (Opposite (Hom_X (\x -> x)) :.: OpOpInv)
+  (Hom_X (\x -> x))
   (\_ -> \(Op f) -> \b a -> f a b)
   (\_ -> \f -> Op (\b a -> f a b))

@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeOperators, TypeFamilies, FlexibleInstances, FlexibleContexts, UndecidableInstances, RankNTypes, GADTs, LiberalTypeSynonyms, NoImplicitPrelude #-}
+{-# LANGUAGE TypeOperators, TypeFamilies, PatternSynonyms, FlexibleInstances, FlexibleContexts, UndecidableInstances, RankNTypes, GADTs, LiberalTypeSynonyms, NoImplicitPrelude #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category.NaturalTransformation
@@ -40,10 +40,8 @@ module Data.Category.NaturalTransformation (
   -- * Related functors
   , FunctorCompose(..)
   , EndoFunctorCompose
-  , Precompose
-  , precompose
-  , Postcompose
-  , postcompose
+  , Precompose, pattern Precompose
+  , Postcompose, pattern Postcompose
   , Wrap(..)
   , Apply(..)
   , Tuple(..)
@@ -83,6 +81,10 @@ njk@(Nat j k _) `o` nfg@(Nat f g _) = Nat (j :.: f) (k :.: g) ((njk !) . (nfg !)
 -- | The identity natural transformation of a functor.
 natId :: Functor f => f -> Nat (Dom f) (Cod f) f f
 natId f = Nat f f (\i -> f % i)
+
+pattern NatId :: Functor f => f -> Nat (Dom f) (Cod f) f f
+pattern NatId f <- Nat f _ _ where 
+  NatId f = Nat f f (\i -> f % i)
 
 srcF :: Nat c d f g -> f
 srcF (Nat f _ _) = f
@@ -158,14 +160,14 @@ type Profunctors c d = Nat (Op d :**: c) (->)
 -- | @Precompose f e@ is the functor such that @Precompose f e :% g = g :.: f@,
 --   for functors @g@ that compose with @f@ and with codomain @e@.
 type Precompose f e = FunctorCompose (Dom f) (Cod f) e :.: Tuple2 (Nat (Cod f) e) (Nat (Dom f) (Cod f)) f
-precompose :: (Category e, Functor f) => f -> Precompose f e
-precompose f = FunctorCompose :.: tuple2 (natId f)
+pattern Precompose :: (Category e, Functor f) => f -> Precompose f e
+pattern Precompose f = FunctorCompose :.: Tuple2 (NatId f)
 
 -- | @Postcompose f c@ is the functor such that @Postcompose f c :% g = f :.: g@,
 --   for functors @g@ that compose with @f@ and with domain @c@.
 type Postcompose f c = FunctorCompose c (Dom f) (Cod f) :.: Tuple1 (Nat (Dom f) (Cod f)) (Nat c (Dom f)) f
-postcompose :: (Category e, Functor f) => f -> Postcompose f e
-postcompose f = FunctorCompose :.: tuple1 (natId f)
+pattern Postcompose :: (Category e, Functor f) => f -> Postcompose f e
+pattern Postcompose f = FunctorCompose :.: Tuple1 (NatId f)
 
 
 data Wrap f h = Wrap f h
@@ -194,4 +196,4 @@ instance (Category c1, Category c2) => Functor (Tuple c1 c2) where
   type Dom (Tuple c1 c2) = c1
   type Cod (Tuple c1 c2) = Nat c2 (c1 :**: c2)
   type Tuple c1 c2 :% a = Tuple1 c1 c2 a
-  Tuple % f = Nat (tuple1 (src f)) (tuple1 (tgt f)) (\z -> f :**: z)
+  Tuple % f = Nat (Tuple1 (src f)) (Tuple1 (tgt f)) (\z -> f :**: z)

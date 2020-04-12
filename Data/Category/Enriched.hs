@@ -3,6 +3,7 @@
   , TypeFamilies
   , GADTs
   , RankNTypes
+  , PatternSynonyms
   , FlexibleContexts
   , NoImplicitPrelude
   , UndecidableInstances
@@ -24,7 +25,7 @@ module Data.Category.Enriched where
 
 import Data.Category (Category(..), Obj, Op(..))
 import Data.Category.Product
-import Data.Category.Functor (Functor(..), Hom(..), (:*-:), homX_)
+import Data.Category.Functor (Functor(..), Hom(..), (:*-:), pattern HomX_)
 import Data.Category.Limit hiding (HasLimits)
 import Data.Category.CartesianClosed
 import Data.Category.Boolean
@@ -46,7 +47,7 @@ class CartesianClosed (V k) => ECategory (k :: * -> * -> *) where
 -- | The elements of @k@ as a functor from @V k@ to @(->)@ 
 type Elem k = TerminalObject (V k) :*-: (V k)
 elem :: CartesianClosed (V k) => Elem k
-elem = homX_ terminalObject
+elem = HomX_ terminalObject
 
 -- | Arrows as elements of @k@
 type Arr k a b = Elem k :% (k $ (a, b))

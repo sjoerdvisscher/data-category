@@ -3,6 +3,7 @@
   TypeFamilies,
   GADTs,
   Rank2Types,
+  PatternSynonyms,
   ScopedTypeVariables,
   UndecidableInstances,
   TypeSynonymInstances,
@@ -83,16 +84,16 @@ type PShExponential k y z = (Presheaves k :-*: z) :.: Opposite
   :.: Tuple2 (Presheaves k) (Presheaves k) y
   :.: YonedaEmbedding k
   )
-pshExponential :: Category k => Obj (Presheaves k) y -> Obj (Presheaves k) z -> PShExponential k y z
-pshExponential y z = hom_X z :.: Opposite (ProductFunctor :.: tuple2 y :.: yonedaEmbedding)
+pattern PshExponential :: Category k => Obj (Presheaves k) y -> Obj (Presheaves k) z -> PShExponential k y z
+pattern PshExponential y z = Hom_X z :.: Opposite (ProductFunctor :.: Tuple2 y :.: YonedaEmbedding)
 
 -- | The category of presheaves on a category @C@ is cartesian closed for any @C@.
 instance Category k => CartesianClosed (Presheaves k) where
   type Exponential (Presheaves k) y z = PShExponential k y z
 
-  apply yn@(Nat y _ _) zn@(Nat z _ _) = Nat (pshExponential yn zn :*: y) z (\(Op i) (n, yi) -> (n ! Op i) (i, yi))
-  tuple yn zn@(Nat z _ _) = Nat z (pshExponential yn (zn *** yn)) (\(Op i) zi -> (Nat (hom_X i) z (\_ j2i -> (z % Op j2i) zi) *** yn))
-  zn ^^^ yn = Nat (pshExponential (tgt yn) (src zn)) (pshExponential (src yn) (tgt zn)) (\(Op i) n -> zn . n . (natId (hom_X i) *** yn))
+  apply yn@(Nat y _ _) zn@(Nat z _ _) = Nat (PshExponential yn zn :*: y) z (\(Op i) (n, yi) -> (n ! Op i) (i, yi))
+  tuple yn zn@(Nat z _ _) = Nat z (PshExponential yn (zn *** yn)) (\(Op i) zi -> (Nat (Hom_X i) z (\_ j2i -> (z % Op j2i) zi) *** yn))
+  zn ^^^ yn = Nat (PshExponential (tgt yn) (src zn)) (PshExponential (src yn) (tgt zn)) (\(Op i) n -> zn . n . (natId (Hom_X i) *** yn))
 
 
 
@@ -102,7 +103,7 @@ curryAdj :: CartesianClosed k
          -> Adjunction k k
               (ProductFunctor k :.: Tuple2 k k y)
               (ExpFunctor k :.: Tuple1 (Op k) k y)
-curryAdj y = mkAdjunctionUnits (ProductFunctor :.: tuple2 y) (ExpFunctor :.: tuple1 (Op y)) (tuple y) (apply y)
+curryAdj y = mkAdjunctionUnits (ProductFunctor :.: Tuple2 y) (ExpFunctor :.: Tuple1 (Op y)) (tuple y) (apply y)
 
 -- | From the adjunction between the product functor and the exponential functor we get the curry and uncurry functions,
 --   generalized to any cartesian closed category.
