@@ -40,12 +40,17 @@ fromYoneda f = Nat Yoneda f (\(Op a) n -> (n ! Op a) a)
 toYoneda   :: (Category k, Functor f, Dom f ~ Op k, Cod f ~ (->)) => f -> Nat (Op k) (->) f (Yoneda k f)
 toYoneda   f = Nat f Yoneda (\(Op a) fa -> Nat (Hom_X a) f (\_ h -> (f % Op h) fa))
 
+haskUnit :: Obj (->) ()
+haskUnit () = ()
+
 data M1 = M1
 instance Functor M1 where
   type Dom M1 = Nat (Op (->)) (->)
   type Cod M1 = (->)
   type M1 :% f = f :% ()
-  M1 % n = n ! Op (\() -> ())
+  M1 % n = n ! Op haskUnit
 
 haskIsTotal :: Adjunction (->) (Nat (Op (->)) (->)) M1 (YonedaEmbedding (->))
-haskIsTotal = mkAdjunction M1 YonedaEmbedding (\(Nat f _ _) fu2b -> Nat f (Hom :.: (Swap :.: Tuple1 (\x -> x))) (\_ y _ -> fu2b y)) (\_ n@(Nat _ () _) -> (n ! Op (\x -> x)) _)
+haskIsTotal = mkAdjunction M1 YonedaEmbedding
+  (\(Nat f _ _) fu2b -> Nat f (Hom :.: (Swap :.: Tuple1 (\x -> x))) (\_ fz z -> fu2b ((f % Op (\() -> z)) fz)))
+  (\_ n@(Nat f _ _) fu -> (n ! Op haskUnit) fu ())
