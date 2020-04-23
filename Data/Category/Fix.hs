@@ -9,7 +9,7 @@
 -- Portability :  non-portable
 -----------------------------------------------------------------------------
 module Data.Category.Fix where
-  
+
 import Data.Category
 import Data.Category.Functor
 import Data.Category.Limit
@@ -20,7 +20,7 @@ import qualified Data.Category.Unit as U
 import Data.Category.Coproduct
 
 
-newtype Fix f a b = Fix (f (Fix f) a b) 
+newtype Fix f a b = Fix (f (Fix f) a b)
 
 -- | @`Fix` f@ is the fixed point category for a category combinator `f`.
 deriving instance Category (f (Fix f)) => Category (Fix f)
@@ -32,14 +32,26 @@ deriving instance HasInitialObject (f (Fix f)) => HasInitialObject (Fix f)
 deriving instance HasTerminalObject (f (Fix f)) => HasTerminalObject (Fix f)
 
 -- | @Fix f@ inherits its (co)limits from @f (Fix f)@.
-deriving instance HasBinaryProducts (f (Fix f)) => HasBinaryProducts (Fix f)
-  
+instance HasBinaryProducts (f (Fix f)) => HasBinaryProducts (Fix f) where
+  type BinaryProduct (Fix f) x y = BinaryProduct (f (Fix f)) x y
+  proj1 (Fix a) (Fix b) = Fix (proj1 a b)
+  proj2 (Fix a) (Fix b) = Fix (proj2 a b)
+  Fix a &&& Fix b = Fix (a &&& b)
+
 -- | @Fix f@ inherits its (co)limits from @f (Fix f)@.
-deriving instance HasBinaryCoproducts (f (Fix f)) => HasBinaryCoproducts (Fix f)
+instance HasBinaryCoproducts (f (Fix f)) => HasBinaryCoproducts (Fix f) where
+  type BinaryCoproduct (Fix f) x y = BinaryCoproduct (f (Fix f)) x y
+  inj1 (Fix a) (Fix b) = Fix (inj1 a b)
+  inj2 (Fix a) (Fix b) = Fix (inj2 a b)
+  Fix a ||| Fix b = Fix (a ||| b)
 
 -- | @Fix f@ inherits its exponentials from @f (Fix f)@.
-deriving instance CartesianClosed (f (Fix f)) => CartesianClosed (Fix f)
-  
+instance CartesianClosed (f (Fix f)) => CartesianClosed (Fix f) where
+  type Exponential (Fix f) x y = Exponential (f (Fix f)) x y
+  apply (Fix a) (Fix b) = Fix (apply a b)
+  tuple (Fix a) (Fix b) = Fix (tuple a b)
+  Fix a ^^^ Fix b = Fix (a ^^^ b)
+
 data Wrap (f :: * -> * -> *) = Wrap
 -- | The `Wrap` functor wraps `Fix` around @f (Fix f)@.
 instance Category (f (Fix f)) => Functor (Wrap (Fix f)) where
@@ -61,7 +73,7 @@ type WrapTensor f t = Wrap f :.: t :.: (Unwrap f :***: Unwrap f)
 instance (TensorProduct t, Cod t ~ f (Fix f)) => TensorProduct (WrapTensor (Fix f) t) where
   type Unit (WrapTensor (Fix f) t) = Unit t
   unitObject (_ :.: t :.: _) = Fix (unitObject t)
-  
+
   leftUnitor (_ :.: t :.: _) (Fix a) = Fix (leftUnitor t a)
   leftUnitorInv (_ :.: t :.: _) (Fix a) = Fix (leftUnitorInv t a)
   rightUnitor (_ :.: t :.: _) (Fix a) = Fix (rightUnitor t a)

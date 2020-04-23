@@ -6,6 +6,7 @@
   , ViewPatterns
   , TypeSynonymInstances
   , FlexibleInstances
+  , UndecidableInstances
   , NoImplicitPrelude
   #-}
 -----------------------------------------------------------------------------
@@ -174,24 +175,24 @@ idComonad = ComonoidObject (natId Id) (idPrecompInv Id)
 
 -- | Every adjunction gives rise to an associated monad.
 adjunctionMonad :: Adjunction c d f g -> Monad (g :.: f)
-adjunctionMonad adj@(Adjunction f g _ _) = 
-  let MonoidObject ret mult = adjunctionMonadT adj idMonad 
+adjunctionMonad adj@(Adjunction f g _ _) =
+  let MonoidObject ret mult = adjunctionMonadT adj idMonad
   in mkMonad (g :.: f) (ret !) (mult !)
 
 -- | Every adjunction gives rise to an associated monad transformer.
 adjunctionMonadT :: (Dom m ~ c) => Adjunction c d f g -> Monad m -> Monad (g :.: m :.: f)
-adjunctionMonadT adj@(Adjunction f g _ _) (MonoidObject ret@(Nat _ m _) mult) = mkMonad (g :.: m :.: f) 
-  ((Wrap g f % ret . idPrecompInv g `o` natId f . adjunctionUnit adj) !) 
+adjunctionMonadT adj@(Adjunction f g _ _) (MonoidObject ret@(Nat _ m _) mult) = mkMonad (g :.: m :.: f)
+  ((Wrap g f % ret . idPrecompInv g `o` natId f . adjunctionUnit adj) !)
   ((Wrap g f % (mult . idPrecomp m `o` natId m . Wrap m m % adjunctionCounit adj)) !)
 
 -- | Every adjunction gives rise to an associated comonad.
 adjunctionComonad :: Adjunction c d f g -> Comonad (f :.: g)
-adjunctionComonad adj@(Adjunction f g _ _) = 
+adjunctionComonad adj@(Adjunction f g _ _) =
   let ComonoidObject extr dupl = adjunctionComonadT adj idComonad
   in mkComonad (f :.: g) (extr !) (dupl !)
 
 -- | Every adjunction gives rise to an associated comonad transformer.
 adjunctionComonadT :: (Dom w ~ d) => Adjunction c d f g -> Comonad w -> Comonad (f :.: w :.: g)
-adjunctionComonadT adj@(Adjunction f g _ _) (ComonoidObject extr@(Nat w _ _) dupl) = mkComonad (f :.: w :.: g) 
+adjunctionComonadT adj@(Adjunction f g _ _) (ComonoidObject extr@(Nat w _ _) dupl) = mkComonad (f :.: w :.: g)
   ((adjunctionCounit adj . idPrecomp f `o` natId g . Wrap f g % extr) !)
   ((Wrap f g % (Wrap w w % adjunctionUnit adj . idPrecompInv w `o` natId w . dupl)) !)

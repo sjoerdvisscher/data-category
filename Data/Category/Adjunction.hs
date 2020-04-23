@@ -110,7 +110,7 @@ composeAdj l@(Adjunction f g _ _) r@(Adjunction f' g' _ _) = mkAdjunction (f' :.
 
 
 data AdjArrow c d where
-  AdjArrow :: (Category c, Category d) => Adjunction c d f g -> AdjArrow (CatW c) (CatW d)
+  AdjArrow :: (Category c, Category d) => Adjunction c d f g -> AdjArrow c d
 
 -- | The category with categories as objects and adjunctions as arrows.
 instance Category AdjArrow where

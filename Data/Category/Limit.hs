@@ -2,6 +2,8 @@
   FlexibleContexts,
   FlexibleInstances,
   GADTs,
+  PolyKinds,
+  DataKinds,
   MultiParamTypeClasses,
   RankNTypes,
   ScopedTypeVariables,
@@ -152,16 +154,16 @@ limitAdj = mkAdjunctionUnits diag LimitFunctor (\a -> limitFactorizer (diag % a)
 -- d (f :% Limit (g :.: t)) (Limit t)
 -- d (Limit (g :.: t)) (g :% Limit t)
 rightAdjointPreservesLimits
-  :: (HasLimits j c, HasLimits j d) 
+  :: (HasLimits j c, HasLimits j d)
   => Adjunction c d f g -> Obj (Nat j c) t -> d (Limit (g :.: t)) (g :% Limit t)
-rightAdjointPreservesLimits adj@(Adjunction f g _ _) (Nat t _ _) = 
+rightAdjointPreservesLimits adj@(Adjunction f g _ _) (Nat t _ _) =
   leftAdjunct adj x (limitFactorizer (natId t) cone)
     where
       l = limit (natId (g :.: t))
       x = coneVertex l
       -- cone :: Cone t (f :% Limit (g :.: t))
       cone = Nat (Const (f % x)) t (\z -> rightAdjunct adj (t % z) (l ! z))
-      
+
 -- Cone t (Limit t)
 -- Cone (g :.: t) (g :% Limit t)
 -- d (g :% Limit t) (Limit (g :.: t))
@@ -200,9 +202,9 @@ colimitAdj = mkAdjunctionUnits ColimitFunctor diag (\f @ Nat{} -> colimit f) (\a
 
 
 leftAdjointPreservesColimits
-  :: (HasColimits j c, HasColimits j d) 
+  :: (HasColimits j c, HasColimits j d)
   => Adjunction c d f g -> Obj (Nat j d) t -> c (f :% Colimit t) (Colimit (f :.: t))
-leftAdjointPreservesColimits adj@(Adjunction f g _ _) (Nat t _ _) = 
+leftAdjointPreservesColimits adj@(Adjunction f g _ _) (Nat t _ _) =
   rightAdjunct adj x (colimitFactorizer (natId t) cocone)
     where
       l = colimit (natId (f :.: t))
@@ -210,14 +212,14 @@ leftAdjointPreservesColimits adj@(Adjunction f g _ _) (Nat t _ _) =
       cocone = Nat t (Const (g % x)) (\z -> leftAdjunct adj (t % z) (l ! z))
 
 leftAdjointPreservesColimitsInv
-  :: (HasColimits j c, HasColimits j d) 
+  :: (HasColimits j c, HasColimits j d)
   => Obj (Nat d c) f -> Obj (Nat j d) t -> c (Colimit (f :.: t)) (f :% Colimit t)
 leftAdjointPreservesColimitsInv f@Nat{} t@Nat{} = colimitFactorizer (f `o` t) (constPrecompOut (f `o` colimit t))
 
 
 class Category k => HasTerminalObject k where
 
-  type TerminalObject k :: *
+  type TerminalObject k :: Kind k
 
   terminalObject :: Obj k (TerminalObject k)
 
@@ -227,7 +229,7 @@ class Category k => HasTerminalObject k where
 type instance LimitFam Void k f = TerminalObject k
 
 -- | A terminal object is the limit of the functor from /0/ to k.
-instance (HasTerminalObject k) => HasLimits Void k where
+instance (Category k, HasTerminalObject k) => HasLimits Void k where
 
   limit (Nat f _ _) = voidNat (Const terminalObject) f
   limitFactorizer Nat{} = terminate . coneVertex
@@ -243,7 +245,7 @@ instance HasTerminalObject (->) where
 
 -- | @Unit@ is the terminal category.
 instance HasTerminalObject Cat where
-  type TerminalObject Cat = CatW Unit
+  type TerminalObject Cat = Unit
 
   terminalObject = CatA Id
 
@@ -285,7 +287,7 @@ instance (Category c1, HasTerminalObject c2) => HasTerminalObject (c1 :>>: c2) w
 
 
 class Category k => HasInitialObject k where
-  type InitialObject k :: *
+  type InitialObject k :: Kind k
 
   initialObject :: Obj k (InitialObject k)
 
@@ -295,7 +297,7 @@ class Category k => HasInitialObject k where
 type instance ColimitFam Void k f = InitialObject k
 
 -- | An initial object is the colimit of the functor from /0/ to k.
-instance HasInitialObject k => HasColimits Void k where
+instance (Category k, HasInitialObject k) => HasColimits Void k where
 
   colimit (Nat f _ _) = voidNat f (Const initialObject)
   colimitFactorizer Nat{} = initialize . coconeVertex
@@ -313,7 +315,7 @@ instance HasInitialObject (->) where
 
 -- | The empty category is the initial object in @Cat@.
 instance HasInitialObject Cat where
-  type InitialObject Cat = CatW Void
+  type InitialObject Cat = Void
 
   initialObject = CatA Id
 
@@ -354,7 +356,7 @@ instance (HasInitialObject c1, Category c2) => HasInitialObject (c1 :>>: c2) whe
 
 
 class Category k => HasBinaryProducts k where
-  type BinaryProduct (k :: * -> * -> *) x y :: *
+  type BinaryProduct k (x :: Kind k) (y :: Kind k) :: Kind k
 
   proj1 :: Obj k x -> Obj k y -> k (BinaryProduct k x y) x
   proj2 :: Obj k x -> Obj k y -> k (BinaryProduct k x y) y
@@ -403,7 +405,7 @@ instance HasBinaryProducts (->) where
 
 -- | The product of categories ':**:' is the binary product in 'Cat'.
 instance HasBinaryProducts Cat where
-  type BinaryProduct Cat (CatW c1) (CatW c2) = CatW (c1 :**: c2)
+  type BinaryProduct Cat c1 c2 = c1 :**: c2
 
   proj1 (CatA _) (CatA _) = CatA Proj1
   proj2 (CatA _) (CatA _) = CatA Proj2
@@ -490,7 +492,7 @@ instance (Category c, HasBinaryProducts d) => HasBinaryProducts (Nat c d) where
 
 
 class Category k => HasBinaryCoproducts k where
-  type BinaryCoproduct (k :: * -> * -> *) x y :: *
+  type BinaryCoproduct k (x :: Kind k) (y :: Kind k) :: Kind k
 
   inj1 :: Obj k x -> Obj k y -> k x (BinaryCoproduct k x y)
   inj2 :: Obj k x -> Obj k y -> k y (BinaryCoproduct k x y)
@@ -529,7 +531,7 @@ instance (HasColimits i k, HasColimits j k, HasBinaryCoproducts k) => HasColimit
 
 -- | The coproduct of categories ':++:' is the binary coproduct in 'Cat'.
 instance HasBinaryCoproducts Cat where
-  type BinaryCoproduct Cat (CatW c1) (CatW c2) = CatW (c1 :++: c2)
+  type BinaryCoproduct Cat c1 c2 = c1 :++: c2
 
   inj1 (CatA _) (CatA _) = CatA Inj1
   inj2 (CatA _) (CatA _) = CatA Inj2
@@ -657,7 +659,7 @@ instance Category k => HasLimits Unit k where
 type instance LimitFam (i :>>: j) k f = f :% InitialObject (i :>>: j)
 
 -- | The limit of any diagram with an initial object, has the limit at the initial object.
-instance (HasInitialObject (i :>>: j), Category k) => HasLimits (i :>>: j) k where
+instance (HasInitialObject (i :>>: j), Category i, Category j, Category k) => HasLimits (i :>>: j) k where
 
   limit (Nat f _ _) = Nat (Const (f % initialObject)) f (\z -> f % initialize z)
   limitFactorizer Nat{} n = n ! initialObject
@@ -674,7 +676,7 @@ instance Category k => HasColimits Unit k where
 type instance ColimitFam (i :>>: j) k f = f :% TerminalObject (i :>>: j)
 
 -- | The colimit of any diagram with a terminal object, has the limit at the terminal object.
-instance (HasTerminalObject (i :>>: j), Category k) => HasColimits (i :>>: j) k where
+instance (HasTerminalObject (i :>>: j), Category i, Category j, Category k) => HasColimits (i :>>: j) k where
 
   colimit (Nat f _ _) = Nat f (Const (f % terminalObject)) (\z -> f % terminate z)
   colimitFactorizer Nat{} n = n ! terminalObject

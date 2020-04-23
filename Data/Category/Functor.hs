@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeOperators, TypeFamilies, PatternSynonyms, FlexibleContexts, FlexibleInstances, UndecidableInstances, GADTs, RankNTypes, ConstraintKinds, NoImplicitPrelude #-}
+{-# LANGUAGE PolyKinds, TypeOperators, TypeFamilies, PatternSynonyms, FlexibleContexts, FlexibleInstances, UndecidableInstances, GADTs, RankNTypes, ConstraintKinds, NoImplicitPrelude #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category.Functor
@@ -12,7 +12,6 @@ module Data.Category.Functor (
 
   -- * Cat
     Cat(..)
-  , CatW
 
   -- * Functors
   , Functor(..)
@@ -71,11 +70,8 @@ type FunctorOf a b t = (Functor t, Dom t ~ a, Cod t ~ b)
 
 
 -- | Functors are arrows in the category Cat.
-data Cat :: * -> * -> * where
-  CatA :: (Functor ftag, Category (Dom ftag), Category (Cod ftag)) => ftag -> Cat (CatW (Dom ftag)) (CatW (Cod ftag))
-
--- | We need a wrapper here because objects need to be of kind *, and categories are of kind * -> * -> *.
-data CatW :: (* -> * -> *) -> *
+data Cat :: (* -> * -> *) -> (* -> * -> *) -> * where
+  CatA :: (Functor ftag, Category (Dom ftag), Category (Cod ftag)) => ftag -> Cat (Dom ftag) (Cod ftag)
 
 
 -- | @Cat@ is the category with categories as objects and funtors as arrows.
@@ -138,7 +134,7 @@ instance (Category (Dom f), Category (Cod f)) => Functor (Opposite f) where
 
   Opposite f % Op a = Op (f % a)
 
-  
+
 data OpOp (k :: * -> * -> *) = OpOp
 
 -- | The @Op (Op x) = x@ functor.
