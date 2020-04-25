@@ -41,6 +41,8 @@ module Data.Category.Limit (
   , HasLimits(..)
   , LimitFunctor(..)
   , limitAdj
+  , adjLimit
+  , adjLimitFactorizer
   , rightAdjointPreservesLimits
   , rightAdjointPreservesLimitsInv
 
@@ -50,15 +52,17 @@ module Data.Category.Limit (
   , HasColimits(..)
   , ColimitFunctor(..)
   , colimitAdj
+  , adjColimit
+  , adjColimitFactorizer
   , leftAdjointPreservesColimits
   , leftAdjointPreservesColimitsInv
 
-  -- ** Limits of type Void
+  -- * Limits of type Void
   , HasTerminalObject(..)
   , HasInitialObject(..)
   , Zero
 
-  -- ** Limits of type Pair
+  -- * Limits of type Pair
   , HasBinaryProducts(..)
   , ProductFunctor(..)
   , (:*:)(..)
@@ -103,18 +107,18 @@ type DiagF f = Diag (Dom f) (Cod f)
 
 
 -- | A cone from N to F is a natural transformation from the constant functor to N to F.
-type Cone   f n = Nat (Dom f) (Cod f) (ConstF f n) f
+type Cone   j k f n = Nat j k (Const j k n) f
 
 -- | A co-cone from F to N is a natural transformation from F to the constant functor to N.
-type Cocone f n = Nat (Dom f) (Cod f) f (ConstF f n)
+type Cocone j k f n = Nat j k f (Const j k n)
 
 
 -- | The vertex (or apex) of a cone.
-coneVertex :: Cone f n -> Obj (Cod f) n
+coneVertex :: Cone j k f n -> Obj k n
 coneVertex (Nat (Const x) _ _) = x
 
 -- | The vertex (or apex) of a co-cone.
-coconeVertex :: Cocone f n -> Obj (Cod f) n
+coconeVertex :: Cocone j k f n -> Obj k n
 coconeVertex (Nat _ (Const x) _) = x
 
 
@@ -127,10 +131,10 @@ type Limit f = LimitFam (Dom f) (Cod f) f
 -- | An instance of @HasLimits j k@ says that @k@ has all limits of type @j@.
 class (Category j, Category k) => HasLimits j k where
   -- | 'limit' returns the limiting cone for a functor @f@.
-  limit           :: Obj (Nat j k) f -> Cone f (Limit f)
+  limit           :: Obj (Nat j k) f -> Cone j k f (LimitFam j k f)
   -- | 'limitFactorizer' shows that the limiting cone is universal – i.e. any other cone of @f@ factors through it
   --   by returning the morphism between the vertices of the cones.
-  limitFactorizer :: Obj (Nat j k) f -> Cone f n -> k n (Limit f)
+  limitFactorizer :: Cone j k f n -> k n (LimitFam j k f)
 
 data LimitFunctor (j :: * -> * -> *) (k  :: * -> * -> *) = LimitFunctor
 -- | If every diagram of type @j@ has a limit in @k@ there exists a limit functor.
@@ -140,12 +144,18 @@ instance HasLimits j k => Functor (LimitFunctor j k) where
   type Cod (LimitFunctor j k) = k
   type LimitFunctor j k :% f = LimitFam j k f
 
-  LimitFunctor % n @ Nat{}  = limitFactorizer (tgt n) (n . limit (src n))
+  LimitFunctor % n = limitFactorizer (n . limit (src n))
 
 -- | The limit functor is right adjoint to the diagonal functor.
 limitAdj :: forall j k. HasLimits j k => Adjunction (Nat j k) k (Diag j k) (LimitFunctor j k)
-limitAdj = mkAdjunctionUnits diag LimitFunctor (\a -> limitFactorizer (diag % a) (diag % a)) (\f @ Nat{} -> limit f)
-  where diag = Diag :: Diag j k -- Forces the type of all Diags to be the same.
+limitAdj = mkAdjunctionCounit Diag LimitFunctor (\_ -> limitFactorizer) limit
+
+adjLimit :: Category k => Adjunction (Nat j k) k (Diag j k) r -> Obj (Nat j k) f -> Cone j k f (r :% f)
+adjLimit adj f = adjunctionCounit adj ! f
+
+adjLimitFactorizer :: Category k => Adjunction (Nat j k) k (Diag j k) r -> Cone j k f n -> k n (r :% f)
+adjLimitFactorizer adj cone = leftAdjunct adj (coneVertex cone) cone
+
 
 -- Cone (g :.: t) (Limit (g :.: t))
 -- Obj j z -> d (Limit (g :.: t)) ((g :.: t) :% z)
@@ -157,7 +167,7 @@ rightAdjointPreservesLimits
   :: (HasLimits j c, HasLimits j d)
   => Adjunction c d f g -> Obj (Nat j c) t -> d (Limit (g :.: t)) (g :% Limit t)
 rightAdjointPreservesLimits adj@(Adjunction f g _ _) (Nat t _ _) =
-  leftAdjunct adj x (limitFactorizer (natId t) cone)
+  leftAdjunct adj x (limitFactorizer cone)
     where
       l = limit (natId (g :.: t))
       x = coneVertex l
@@ -169,8 +179,8 @@ rightAdjointPreservesLimits adj@(Adjunction f g _ _) (Nat t _ _) =
 -- d (g :% Limit t) (Limit (g :.: t))
 rightAdjointPreservesLimitsInv
   :: (HasLimits j c, HasLimits j d)
-  => Obj (Nat c d) g -> Obj (Nat j c) t -> d (g :% Limit t) (Limit (g :.: t))
-rightAdjointPreservesLimitsInv g@Nat{} t@Nat{} = limitFactorizer (g `o` t) (constPrecompIn (g `o` limit t))
+  => Obj (Nat c d) g -> Obj (Nat j c) t -> d (g :% LimitFam j c t) (LimitFam j d (g :.: t))
+rightAdjointPreservesLimitsInv g t = limitFactorizer (constPrecompIn (g `o` limit t))
 
 -- | Colimits in a category @k@ by means of a diagram of type @j@, which is a functor from @j@ to @k@.
 type family ColimitFam (j :: * -> * -> *) (k :: * -> * -> *) (f :: *) :: *
@@ -180,10 +190,10 @@ type Colimit f = ColimitFam (Dom f) (Cod f) f
 -- | An instance of @HasColimits j k@ says that @k@ has all colimits of type @j@.
 class (Category j, Category k) => HasColimits j k where
   -- | 'colimit' returns the limiting co-cone for a functor @f@.
-  colimit           :: Obj (Nat j k) f -> Cocone f (Colimit f)
+  colimit           :: Obj (Nat j k) f -> Cocone j k f (ColimitFam j k f)
   -- | 'colimitFactorizer' shows that the limiting co-cone is universal – i.e. any other co-cone of @f@ factors through it
   --   by returning the morphism between the vertices of the cones.
-  colimitFactorizer :: Obj (Nat j k) f -> Cocone f n -> k (Colimit f) n
+  colimitFactorizer :: Cocone j k f n -> k (ColimitFam j k f) n
 
 data ColimitFunctor (j :: * -> * -> *) (k  :: * -> * -> *) = ColimitFunctor
 -- | If every diagram of type @j@ has a colimit in @k@ there exists a colimit functor.
@@ -193,19 +203,24 @@ instance HasColimits j k => Functor (ColimitFunctor j k) where
   type Cod (ColimitFunctor j k) = k
   type ColimitFunctor j k :% f = ColimitFam j k f
 
-  ColimitFunctor % n @ Nat{}  = colimitFactorizer (src n) (colimit (tgt n) . n)
+  ColimitFunctor % n = colimitFactorizer (colimit (tgt n) . n)
 
 -- | The colimit functor is left adjoint to the diagonal functor.
 colimitAdj :: forall j k. HasColimits j k => Adjunction k (Nat j k) (ColimitFunctor j k) (Diag j k)
-colimitAdj = mkAdjunctionUnits ColimitFunctor diag (\f @ Nat{} -> colimit f) (\a -> colimitFactorizer (diag % a) (diag % a))
-  where diag = Diag :: Diag j k -- Forces the type of all Diags to be the same.
+colimitAdj = mkAdjunctionUnit ColimitFunctor Diag colimit (\_ -> colimitFactorizer)
+
+adjColimit :: Category k => Adjunction k (Nat j k) l (Diag j k) -> Obj (Nat j k) f -> Cocone j k f (l :% f)
+adjColimit adj f = adjunctionUnit adj ! f
+
+adjColimitFactorizer :: Category k => Adjunction k (Nat j k) l (Diag j k) -> Cocone j k f n -> k (l :% f) n
+adjColimitFactorizer adj cocone = rightAdjunct adj (coconeVertex cocone) cocone
 
 
 leftAdjointPreservesColimits
   :: (HasColimits j c, HasColimits j d)
   => Adjunction c d f g -> Obj (Nat j d) t -> c (f :% Colimit t) (Colimit (f :.: t))
 leftAdjointPreservesColimits adj@(Adjunction f g _ _) (Nat t _ _) =
-  rightAdjunct adj x (colimitFactorizer (natId t) cocone)
+  rightAdjunct adj x (colimitFactorizer cocone)
     where
       l = colimit (natId (f :.: t))
       x = coconeVertex l
@@ -213,8 +228,8 @@ leftAdjointPreservesColimits adj@(Adjunction f g _ _) (Nat t _ _) =
 
 leftAdjointPreservesColimitsInv
   :: (HasColimits j c, HasColimits j d)
-  => Obj (Nat d c) f -> Obj (Nat j d) t -> c (Colimit (f :.: t)) (f :% Colimit t)
-leftAdjointPreservesColimitsInv f@Nat{} t@Nat{} = colimitFactorizer (f `o` t) (constPrecompOut (f `o` colimit t))
+  => Obj (Nat d c) f -> Obj (Nat j d) t -> c (ColimitFam j c (f :.: t)) (f :% ColimitFam j d t)
+leftAdjointPreservesColimitsInv f t = colimitFactorizer (constPrecompOut (f `o` colimit t))
 
 
 class Category k => HasTerminalObject k where
@@ -232,7 +247,7 @@ type instance LimitFam Void k f = TerminalObject k
 instance (Category k, HasTerminalObject k) => HasLimits Void k where
 
   limit (Nat f _ _) = voidNat (Const terminalObject) f
-  limitFactorizer Nat{} = terminate . coneVertex
+  limitFactorizer = terminate . coneVertex
 
 
 -- | @()@ is the terminal object in @Hask@.
@@ -300,7 +315,7 @@ type instance ColimitFam Void k f = InitialObject k
 instance (Category k, HasInitialObject k) => HasColimits Void k where
 
   colimit (Nat f _ _) = voidNat f (Const initialObject)
-  colimitFactorizer Nat{} = initialize . coconeVertex
+  colimitFactorizer = initialize . coconeVertex
 
 
 data Zero
@@ -376,7 +391,7 @@ instance (HasLimits i k, HasLimits j k, HasBinaryProducts k) => HasLimits (i :++
 
   limit = limit'
     where
-      limit' :: forall f. Obj (Nat (i :++: j) k) f -> Cone f (Limit f)
+      limit' :: forall f. Obj (Nat (i :++: j) k) f -> Cone (i :++: j) k f (LimitFam (i :++: j) k f)
       limit' l@Nat{} = Nat (Const (x *** y)) (srcF l) h
         where
           x = coneVertex lim1
@@ -387,10 +402,10 @@ instance (HasLimits i k, HasLimits j k, HasBinaryProducts k) => HasLimits (i :++
           h (I1 n) = lim1 ! n . proj1 x y
           h (I2 n) = lim2 ! n . proj2 x y
 
-  limitFactorizer l@Nat{} c =
-    limitFactorizer (l `o` natId Inj1) (constPostcompIn (c `o` natId Inj1))
+  limitFactorizer c =
+    limitFactorizer (constPostcompIn (c `o` natId Inj1))
     &&&
-    limitFactorizer (l `o` natId Inj2) (constPostcompIn (c `o` natId Inj2))
+    limitFactorizer (constPostcompIn (c `o` natId Inj2))
 
 
 -- | The tuple is the binary product in @Hask@.
@@ -512,7 +527,7 @@ instance (HasColimits i k, HasColimits j k, HasBinaryCoproducts k) => HasColimit
 
   colimit = colimit'
     where
-      colimit' :: forall f. Obj (Nat (i :++: j) k) f -> Cocone f (Colimit f)
+      colimit' :: forall f. Obj (Nat (i :++: j) k) f -> Cocone (i :++: j) k f (ColimitFam (i :++: j) k f)
       colimit' l@Nat{} = Nat (srcF l) (Const (x +++ y)) h
         where
           x = coconeVertex col1
@@ -523,10 +538,10 @@ instance (HasColimits i k, HasColimits j k, HasBinaryCoproducts k) => HasColimit
           h (I1 n) = inj1 x y . col1 ! n
           h (I2 n) = inj2 x y . col2 ! n
 
-  colimitFactorizer l@Nat{} c =
-    colimitFactorizer (l `o` natId Inj1) (constPostcompOut (c `o` natId Inj1))
+  colimitFactorizer c =
+    colimitFactorizer (constPostcompOut (c `o` natId Inj1))
     |||
-    colimitFactorizer (l `o` natId Inj2) (constPostcompOut (c `o` natId Inj2))
+    colimitFactorizer (constPostcompOut (c `o` natId Inj2))
 
 
 -- | The coproduct of categories ':++:' is the binary coproduct in 'Cat'.
@@ -654,7 +669,7 @@ type instance LimitFam Unit k f = f :% ()
 instance Category k => HasLimits Unit k where
 
   limit (Nat f _ _) = Nat (Const (f % Unit)) f (\Unit -> f % Unit)
-  limitFactorizer Nat{} n = n ! Unit
+  limitFactorizer n = n ! Unit
 
 type instance LimitFam (i :>>: j) k f = f :% InitialObject (i :>>: j)
 
@@ -662,7 +677,7 @@ type instance LimitFam (i :>>: j) k f = f :% InitialObject (i :>>: j)
 instance (HasInitialObject (i :>>: j), Category i, Category j, Category k) => HasLimits (i :>>: j) k where
 
   limit (Nat f _ _) = Nat (Const (f % initialObject)) f (\z -> f % initialize z)
-  limitFactorizer Nat{} n = n ! initialObject
+  limitFactorizer n = n ! initialObject
 
 
 type instance ColimitFam Unit k f = f :% ()
@@ -671,7 +686,7 @@ type instance ColimitFam Unit k f = f :% ()
 instance Category k => HasColimits Unit k where
 
   colimit (Nat f _ _) = Nat f (Const (f % Unit)) (\Unit -> f % Unit)
-  colimitFactorizer Nat{} n = n ! Unit
+  colimitFactorizer n = n ! Unit
 
 type instance ColimitFam (i :>>: j) k f = f :% TerminalObject (i :>>: j)
 
@@ -679,7 +694,7 @@ type instance ColimitFam (i :>>: j) k f = f :% TerminalObject (i :>>: j)
 instance (HasTerminalObject (i :>>: j), Category i, Category j, Category k) => HasColimits (i :>>: j) k where
 
   colimit (Nat f _ _) = Nat f (Const (f % terminalObject)) (\z -> f % terminate z)
-  colimitFactorizer Nat{} n = n ! terminalObject
+  colimitFactorizer n = n ! terminalObject
 
 
 data ForAll f = ForAll (forall a. Obj (->) a -> f :% a)
@@ -687,11 +702,11 @@ type instance LimitFam (->) (->) f = ForAll f
 
 instance HasLimits (->) (->) where
   limit (Nat f _ _) = Nat (Const (\x -> x)) f (\a (ForAll g) -> g a)
-  limitFactorizer Nat{} n = \z -> ForAll (\a -> (n ! a) z)
+  limitFactorizer n = \z -> ForAll (\a -> (n ! a) z)
 
 data Exists f = forall a. Exists (Obj (->) a) (f :% a)
 type instance ColimitFam (->) (->) f = Exists f
 
 instance HasColimits (->) (->) where
   colimit (Nat f _ _) = Nat f (Const (\x -> x)) Exists
-  colimitFactorizer Nat{} n = \(Exists a fa) -> (n ! a) fa
+  colimitFactorizer n = \(Exists a fa) -> (n ! a) fa

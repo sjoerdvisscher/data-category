@@ -21,12 +21,12 @@ import Data.Category.RepresentableFunctor
 data CommaO :: * -> * -> * -> * where
   CommaO :: (Cod t ~ k, Cod s ~ k)
     => Obj (Dom t) a -> k (t :% a) (s :% b) -> Obj (Dom s) b -> CommaO t s (a, b)
-    
-data (:/\:) :: * -> * -> * -> * -> * where 
-  CommaA :: 
+
+data (:/\:) :: * -> * -> * -> * -> * where
+  CommaA ::
     CommaO t s (a, b) ->
-    Dom t a a' -> 
-    Dom s b b' -> 
+    Dom t a a' ->
+    Dom s b b' ->
     CommaO t s (a', b') ->
     (t :/\: s) (a, b) (a', b')
 
@@ -35,10 +35,10 @@ commaId o@(CommaO a _ b) = CommaA o a b o
 
 -- | The comma category T \\downarrow S
 instance (Category (Dom t), Category (Dom s)) => Category (t :/\: s) where
-    
+
   src (CommaA so _ _ _) = commaId so
   tgt (CommaA _ _ _ to) = commaId to
-  
+
   (CommaA _ g h to) . (CommaA so g' h' _) = CommaA so (g . g') (h . h') to
 
 
@@ -48,12 +48,14 @@ type (f `ObjectsFOver`  a) = f :/\: ConstF f a
 type (c `ObjectsUnder` a) = Id c `ObjectsFUnder` a
 type (c `ObjectsOver`  a) = Id c `ObjectsFOver`  a
 
+type Arrows c = Id c :/\: Id c
+
 
 initialUniversalComma :: forall u x c a a_
                        . (Functor u, c ~ (u `ObjectsFUnder` x), HasInitialObject c, (a_, a) ~ InitialObject c)
                       => u -> InitialUniversal x u a
 initialUniversalComma u = case initialObject :: Obj c (a_, a) of
-  CommaA (CommaO _ mor a) _ _ _ -> 
+  CommaA (CommaO _ mor a) _ _ _ ->
     initialUniversal u a mor factorizer
       where
         factorizer :: forall y. Obj (Dom u) y -> Cod u x (u :% y) -> Dom u a y

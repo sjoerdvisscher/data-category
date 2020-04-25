@@ -12,7 +12,7 @@
 -- of an adjunction for each monad.
 -----------------------------------------------------------------------------
 module Data.Category.Kleisli where
-  
+
 import Data.Category
 import Data.Category.Functor
 import Data.Category.NaturalTransformation
@@ -28,30 +28,28 @@ kleisliId m a = Kleisli m a (unit m ! a)
 
 -- | The category of Kleisli arrows.
 instance Category (Kleisli m) where
-  
+
   src (Kleisli m _ f) = kleisliId m (src f)
   tgt (Kleisli m b _) = kleisliId m b
-  
+
   (Kleisli m c f) . (Kleisli _ _ g) = Kleisli m c ((multiply m ! c) . (monadFunctor m % f) . g)
 
 
 
-data KleisliAdjF m = KleisliAdjF (Monad m)
-instance (Functor m, Dom m ~ k, Cod m ~ k) => Functor (KleisliAdjF m) where
-  type Dom (KleisliAdjF m) = Dom m
-  type Cod (KleisliAdjF m) = Kleisli m
-  type KleisliAdjF m :% a = a
-  KleisliAdjF m % f = Kleisli m (tgt f) ((unit m ! tgt f) . f)
-   
-data KleisliAdjG m = KleisliAdjG (Monad m)
-instance (Functor m, Dom m ~ k, Cod m ~ k) => Functor (KleisliAdjG m) where
-  type Dom (KleisliAdjG m) = Kleisli m
-  type Cod (KleisliAdjG m) = Dom m
-  type KleisliAdjG m :% a = m :% a
-  KleisliAdjG m % Kleisli _ b f = (multiply m ! b) . (monadFunctor m % f)
+newtype KleisliFree m = KleisliFree (Monad m)
+instance (Functor m, Dom m ~ k, Cod m ~ k) => Functor (KleisliFree m) where
+  type Dom (KleisliFree m) = Dom m
+  type Cod (KleisliFree m) = Kleisli m
+  type KleisliFree m :% a = a
+  KleisliFree m % f = Kleisli m (tgt f) ((unit m ! tgt f) . f)
+
+data KleisliForget m = KleisliForget
+instance (Functor m, Dom m ~ k, Cod m ~ k) => Functor (KleisliForget m) where
+  type Dom (KleisliForget m) = Kleisli m
+  type Cod (KleisliForget m) = Dom m
+  type KleisliForget m :% a = m :% a
+  KleisliForget % Kleisli m b f = (multiply m ! b) . (monadFunctor m % f)
 
 kleisliAdj :: (Functor m, Dom m ~ k, Cod m ~ k)
-  => Monad m -> A.Adjunction (Kleisli m) k (KleisliAdjF m) (KleisliAdjG m)
-kleisliAdj m = A.mkAdjunctionUnits (KleisliAdjF m) (KleisliAdjG m)
-  (\x -> unit m ! x)
-  (\(Kleisli _ x _) -> Kleisli m x (monadFunctor m % x))
+  => Monad m -> A.Adjunction (Kleisli m) k (KleisliFree m) (KleisliForget m)
+kleisliAdj m = A.mkAdjunctionUnit (KleisliFree m) KleisliForget (unit m !) (\(Kleisli _ x _) f -> Kleisli m x f)

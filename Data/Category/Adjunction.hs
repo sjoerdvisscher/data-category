@@ -14,6 +14,8 @@ module Data.Category.Adjunction (
     Adjunction(..)
   , mkAdjunction
   , mkAdjunctionUnits
+  , mkAdjunctionUnit
+  , mkAdjunctionCounit
 
   , leftAdjunct
   , rightAdjunct
@@ -67,6 +69,20 @@ mkAdjunctionUnits :: (Functor f, Functor g, Dom f ~ d, Cod f ~ c, Dom g ~ c, Cod
   -> (forall a. Obj c a -> Component (f :.: g) (Id c) a)
   -> Adjunction c d f g
 mkAdjunctionUnits f g un coun = mkAdjunction f g (\a h -> (g % h) . un a) (\b h -> coun b . (f % h))
+
+mkAdjunctionUnit :: (Functor f, Functor g, Dom f ~ d, Cod f ~ c, Dom g ~ c, Cod g ~ d)
+  => f -> g
+  -> (forall a. Obj d a -> Component (Id d) (g :.: f) a)
+  -> (forall a b. Obj c b -> d a (g :% b) -> c (f :% a) b)
+  -> Adjunction c d f g
+mkAdjunctionUnit f g un adj = mkAdjunction f g (\a h -> (g % h) . un a) adj
+
+mkAdjunctionCounit :: (Functor f, Functor g, Dom f ~ d, Cod f ~ c, Dom g ~ c, Cod g ~ d)
+  => f -> g
+  -> (forall a b. Obj d a -> c (f :% a) b -> d a (g :% b))
+  -> (forall a. Obj c a -> Component (f :.: g) (Id c) a)
+  -> Adjunction c d f g
+mkAdjunctionCounit f g adj coun = mkAdjunction f g adj (\b h -> coun b . (f % h))
 
 leftAdjunct :: Adjunction c d f g -> Obj d a -> c (f :% a) b -> d a (g :% b)
 leftAdjunct (Adjunction _ _ l _) a h = (l ! (Op a :**: tgt h)) h

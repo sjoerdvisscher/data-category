@@ -39,10 +39,10 @@ dialgebra (DialgA d _ _) = d
 
 -- | The category of (F,G)-dialgebras.
 instance Category (Dialg f g) where
-  
+
   src (DialgA s _ _) = dialgId s
   tgt (DialgA _ t _) = dialgId t
-  
+
   DialgA _ t f . DialgA s _ g = DialgA s t (f . g)
 
 
@@ -76,11 +76,11 @@ primRec z s (S  n) = s (primRec z s n)
 -- | The category for defining the natural numbers and primitive recursion can be described as
 -- @Dialg(F,G)@, with @F(A)=\<1,A>@ and @G(A)=\<A,A>@.
 instance HasInitialObject (Dialg (Tuple1 (->) (->) ()) (DiagProd (->))) where
-  
+
   type InitialObject (Dialg (Tuple1 (->) (->) ()) (DiagProd (->))) = NatNum
-    
+
   initialObject = dialgId (Dialgebra (\x -> x) (Z :**: S))
-  
+
   initialize (dialgebra -> d@(Dialgebra _ (z :**: s))) = DialgA (dialgebra initialObject) d (primRec z s)
 
 
@@ -91,10 +91,10 @@ instance (Functor m, Dom m ~ k, Cod m ~ k) => Functor (FreeAlg m) where
   type Dom (FreeAlg m) = Dom m
   type Cod (FreeAlg m) = Alg m
   type FreeAlg m :% a = m :% a
-  FreeAlg m % f = DialgA (alg (src f)) (alg (tgt f)) (monadFunctor m % f)
-    where
-      alg :: Obj k x -> Algebra m (m :% x)
-      alg x = Dialgebra (monadFunctor m % x) (multiply m ! x)
+  FreeAlg m % f = DialgA (freeAlg m (src f)) (freeAlg m (tgt f)) (monadFunctor m % f)
+
+freeAlg :: (Functor m, Dom m ~ k, Cod m ~ k) => Monad m -> Obj (Cod m) x -> Algebra m (m :% x)
+freeAlg m x = Dialgebra (monadFunctor m % x) (multiply m ! x)
 
 data ForgetAlg m = ForgetAlg
 -- | @ForgetAlg m@ is the forgetful functor for @Alg m@.
@@ -107,5 +107,5 @@ instance (Functor m, Dom m ~ k, Cod m ~ k) => Functor (ForgetAlg m) where
 eilenbergMooreAdj :: (Functor m, Dom m ~ k, Cod m ~ k)
   => Monad m -> A.Adjunction (Alg m) k (FreeAlg m) (ForgetAlg m)
 eilenbergMooreAdj m = A.mkAdjunctionUnits (FreeAlg m) ForgetAlg
-  (\x -> unit m ! x)
-  (\(DialgA (Dialgebra _ h) _ _) -> DialgA (Dialgebra (src h) (monadFunctor m % h)) (Dialgebra (tgt h) h) h)
+  (unit m !)
+  (\(DialgA b@(Dialgebra _ h) _ _) -> DialgA (Dialgebra (src h) (monadFunctor m % h)) b h)
