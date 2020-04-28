@@ -9,8 +9,6 @@
   , UndecidableInstances
   , ScopedTypeVariables
   , ConstraintKinds
-  , AllowAmbiguousTypes
-  , TypeApplications
   #-}
 -----------------------------------------------------------------------------
 -- |
@@ -33,7 +31,7 @@ import Data.Category.Boolean
 
 -- | An enriched category
 class CartesianClosed (V k) => ECategory (k :: * -> * -> *) where
-  -- | The tensor product of the category V which k is enriched in
+  -- | The category V which k is enriched in
   type V k :: * -> * -> *
 
   -- | The hom object in V from a to b
@@ -44,13 +42,8 @@ class CartesianClosed (V k) => ECategory (k :: * -> * -> *) where
   comp :: Obj k a -> Obj k b -> Obj k c -> V k (BinaryProduct (V k) (k $ (b, c)) (k $ (a, b))) (k $ (a, c))
 
 
--- | The elements of @k@ as a functor from @V k@ to @(->)@ 
-type Elem k = TerminalObject (V k) :*-: (V k)
-elem :: CartesianClosed (V k) => Elem k
-elem = HomX_ terminalObject
-
 -- | Arrows as elements of @k@
-type Arr k a b = Elem k :% (k $ (a, b))
+type Arr k a b = V k (TerminalObject (V k)) (k $ (a, b))
 
 compArr :: ECategory k => Obj k a -> Obj k b -> Obj k c -> Arr k b c -> Arr k a b -> Arr k a c
 compArr a b c f g = comp a b c . (f &&& g)
@@ -76,17 +69,17 @@ instance ECategory k => ECategory (EOp k) where
 
 data (:<>:) :: (* -> * -> *) -> (* -> * -> *) -> * -> * -> * where
   (:<>:) :: (V k1 ~ V k2) => Obj k1 a1 -> Obj k2 a2 -> (:<>:) k1 k2 (a1, a2) (a1, a2)
-  
+
 -- | The enriched product category of enriched categories @c1@ and @c2@.
 instance (ECategory k1, ECategory k2, V k1 ~ V k2) => ECategory (k1 :<>: k2) where
   type V (k1 :<>: k2) = V k1
   type (k1 :<>: k2) $ ((a1, a2), (b1, b2)) = BinaryProduct (V k1) (k1 $ (a1, b1)) (k2 $ (a2, b2))
   hom (a1 :<>: a2) (b1 :<>: b2) = hom a1 b1 *** hom a2 b2
   id (a1 :<>: a2) = id a1 &&& id a2
-  comp (a1 :<>: a2) (b1 :<>: b2) (c1 :<>: c2) = 
-    comp a1 b1 c1 . (proj1 bc1 bc2 . proj1 l r &&& proj1 ab1 ab2 . proj2 l r) &&& 
+  comp (a1 :<>: a2) (b1 :<>: b2) (c1 :<>: c2) =
+    comp a1 b1 c1 . (proj1 bc1 bc2 . proj1 l r &&& proj1 ab1 ab2 . proj2 l r) &&&
     comp a2 b2 c2 . (proj2 bc1 bc2 . proj1 l r &&& proj2 ab1 ab2 . proj2 l r)
-    where 
+    where
       ab1 = hom a1 b1
       ab2 = hom a2 b2
       bc1 = hom b1 c1
@@ -209,7 +202,7 @@ instance EFunctor f => Functor (UnderlyingF f) where
   type Cod (UnderlyingF f) = Underlying (ECod f)
   type UnderlyingF f :% a = f :%% a
   UnderlyingF f % Underlying a ab b = Underlying (f %% a) (map f a b . ab) (f %% b)
-  
+
 
 data EHom (k :: * -> * -> *) = EHom
 instance ECategory k => EFunctor (EHom k) where
@@ -259,7 +252,7 @@ class CartesianClosed v => HasEnds v where
   end :: (VProfunctor k k t, V k ~ v) => t -> Obj v (End v t)
   endCounit :: (VProfunctor k k t, V k ~ v) => t -> Obj k a -> v (End v t) (t :%% (a, a))
   endFactorizer :: (VProfunctor k k t, V k ~ v) => t -> (forall a. Obj k a -> v x (t :%% (a, a))) -> v x (End v t)
-  
+
 
 newtype HaskEnd t = HaskEnd { getHaskEnd :: forall k a. VProfunctor k k t => t -> Obj k a -> t :%% (a, a) }
 type instance End (->) t = HaskEnd t
@@ -281,7 +274,7 @@ instance (HasEnds (V a), V a ~ V b) => ECategory (FunCat a b) where
   type FunCat a b $ (t, s) = End (V a) (t :->>: s)
   hom (FArr t _) (FArr s _) = end (t ->> s)
   id (FArr t _) = endFactorizer (t ->> t) (\a -> id (t %% a))
-  comp (FArr t _) (FArr s _) (FArr r _) = endFactorizer (t ->> r) 
+  comp (FArr t _) (FArr s _) (FArr r _) = endFactorizer (t ->> r)
     (\a -> comp (t %% a) (s %% a) (r %% a) . (endCounit (s ->> r) a *** endCounit (t ->> s) a))
 
 
@@ -291,9 +284,9 @@ instance (HasEnds (V k), ECategory k) => EFunctor (EndFunctor k) where
   type ECod (EndFunctor k) = Self (V k)
   type EndFunctor k :%% t = End (V k) t
   EndFunctor %% (FArr t _) = Self (end t)
-  map EndFunctor (FArr f _) (FArr g _) = curry (end (f ->> g)) (end f) (end g) (endFactorizer g (\a -> 
+  map EndFunctor (FArr f _) (FArr g _) = curry (end (f ->> g)) (end f) (end g) (endFactorizer g (\a ->
     let aa = EOp a :<>: a in apply (getSelf (f %% aa)) (getSelf (g %% aa)) . (endCounit (f ->> g) aa *** endCounit f a)))
-    
+
 
 -- d :: j -> k, w :: j -> Self (V k)
 type family WeigtedLimit (k :: * -> * -> *) w d :: *
@@ -312,14 +305,14 @@ class HasEnds (V k) => HasColimits k where
   colimitObj :: (EFunctorOf j k d, EFunctorOf (EOp j) (Self (V k)) w) => w -> d -> Obj k (Colim w d)
   colimit    :: (EFunctorOf j k d, EFunctorOf (EOp j) (Self (V k)) w) => w -> d -> Obj k e -> V k (End (V k) (w :->>: (EHom_X k e :.: Opposite d))) (k $ (Colim w d, e))
   colimitInv :: (EFunctorOf j k d, EFunctorOf (EOp j) (Self (V k)) w) => w -> d -> Obj k e -> V k (k $ (Colim w d, e)) (End (V k) (w :->>: (EHom_X k e :.: Opposite d)))
-  
+
 
 type instance WeigtedLimit (Self v) w d = End v (w :->>: d)
 instance HasEnds v => HasLimits (Self v) where
   limitObj w d = Self (end (w ->> d))
-  limit w d (Self e) = let wed = w ->> (EHomX_ (Self e) :.: d) in curry (end wed) e (end (w ->> d)) 
+  limit w d (Self e) = let wed = w ->> (EHomX_ (Self e) :.: d) in curry (end wed) e (end (w ->> d))
     (endFactorizer (w ->> d) (\a -> let { Self wa = w %% a; Self da = d %% a } in apply e (da ^^^ wa) . (flip wa e da . endCounit wed a *** e)))
-  limitInv w d (Self e) = let wed = w ->> (EHomX_ (Self e) :.: d) in endFactorizer wed 
+  limitInv w d (Self e) = let wed = w ->> (EHomX_ (Self e) :.: d) in endFactorizer wed
     (\a -> let { Self wa = w %% a; Self da = d %% a } in flip e wa da . (endCounit (w ->> d) a ^^^ e))
 
 

@@ -54,4 +54,7 @@ instance Category k => Category (Op k) where
 
   (Op a) . (Op b) = Op (b . a)
 
-type Kind (cat :: k -> k -> *) = k
+
+-- | @Kind k@ is the kind of the objects of the category @k@.
+type family Kind (k :: o -> o -> *) :: * where
+  Kind (k :: o -> o -> *) = o

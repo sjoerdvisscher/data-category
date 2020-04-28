@@ -26,10 +26,16 @@ newtype Fix f a b = Fix (f (Fix f) a b)
 deriving instance Category (f (Fix f)) => Category (Fix f)
 
 -- | @Fix f@ inherits its (co)limits from @f (Fix f)@.
-deriving instance HasInitialObject (f (Fix f)) => HasInitialObject (Fix f)
+instance HasInitialObject (f (Fix f)) => HasInitialObject (Fix f) where
+  type InitialObject (Fix f) = InitialObject (f (Fix f))
+  initialObject = Fix initialObject
+  initialize (Fix a) = Fix (initialize a)
 
 -- | @Fix f@ inherits its (co)limits from @f (Fix f)@.
-deriving instance HasTerminalObject (f (Fix f)) => HasTerminalObject (Fix f)
+instance HasTerminalObject (f (Fix f)) => HasTerminalObject (Fix f) where
+  type TerminalObject (Fix f) = TerminalObject (f (Fix f))
+  terminalObject = Fix terminalObject
+  terminate (Fix a) = Fix (terminate a)
 
 -- | @Fix f@ inherits its (co)limits from @f (Fix f)@.
 instance HasBinaryProducts (f (Fix f)) => HasBinaryProducts (Fix f) where
