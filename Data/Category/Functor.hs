@@ -1,4 +1,17 @@
-{-# LANGUAGE PolyKinds, TypeOperators, TypeFamilies, PatternSynonyms, FlexibleContexts, FlexibleInstances, UndecidableInstances, GADTs, RankNTypes, ConstraintKinds, NoImplicitPrelude #-}
+{-# LANGUAGE
+    GADTs
+  , PolyKinds
+  , RankNTypes
+  , ConstraintKinds
+  , NoImplicitPrelude
+  , TypeOperators
+  , TypeFamilies
+  , PatternSynonyms
+  , FlexibleContexts
+  , FlexibleInstances
+  , UndecidableInstances
+  , GeneralizedNewtypeDeriving
+  #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category.Functor
@@ -24,6 +37,7 @@ module Data.Category.Functor (
   , Opposite(..)
   , OpOp(..)
   , OpOpInv(..)
+  , Any(..)
 
   -- *** Related to the product category
   , Proj1(..)
@@ -155,6 +169,10 @@ instance Category k => Functor (OpOpInv k) where
   type OpOpInv k :% a = a
 
   OpOpInv % f = Op (Op f)
+
+
+-- | A functor wrapper in case of conflicting family instance declarations
+newtype Any f = Any f deriving Functor
 
 
 data Proj1 (c1 :: * -> * -> *) (c2 :: * -> * -> *) = Proj1
