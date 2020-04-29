@@ -136,7 +136,7 @@ class (Category j, Category k) => HasLimits j k where
   --   by returning the morphism between the vertices of the cones.
   limitFactorizer :: Cone j k f n -> k n (LimitFam j k f)
 
-data LimitFunctor (j :: * -> * -> *) (k  :: * -> * -> *) = LimitFunctor
+data LimitFunctor (j :: * -> * -> *) (k :: * -> * -> *) = LimitFunctor
 -- | If every diagram of type @j@ has a limit in @k@ there exists a limit functor.
 --   It can be seen as a generalisation of @(***)@.
 instance HasLimits j k => Functor (LimitFunctor j k) where
@@ -148,7 +148,7 @@ instance HasLimits j k => Functor (LimitFunctor j k) where
 
 -- | The limit functor is right adjoint to the diagonal functor.
 limitAdj :: forall j k. HasLimits j k => Adjunction (Nat j k) k (Diag j k) (LimitFunctor j k)
-limitAdj = mkAdjunctionCounit Diag LimitFunctor (\_ -> limitFactorizer) limit
+limitAdj = mkAdjunctionTerm Diag LimitFunctor (\_ -> limitFactorizer) limit
 
 adjLimit :: Category k => Adjunction (Nat j k) k (Diag j k) r -> Obj (Nat j k) f -> Cone j k f (r :% f)
 adjLimit adj f = adjunctionCounit adj ! f
@@ -195,7 +195,7 @@ class (Category j, Category k) => HasColimits j k where
   --   by returning the morphism between the vertices of the cones.
   colimitFactorizer :: Cocone j k f n -> k (ColimitFam j k f) n
 
-data ColimitFunctor (j :: * -> * -> *) (k  :: * -> * -> *) = ColimitFunctor
+data ColimitFunctor (j :: * -> * -> *) (k :: * -> * -> *) = ColimitFunctor
 -- | If every diagram of type @j@ has a colimit in @k@ there exists a colimit functor.
 --   It can be seen as a generalisation of @(+++)@.
 instance HasColimits j k => Functor (ColimitFunctor j k) where
@@ -207,7 +207,7 @@ instance HasColimits j k => Functor (ColimitFunctor j k) where
 
 -- | The colimit functor is left adjoint to the diagonal functor.
 colimitAdj :: forall j k. HasColimits j k => Adjunction k (Nat j k) (ColimitFunctor j k) (Diag j k)
-colimitAdj = mkAdjunctionUnit ColimitFunctor Diag colimit (\_ -> colimitFactorizer)
+colimitAdj = mkAdjunctionInit ColimitFunctor Diag colimit (\_ -> colimitFactorizer)
 
 adjColimit :: Category k => Adjunction k (Nat j k) l (Diag j k) -> Obj (Nat j k) f -> Cocone j k f (l :% f)
 adjColimit adj f = adjunctionUnit adj ! f
@@ -482,7 +482,7 @@ instance HasBinaryProducts k => Functor (ProductFunctor k) where
 
 -- | A specialisation of the limit adjunction to products.
 prodAdj :: HasBinaryProducts k => Adjunction (k :**: k) k (DiagProd k) (ProductFunctor k)
-prodAdj = mkAdjunctionUnits DiagProd ProductFunctor (\x -> x &&& x) (\(l :**: r) -> proj1 l r :**: proj2 l r)
+prodAdj = mkAdjunctionTerm DiagProd ProductFunctor (\_ (l :**: r) -> l &&& r) (\(l :**: r) -> proj1 l r :**: proj2 l r)
 
 data p :*: q where
   (:*:) :: (Functor p, Functor q, Dom p ~ Dom q, Cod p ~ k, Cod q ~ k, HasBinaryProducts k) => p -> q -> p :*: q
@@ -608,7 +608,7 @@ instance HasBinaryCoproducts k => Functor (CoproductFunctor k) where
 
 -- | A specialisation of the colimit adjunction to coproducts.
 coprodAdj :: HasBinaryCoproducts k => Adjunction k (k :**: k) (CoproductFunctor k) (DiagProd k)
-coprodAdj = mkAdjunctionUnits CoproductFunctor DiagProd (\(l :**: r) -> inj1 l r :**: inj2 l r) (\x -> x ||| x)
+coprodAdj = mkAdjunctionInit CoproductFunctor DiagProd (\(l :**: r) -> inj1 l r :**: inj2 l r) (\_ (l :**: r) -> l ||| r)
 
 data p :+: q where
   (:+:) :: (Functor p, Functor q, Dom p ~ Dom q, Cod p ~ k, Cod q ~ k, HasBinaryCoproducts k) => p -> q -> p :+: q

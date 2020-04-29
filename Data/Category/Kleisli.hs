@@ -52,4 +52,4 @@ instance (Functor m, Dom m ~ k, Cod m ~ k) => Functor (KleisliForget m) where
 
 kleisliAdj :: (Functor m, Dom m ~ k, Cod m ~ k)
   => Monad m -> A.Adjunction (Kleisli m) k (KleisliFree m) (KleisliForget m)
-kleisliAdj m = A.mkAdjunctionUnit (KleisliFree m) KleisliForget (unit m !) (\(Kleisli _ x _) f -> Kleisli m x f)
+kleisliAdj m = A.mkAdjunctionInit (KleisliFree m) KleisliForget (unit m !) (\(Kleisli _ x _) f -> Kleisli m x f)

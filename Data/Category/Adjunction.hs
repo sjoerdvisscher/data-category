@@ -14,8 +14,8 @@ module Data.Category.Adjunction (
     Adjunction(..)
   , mkAdjunction
   , mkAdjunctionUnits
-  , mkAdjunctionUnit
-  , mkAdjunctionCounit
+  , mkAdjunctionInit
+  , mkAdjunctionTerm
 
   , leftAdjunct
   , rightAdjunct
@@ -26,14 +26,6 @@ module Data.Category.Adjunction (
   , idAdj
   , composeAdj
   , AdjArrow(..)
-
-  -- * Adjunctions from universal morphisms
-  , initialPropAdjunction
-  , terminalPropAdjunction
-
-  -- * Universal morphisms from adjunctions
-  , adjunctionInitialProp
-  , adjunctionTerminalProp
 
   -- * Examples
   , precomposeAdj
@@ -46,7 +38,6 @@ import Data.Category
 import Data.Category.Functor
 import Data.Category.Product
 import Data.Category.NaturalTransformation
-import Data.Category.RepresentableFunctor
 
 data Adjunction c d f g = (Functor f, Functor g, Category c, Category d, Dom f ~ d, Cod f ~ c, Dom g ~ c, Cod g ~ d)
   => Adjunction
@@ -56,6 +47,7 @@ data Adjunction c d f g = (Functor f, Functor g, Category c, Category d, Dom f ~
   , rightAdjunctN :: Profunctors c d (Star g) (Costar f)
   }
 
+-- | Make an adjunction from the hom-set isomorphism.
 mkAdjunction :: (Functor f, Functor g, Dom f ~ d, Cod f ~ c, Dom g ~ c, Cod g ~ d)
   => f -> g
   -> (forall a b. Obj d a -> c (f :% a) b -> d a (g :% b))
@@ -63,6 +55,7 @@ mkAdjunction :: (Functor f, Functor g, Dom f ~ d, Cod f ~ c, Dom g ~ c, Cod g ~ 
   -> Adjunction c d f g
 mkAdjunction f g l r = Adjunction f g (Nat (Costar f) (Star g) (\(Op a :**: _) -> l a)) (Nat (Star g) (Costar f) (\(_ :**: b) -> r b))
 
+-- | Make an adjunction from the unit and counit.
 mkAdjunctionUnits :: (Functor f, Functor g, Dom f ~ d, Cod f ~ c, Dom g ~ c, Cod g ~ d)
   => f -> g
   -> (forall a. Obj d a -> Component (Id d) (g :.: f) a)
@@ -70,19 +63,21 @@ mkAdjunctionUnits :: (Functor f, Functor g, Dom f ~ d, Cod f ~ c, Dom g ~ c, Cod
   -> Adjunction c d f g
 mkAdjunctionUnits f g un coun = mkAdjunction f g (\a h -> (g % h) . un a) (\b h -> coun b . (f % h))
 
-mkAdjunctionUnit :: (Functor f, Functor g, Dom f ~ d, Cod f ~ c, Dom g ~ c, Cod g ~ d)
+-- | Make an adjunction from an initial universal property.
+mkAdjunctionInit :: (Functor f, Functor g, Dom f ~ d, Cod f ~ c, Dom g ~ c, Cod g ~ d)
   => f -> g
-  -> (forall a. Obj d a -> Component (Id d) (g :.: f) a)
+  -> (forall a. Obj d a -> d a (g :% (f :% a)))
   -> (forall a b. Obj c b -> d a (g :% b) -> c (f :% a) b)
   -> Adjunction c d f g
-mkAdjunctionUnit f g un adj = mkAdjunction f g (\a h -> (g % h) . un a) adj
+mkAdjunctionInit f g un adj = mkAdjunction f g (\a h -> (g % h) . un a) adj
 
-mkAdjunctionCounit :: (Functor f, Functor g, Dom f ~ d, Cod f ~ c, Dom g ~ c, Cod g ~ d)
+-- | Make an adjunction from a terminal universal property.
+mkAdjunctionTerm :: (Functor f, Functor g, Dom f ~ d, Cod f ~ c, Dom g ~ c, Cod g ~ d)
   => f -> g
   -> (forall a b. Obj d a -> c (f :% a) b -> d a (g :% b))
-  -> (forall a. Obj c a -> Component (f :.: g) (Id c) a)
+  -> (forall b. Obj c b -> c (f :% (g :% b)) b)
   -> Adjunction c d f g
-mkAdjunctionCounit f g adj coun = mkAdjunction f g adj (\b h -> coun b . (f % h))
+mkAdjunctionTerm f g adj coun = mkAdjunction f g adj (\b h -> coun b . (f % h))
 
 leftAdjunct :: Adjunction c d f g -> Obj d a -> c (f :% a) b -> d a (g :% b)
 leftAdjunct (Adjunction _ _ l _) a h = (l ! (Op a :**: tgt h)) h
@@ -93,28 +88,6 @@ adjunctionUnit :: Adjunction c d f g -> Nat d d (Id d) (g :.: f)
 adjunctionUnit adj@(Adjunction f g _ _) = Nat Id (g :.: f) (\a -> leftAdjunct adj a (f % a))
 adjunctionCounit :: Adjunction c d f g -> Nat c c (f :.: g) (Id c)
 adjunctionCounit adj@(Adjunction f g _ _) = Nat (f :.: g) Id (\b -> rightAdjunct adj b (g % b))
-
--- Each pair (FY, unit_Y) is an initial morphism from Y to G.
-adjunctionInitialProp :: Adjunction c d f g -> Obj d y -> InitialUniversal y g (f :% y)
-adjunctionInitialProp adj@(Adjunction f g _ _) y = initialUniversal g (f % y) (adjunctionUnit adj ! y) (rightAdjunct adj)
-
--- Each pair (GX, counit_X) is a terminal morphism from F to X.
-adjunctionTerminalProp :: Adjunction c d f g -> Obj c x -> TerminalUniversal x f (g :% x)
-adjunctionTerminalProp adj@(Adjunction f g _ _) x = terminalUniversal f (g % x) (adjunctionCounit adj ! x) (leftAdjunct adj)
-
-
-
-initialPropAdjunction :: forall f g c d. (Functor f, Functor g, Dom f ~ d, Cod f ~ c, Dom g ~ c, Cod g ~ d)
-  => f -> g -> (forall y. Obj d y -> InitialUniversal y g (f :% y)) -> Adjunction c d f g
-initialPropAdjunction f g univ = mkAdjunctionUnits f g
-  (universalElement . univ)
-  (\a -> represent (univ (g % a)) a (g % a))
-
-terminalPropAdjunction :: forall f g c d. (Functor f, Functor g, Dom f ~ d, Cod f ~ c, Dom g ~ c, Cod g ~ d)
-  => f -> g -> (forall x. Obj c x -> TerminalUniversal x f (g :% x)) -> Adjunction c d f g
-terminalPropAdjunction f g univ = mkAdjunctionUnits f g
-  (\a -> unOp (represent (univ (f % a)) (Op a) (f % a)))
-  (universalElement . univ)
 
 
 idAdj :: Category k => Adjunction k k (Id k) (Id k)

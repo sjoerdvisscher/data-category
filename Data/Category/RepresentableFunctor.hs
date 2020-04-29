@@ -12,6 +12,8 @@ module Data.Category.RepresentableFunctor where
 
 import Data.Category
 import Data.Category.Functor
+import Data.Category.NaturalTransformation
+import Data.Category.Adjunction
 
 
 data Representable f repObj = Representable
@@ -69,3 +71,21 @@ terminalUniversal u obj mor factorizer = Representable
   , represent          = \(Op y) f -> Op (factorizer y f)
   , universalElement   = mor
   }
+
+
+-- | For an adjunction F -| G, each pair (FY, unit_Y) is an initial morphism from Y to G.
+adjunctionInitialProp :: Adjunction c d f g -> Obj d y -> InitialUniversal y g (f :% y)
+adjunctionInitialProp adj@(Adjunction f g _ _) y = initialUniversal g (f % y) (adjunctionUnit adj ! y) (rightAdjunct adj)
+
+-- | For an adjunction F -| G, each pair (GX, counit_X) is a terminal morphism from F to X.
+adjunctionTerminalProp :: Adjunction c d f g -> Obj c x -> TerminalUniversal x f (g :% x)
+adjunctionTerminalProp adj@(Adjunction f g _ _) x = terminalUniversal f (g % x) (adjunctionCounit adj ! x) (leftAdjunct adj)
+
+
+initialPropAdjunction :: forall f g c d. (Functor f, Functor g, Dom f ~ d, Cod f ~ c, Dom g ~ c, Cod g ~ d)
+  => f -> g -> (forall y. InitialUniversal y g (f :% y)) -> Adjunction c d f g
+initialPropAdjunction f g univ = mkAdjunctionInit f g (\_ -> universalElement univ) (represent univ)
+
+terminalPropAdjunction :: forall f g c d. (Functor f, Functor g, Dom f ~ d, Cod f ~ c, Dom g ~ c, Cod g ~ d)
+  => f -> g -> (forall x. TerminalUniversal x f (g :% x)) -> Adjunction c d f g
+terminalPropAdjunction f g univ = mkAdjunctionTerm f g ((unOp .) . represent univ . Op) (\_ -> universalElement univ)
