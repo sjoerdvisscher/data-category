@@ -53,4 +53,4 @@ instance Functor M1 where
 haskIsTotal :: Adjunction (->) (Nat (Op (->)) (->)) M1 (YonedaEmbedding (->))
 haskIsTotal = mkAdjunctionInit M1 YonedaEmbedding
   (\(Nat f _ _) -> Nat f (Hom_X (f % Op haskUnit)) (\_ fz z -> (f % Op (\() -> z)) fz))
-  (\_ n@(Nat f _ _) fu -> (n ! Op haskUnit) fu ())
+  (\_ n fu -> (n ! Op haskUnit) fu ())

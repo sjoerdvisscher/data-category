@@ -23,7 +23,7 @@ module Data.Category.Enriched where
 
 import Data.Category (Category(..), Obj, Op(..))
 import Data.Category.Product
-import Data.Category.Functor (Functor(..), Hom(..), (:*-:), pattern HomX_)
+import Data.Category.Functor (Functor(..), Hom(..))
 import Data.Category.Limit hiding (HasLimits)
 import Data.Category.CartesianClosed
 import Data.Category.Boolean
@@ -247,16 +247,16 @@ instance ECategory k => EFunctor (EHom_X k x) where
 
 type VProfunctor k l t = EFunctorOf (EOp k :<>: l) (Self (V k)) t
 
-type family End (v :: * -> * -> *) t :: *
 class CartesianClosed v => HasEnds v where
+  type End (v :: * -> * -> *) t :: *
   end :: (VProfunctor k k t, V k ~ v) => t -> Obj v (End v t)
   endCounit :: (VProfunctor k k t, V k ~ v) => t -> Obj k a -> v (End v t) (t :%% (a, a))
   endFactorizer :: (VProfunctor k k t, V k ~ v) => t -> (forall a. Obj k a -> v x (t :%% (a, a))) -> v x (End v t)
 
 
 newtype HaskEnd t = HaskEnd { getHaskEnd :: forall k a. VProfunctor k k t => t -> Obj k a -> t :%% (a, a) }
-type instance End (->) t = HaskEnd t
 instance HasEnds (->) where
+  type End (->) t = HaskEnd t
   end _ e = e
   endCounit t a (HaskEnd e) = e t a
   endFactorizer _ e x = HaskEnd (\_ a -> e a x)

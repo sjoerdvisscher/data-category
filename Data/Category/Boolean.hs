@@ -171,14 +171,14 @@ instance Category k => Functor (Arrow k a b) where
   Arrow f % Tru = tgt f
 
 
-type instance LimitFam Boolean k f = f :% Fls
 -- | The limit of a functor from the Boolean category is the source of the arrow it points to.
 instance Category k => HasLimits Boolean k where
+  type LimitFam Boolean k f = f :% Fls
   limit (Nat f _ _) = Nat (Const (f % Fls)) f (\case Fls -> f % Fls; Tru -> f % F2T)
   limitFactorizer n = n ! Fls
 
-type instance ColimitFam Boolean k f = f :% Tru
 -- | The colimit of a functor from the Boolean category is the target of the arrow it points to.
 instance Category k => HasColimits Boolean k where
+  type ColimitFam Boolean k f = f :% Tru
   colimit (Nat f _ _) = Nat f (Const (f % Tru)) (\case Fls -> f % F2T; Tru -> f % Tru)
   colimitFactorizer n = n ! Tru

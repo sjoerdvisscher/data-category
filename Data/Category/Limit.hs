@@ -36,9 +36,8 @@ module Data.Category.Limit (
   , coconeVertex
 
   -- * Limits
-  , LimitFam
-  , Limit
   , HasLimits(..)
+  , Limit
   , LimitFunctor(..)
   , limitAdj
   , adjLimit
@@ -47,9 +46,8 @@ module Data.Category.Limit (
   , rightAdjointPreservesLimitsInv
 
   -- * Colimits
-  , ColimitFam
-  , Colimit
   , HasColimits(..)
+  , Colimit
   , ColimitFunctor(..)
   , colimitAdj
   , adjColimit
@@ -122,19 +120,17 @@ coconeVertex :: Cocone j k f n -> Obj k n
 coconeVertex (Nat _ (Const x) _) = x
 
 
-
--- | Limits in a category @k@ by means of a diagram of type @j@, which is a functor from @j@ to @k@.
-type family LimitFam (j :: * -> * -> *) (k :: * -> * -> *) (f :: *) :: *
-
-type Limit f = LimitFam (Dom f) (Cod f) f
-
 -- | An instance of @HasLimits j k@ says that @k@ has all limits of type @j@.
 class (Category j, Category k) => HasLimits j k where
+  -- | Limits in a category @k@ by means of a diagram of type @j@, which is a functor from @j@ to @k@.
+  type LimitFam (j :: * -> * -> *) (k :: * -> * -> *) (f :: *) :: *
   -- | 'limit' returns the limiting cone for a functor @f@.
   limit           :: Obj (Nat j k) f -> Cone j k f (LimitFam j k f)
   -- | 'limitFactorizer' shows that the limiting cone is universal – i.e. any other cone of @f@ factors through it
   --   by returning the morphism between the vertices of the cones.
   limitFactorizer :: Cone j k f n -> k n (LimitFam j k f)
+
+type Limit f = LimitFam (Dom f) (Cod f) f
 
 data LimitFunctor (j :: * -> * -> *) (k :: * -> * -> *) = LimitFunctor
 -- | If every diagram of type @j@ has a limit in @k@ there exists a limit functor.
@@ -182,18 +178,18 @@ rightAdjointPreservesLimitsInv
   => Obj (Nat c d) g -> Obj (Nat j c) t -> d (g :% LimitFam j c t) (LimitFam j d (g :.: t))
 rightAdjointPreservesLimitsInv g t = limitFactorizer (constPrecompIn (g `o` limit t))
 
--- | Colimits in a category @k@ by means of a diagram of type @j@, which is a functor from @j@ to @k@.
-type family ColimitFam (j :: * -> * -> *) (k :: * -> * -> *) (f :: *) :: *
-
-type Colimit f = ColimitFam (Dom f) (Cod f) f
 
 -- | An instance of @HasColimits j k@ says that @k@ has all colimits of type @j@.
 class (Category j, Category k) => HasColimits j k where
+  -- | Colimits in a category @k@ by means of a diagram of type @j@, which is a functor from @j@ to @k@.
+  type ColimitFam (j :: * -> * -> *) (k :: * -> * -> *) (f :: *) :: *
   -- | 'colimit' returns the limiting co-cone for a functor @f@.
   colimit           :: Obj (Nat j k) f -> Cocone j k f (ColimitFam j k f)
   -- | 'colimitFactorizer' shows that the limiting co-cone is universal – i.e. any other co-cone of @f@ factors through it
   --   by returning the morphism between the vertices of the cones.
   colimitFactorizer :: Cocone j k f n -> k (ColimitFam j k f) n
+
+type Colimit f = ColimitFam (Dom f) (Cod f) f
 
 data ColimitFunctor (j :: * -> * -> *) (k :: * -> * -> *) = ColimitFunctor
 -- | If every diagram of type @j@ has a colimit in @k@ there exists a colimit functor.
@@ -241,11 +237,9 @@ class Category k => HasTerminalObject k where
   terminate :: Obj k a -> k a (TerminalObject k)
 
 
-type instance LimitFam Void k f = TerminalObject k
-
 -- | A terminal object is the limit of the functor from /0/ to k.
 instance (Category k, HasTerminalObject k) => HasLimits Void k where
-
+  type LimitFam Void k f = TerminalObject k
   limit (Nat f _ _) = voidNat (Const terminalObject) f
   limitFactorizer = terminate . coneVertex
 
@@ -309,11 +303,9 @@ class Category k => HasInitialObject k where
   initialize :: Obj k a -> k (InitialObject k) a
 
 
-type instance ColimitFam Void k f = InitialObject k
-
 -- | An initial object is the colimit of the functor from /0/ to k.
 instance (Category k, HasInitialObject k) => HasColimits Void k where
-
+  type ColimitFam Void k f = InitialObject k
   colimit (Nat f _ _) = voidNat f (Const initialObject)
   colimitFactorizer = initialize . coconeVertex
 
@@ -382,12 +374,11 @@ class Category k => HasBinaryProducts k where
   l *** r = (l . proj1 (src l) (src r)) &&& (r . proj2 (src l) (src r))
 
 
-type instance LimitFam (i :++: j) k f = BinaryProduct k
-  (LimitFam i k (f :.: Inj1 i j))
-  (LimitFam j k (f :.: Inj2 i j))
-
 -- | If `k` has binary products, we can take the limit of 2 joined diagrams.
 instance (HasLimits i k, HasLimits j k, HasBinaryProducts k) => HasLimits (i :++: j) k where
+  type LimitFam (i :++: j) k f = BinaryProduct k
+    (LimitFam i k (f :.: Inj1 i j))
+    (LimitFam j k (f :.: Inj2 i j))
 
   limit = limit'
     where
@@ -518,12 +509,11 @@ class Category k => HasBinaryCoproducts k where
   l +++ r = (inj1 (tgt l) (tgt r) . l) ||| (inj2 (tgt l) (tgt r) . r)
 
 
-type instance ColimitFam (i :++: j) k f = BinaryCoproduct k
-  (ColimitFam i k (f :.: Inj1 i j))
-  (ColimitFam j k (f :.: Inj2 i j))
-
 -- | If `k` has binary coproducts, we can take the colimit of 2 joined diagrams.
 instance (HasColimits i k, HasColimits j k, HasBinaryCoproducts k) => HasColimits (i :++: j) k where
+  type ColimitFam (i :++: j) k f = BinaryCoproduct k
+    (ColimitFam i k (f :.: Inj1 i j))
+    (ColimitFam j k (f :.: Inj2 i j))
 
   colimit = colimit'
     where
@@ -663,50 +653,42 @@ instance HasBinaryProducts k => HasBinaryCoproducts (Op k) where
 
 
 
-type instance LimitFam Unit k f = f :% ()
-
 -- | The limit of a single object is that object.
 instance Category k => HasLimits Unit k where
-
+  type LimitFam Unit k f = f :% ()
   limit (Nat f _ _) = Nat (Const (f % Unit)) f (\Unit -> f % Unit)
   limitFactorizer n = n ! Unit
 
-type instance LimitFam (i :>>: j) k f = f :% InitialObject (i :>>: j)
-
 -- | The limit of any diagram with an initial object, has the limit at the initial object.
 instance (HasInitialObject (i :>>: j), Category i, Category j, Category k) => HasLimits (i :>>: j) k where
-
+  type LimitFam (i :>>: j) k f = f :% InitialObject (i :>>: j)
   limit (Nat f _ _) = Nat (Const (f % initialObject)) f (\z -> f % initialize z)
   limitFactorizer n = n ! initialObject
 
 
-type instance ColimitFam Unit k f = f :% ()
-
 -- | The colimit of a single object is that object.
 instance Category k => HasColimits Unit k where
-
+  type ColimitFam Unit k f = f :% ()
   colimit (Nat f _ _) = Nat f (Const (f % Unit)) (\Unit -> f % Unit)
   colimitFactorizer n = n ! Unit
 
-type instance ColimitFam (i :>>: j) k f = f :% TerminalObject (i :>>: j)
-
 -- | The colimit of any diagram with a terminal object, has the limit at the terminal object.
 instance (HasTerminalObject (i :>>: j), Category i, Category j, Category k) => HasColimits (i :>>: j) k where
-
+  type ColimitFam (i :>>: j) k f = f :% TerminalObject (i :>>: j)
   colimit (Nat f _ _) = Nat f (Const (f % terminalObject)) (\z -> f % terminate z)
   colimitFactorizer n = n ! terminalObject
 
 
 data ForAll f = ForAll (forall a. Obj (->) a -> f :% a)
-type instance LimitFam (->) (->) f = ForAll f
 
 instance HasLimits (->) (->) where
+  type LimitFam (->) (->) f = ForAll f
   limit (Nat f _ _) = Nat (Const (\x -> x)) f (\a (ForAll g) -> g a)
   limitFactorizer n = \z -> ForAll (\a -> (n ! a) z)
 
 data Exists f = forall a. Exists (Obj (->) a) (f :% a)
-type instance ColimitFam (->) (->) f = Exists f
 
 instance HasColimits (->) (->) where
+  type ColimitFam (->) (->) f = Exists f
   colimit (Nat f _ _) = Nat f (Const (\x -> x)) Exists
   colimitFactorizer n = \(Exists a fa) -> (n ! a) fa
