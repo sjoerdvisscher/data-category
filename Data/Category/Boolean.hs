@@ -8,8 +8,8 @@
 -- Stability   :  experimental
 -- Portability :  non-portable
 --
--- /2/, or the Boolean category.
--- It contains 2 objects, one for true and one for false.
+-- /2/ a.k.a. the Boolean category a.k.a. the walking arrow.
+-- It contains 2 objects, one for false and one for true.
 -- It contains 3 arrows, 2 identity arrows and one from false to true.
 -----------------------------------------------------------------------------
 module Data.Category.Boolean where
@@ -21,6 +21,7 @@ import Data.Category.CartesianClosed
 
 import Data.Category.Functor
 import Data.Category.NaturalTransformation
+import Data.Category.Adjunction
 
 
 data Fls
@@ -177,8 +178,44 @@ instance Category k => HasLimits Boolean k where
   limit (Nat f _ _) = Nat (Const (f % Fls)) f (\case Fls -> f % Fls; Tru -> f % F2T)
   limitFactorizer n = n ! Fls
 
+-- | The source functor sends arrows (as functors from the Boolean category) to their source.
+type SrcFunctor = LimitFunctor Boolean
+
 -- | The colimit of a functor from the Boolean category is the target of the arrow it points to.
 instance Category k => HasColimits Boolean k where
   type ColimitFam Boolean k f = f :% Tru
   colimit (Nat f _ _) = Nat f (Const (f % Tru)) (\case Fls -> f % F2T; Tru -> f % Tru)
   colimitFactorizer n = n ! Tru
+
+-- | The target functor sends arrows (as functors from the Boolean category) to their target.
+type TgtFunctor = ColimitFunctor Boolean
+
+
+data Terminator (k :: * -> * -> *) = Terminator
+-- | @Terminator k@ is the functor that sends an object to its terminating arrow.
+instance HasTerminalObject k => Functor (Terminator k) where
+  type Dom (Terminator k) = k
+  type Cod (Terminator k) = Nat Boolean k
+  type Terminator k :% a = Arrow k a (TerminalObject k)
+  Terminator % f = Nat (Arrow (terminate (src f))) (Arrow (terminate (tgt f))) (\case Fls -> f; Tru -> terminalObject)
+
+-- | @Terminator@ is right adjoint to the source functor.
+terminatorLimitAdj :: HasTerminalObject k => Adjunction k (Nat Boolean k) (SrcFunctor k) (Terminator k)
+terminatorLimitAdj = mkAdjunctionInit LimitFunctor Terminator
+  (\(Nat b _ _) -> Nat b (Arrow (terminate (b % Fls))) (\case Fls -> b % Fls; Tru -> terminate (b % Tru)))
+  (\_ n -> n ! Fls)
+
+
+data Initializer (k :: * -> * -> *) = Initializer
+-- | @Initializer k@ is the functor that sends an object to its initializing arrow.
+instance HasInitialObject k => Functor (Initializer k) where
+  type Dom (Initializer k) = k
+  type Cod (Initializer k) = Nat Boolean k
+  type Initializer k :% a = Arrow k (InitialObject k) a
+  Initializer % f = Nat (Arrow (initialize (src f))) (Arrow (initialize (tgt f))) (\case Fls -> initialObject; Tru -> f)
+
+-- | @Initializer@ is left adjoint to the target functor.
+initializerColimitAdj :: HasInitialObject k => Adjunction (Nat Boolean k) k (Initializer k) (TgtFunctor k)
+initializerColimitAdj = mkAdjunctionTerm Initializer ColimitFunctor
+  (\_ n -> n ! Tru)
+  (\(Nat b _ _) -> Nat (Arrow (initialize (b % Tru))) b (\case Fls -> initialize (b % Fls); Tru -> b % Tru))
