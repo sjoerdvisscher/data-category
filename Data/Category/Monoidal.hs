@@ -99,8 +99,8 @@ instance Category k => TensorProduct (EndoFunctorCompose k) where
 
 -- | @MonoidObject f a@ defines a monoid @a@ in a monoidal category with tensor product @f@.
 data MonoidObject f a = MonoidObject
-  { unit     :: Cod f (Unit f)        a
-  , multiply :: Cod f ((f :% (a, a))) a
+  { unit     :: Cod f (Unit f)      a
+  , multiply :: Cod f (f :% (a, a)) a
   }
 
 trivialMonoid :: TensorProduct f => f -> MonoidObject f (Unit f)

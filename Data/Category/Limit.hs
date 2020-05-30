@@ -248,7 +248,7 @@ instance (Category k, HasTerminalObject k) => HasLimits Void k where
 instance HasTerminalObject (->) where
   type TerminalObject (->) = ()
 
-  terminalObject = \x -> x
+  terminalObject = obj
 
   terminate _ _ = ()
 
@@ -316,7 +316,7 @@ data Zero
 instance HasInitialObject (->) where
   type InitialObject (->) = Zero
 
-  initialObject = \x -> x
+  initialObject = obj
 
   initialize = initialize
 
@@ -456,8 +456,8 @@ instance (HasBinaryProducts c1, HasBinaryProducts c2) => HasBinaryProducts (c1 :
   proj2 (DC (I2A a)) (DC (I2A b)) = DC (I2A (proj2 a b))
 
   DC (I1A a) &&& DC (I1A b) = DC (I1A (a &&& b))
-  DC (I1A a) &&& DC (I12 _ _ _ _) = DC (I1A a)
-  DC (I12 _ _ _ _) &&& DC (I1A b) = DC (I1A b)
+  DC (I1A a) &&& DC I12{} = DC (I1A a)
+  DC I12{} &&& DC (I1A b) = DC (I1A b)
   DC (I2A a) &&& DC (I2A b) = DC (I2A (a &&& b))
   DC (I12 a b1 _ _) &&& DC (I12 _ b2 _ _) = DC (I12 a (b1 *** b2) (Const (\() -> ())) ())
 
@@ -581,8 +581,8 @@ instance (HasBinaryCoproducts c1, HasBinaryCoproducts c2) => HasBinaryCoproducts
   inj2 (DC (I2A a)) (DC (I2A b)) = DC (I2A (inj2 a b))
 
   DC (I1A a) ||| DC (I1A b) = DC (I1A (a ||| b))
-  DC (I2A a) ||| DC (I12 _ _ _ _) = DC (I2A a)
-  DC (I12 _ _ _ _) ||| DC (I2A b) = DC (I2A b)
+  DC (I2A a) ||| DC I12{} = DC (I2A a)
+  DC I12{} ||| DC (I2A b) = DC (I2A b)
   DC (I2A a) ||| DC (I2A b) = DC (I2A (a ||| b))
   DC (I12 a1 b _ _) ||| DC (I12 a2 _ _ _) = DC (I12 (a1 +++ a2) b (Const (\() -> ())) ())
 
@@ -679,16 +679,16 @@ instance (HasTerminalObject (i :>>: j), Category i, Category j, Category k) => H
   colimitFactorizer n = n ! terminalObject
 
 
-data ForAll f = ForAll (forall a. Obj (->) a -> f :% a)
+newtype ForAll f = ForAll (forall a. Obj (->) a -> f :% a)
 
 instance HasLimits (->) (->) where
   type LimitFam (->) (->) f = ForAll f
-  limit (Nat f _ _) = Nat (Const (\x -> x)) f (\a (ForAll g) -> g a)
+  limit (Nat f _ _) = Nat (Const obj) f (\a (ForAll g) -> g a)
   limitFactorizer n = \z -> ForAll (\a -> (n ! a) z)
 
 data Exists f = forall a. Exists (Obj (->) a) (f :% a)
 
 instance HasColimits (->) (->) where
   type ColimitFam (->) (->) f = Exists f
-  colimit (Nat f _ _) = Nat f (Const (\x -> x)) Exists
+  colimit (Nat f _ _) = Nat f (Const obj) Exists
   colimitFactorizer n = \(Exists a fa) -> (n ! a) fa

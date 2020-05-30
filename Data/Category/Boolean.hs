@@ -160,7 +160,7 @@ falseProductComonoid :: ComonoidObject (ProductFunctor Boolean) Fls
 falseProductComonoid = ComonoidObject F2T Fls
 
 
-data Arrow k a b = Arrow (k a b)
+newtype Arrow k a b = Arrow (k a b)
 -- | Any functor from the Boolean category points to an arrow in its target category.
 instance Category k => Functor (Arrow k a b) where
   type Dom (Arrow k a b) = Boolean

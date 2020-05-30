@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeFamilies, GADTs, RankNTypes, TypeOperators, UndecidableInstances, NoImplicitPrelude #-}
+{-# LANGUAGE TypeFamilies, GADTs, RankNTypes, TypeOperators, UndecidableInstances, LambdaCase, NoImplicitPrelude #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category.Simplex
@@ -11,23 +11,23 @@
 -- The (augmented) simplex category.
 -----------------------------------------------------------------------------
 module Data.Category.Simplex (
-  
+
   -- * Simplex Category
     Simplex(..)
   , Z, S
   , suc
-  
+
   -- * Functor
   , Forget(..)
   , Fin(..)
   , Add(..)
-  
+
   -- * The universal monoid
   , universalMonoid
   , Replicate(..)
-        
+
 ) where
-  
+
 import Data.Category
 import Data.Category.Product
 import Data.Category.Functor
@@ -63,11 +63,11 @@ instance Category Simplex where
   src Z = Z
   src (Y f) = src f
   src (X f) = suc (src f)
-  
+
   tgt Z = Z
   tgt (Y f) = suc (tgt f)
   tgt (X f) = tgt f
-  
+
   Z   .   f = f
   f   .   Z = f
   Y f .   g = Y (f . g)
@@ -78,9 +78,9 @@ instance Category Simplex where
 -- | The ordinal @0@ is the initial object of the simplex category.
 instance HasInitialObject Simplex where
   type InitialObject Simplex = Z
-  
+
   initialObject = Z
-  
+
   initialize Z = Z
   initialize (X (Y f)) = Y (initialize f)
 
@@ -104,9 +104,9 @@ instance Functor Forget where
   type Dom Forget = Simplex
   type Cod Forget = (->)
   type Forget :% n = Fin n
-  Forget % Z   = \x -> x
-  Forget % Y f = \x -> Fs ((Forget % f) x)
-  Forget % X f = \x -> case x of
+  Forget % Z   = obj
+  Forget % Y f = Fs . (Forget % f)
+  Forget % X f = \case
     Fz -> Fz
     Fs n -> (Forget % f) n
 
@@ -126,7 +126,7 @@ instance Functor Add where
 instance TensorProduct Add where
   type Unit Add = Z
   unitObject Add = Z
-  
+
   leftUnitor     Add       a   = a
   leftUnitorInv  Add       a   = a
   rightUnitor    Add       Z   = Z

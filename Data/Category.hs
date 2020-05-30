@@ -18,6 +18,9 @@ module Data.Category (
   -- * Opposite category
   , Op(..)
 
+  -- * `(->)`/Hask
+  , obj
+
 ) where
 
 infixr 8 .
@@ -35,11 +38,14 @@ class Category k where
   (.) :: k b c -> k a b -> k a c
 
 
+obj :: Obj (->) a
+obj x = x
+
 -- | The category with Haskell types as objects and Haskell functions as arrows.
 instance Category (->) where
 
-  src _ = \x -> x
-  tgt _ = \x -> x
+  src _ = obj
+  tgt _ = obj
 
   f . g = \x -> f (g x)
 

@@ -27,7 +27,7 @@ data (:++:) :: (* -> * -> *) -> (* -> * -> *) -> * -> * -> * where
 
 -- | The coproduct category of categories @c1@ and @c2@.
 instance (Category c1, Category c2) => Category (c1 :++: c2) where
-  
+
   src (I1 a)      = I1 (src a)
   src (I2 a)      = I2 (src a)
   tgt (I1 a)      = I1 (tgt a)
@@ -36,9 +36,9 @@ instance (Category c1, Category c2) => Category (c1 :++: c2) where
   (I1 a) . (I1 b) = I1 (a . b)
   (I2 a) . (I2 b) = I2 (a . b)
 
-  
-  
-    
+
+
+
 data Inj1 (c1 :: * -> * -> *) (c2 :: * -> * -> *) = Inj1
 -- | 'Inj1' is a functor which injects into the left category.
 instance (Category c1, Category c2) => Functor (Inj1 c1 c2) where
@@ -64,7 +64,7 @@ instance (Functor f1, Functor f2) => Functor (f1 :+++: f2) where
   type (f1 :+++: f2) :% (I2 a) = I2 (f2 :% a)
   (g :+++: _) % I1 f = I1 (g % f)
   (_ :+++: g) % I2 f = I2 (g % f)
-  
+
 data CodiagCoprod (k :: * -> * -> *) = CodiagCoprod
 -- | 'CodiagCoprod' is the codiagonal functor for coproducts.
 instance Category k => Functor (CodiagCoprod k) where
@@ -75,7 +75,7 @@ instance Category k => Functor (CodiagCoprod k) where
   CodiagCoprod % I1 f = f
   CodiagCoprod % I2 f = f
 
-data Cotuple1 (c1 :: * -> * -> *) (c2 :: * -> * -> *) a = Cotuple1 (Obj c1 a)
+newtype Cotuple1 (c1 :: * -> * -> *) (c2 :: * -> * -> *) a = Cotuple1 (Obj c1 a)
 -- | 'Cotuple1' projects out to the left category, replacing a value from the right category with a fixed object.
 instance (Category c1, Category c2) => Functor (Cotuple1 c1 c2 a1) where
   type Dom (Cotuple1 c1 c2 a1) = c1 :++: c2
@@ -85,7 +85,7 @@ instance (Category c1, Category c2) => Functor (Cotuple1 c1 c2 a1) where
   Cotuple1 _ % I1 f = f
   Cotuple1 a % I2 _ = a
 
-data Cotuple2 (c1 :: * -> * -> *) (c2 :: * -> * -> *) a = Cotuple2 (Obj c2 a)
+newtype Cotuple2 (c1 :: * -> * -> *) (c2 :: * -> * -> *) a = Cotuple2 (Obj c2 a)
 -- | 'Cotuple2' projects out to the right category, replacing a value from the left category with a fixed object.
 instance (Category c1, Category c2) => Functor (Cotuple2 c1 c2 a2) where
   type Dom (Cotuple2 c1 c2 a2) = c1 :++: c2
@@ -100,7 +100,7 @@ data Cograph f :: * -> * -> * where
   I1A :: Dom f ~ (Op c :**: d) => c a1 b1 -> Cograph f (I1 a1) (I1 b1)
   I2A :: Dom f ~ (Op c :**: d) => d a2 b2 -> Cograph f (I2 a2) (I2 b2)
   I12 :: Dom f ~ (Op c :**: d) => Obj c a -> Obj d b -> f -> f :% (a, b) -> Cograph f (I1 a) (I2 b)
-  
+
 -- | The cograph of the profunctor @f@.
 instance (Functor f, Dom f ~ (Op c :**: d), Cod f ~ (->), Category c, Category d) => Category (Cograph f) where
 
@@ -120,16 +120,16 @@ instance (Functor f, Dom f ~ (Op c :**: d), Cod f ~ (->), Category c, Category d
 newtype (c1 :>>: c2) a b = DC (Cograph (Const (Op c1 :**: c2) (->) ()) a b) deriving Category
 
 
-data NatAsFunctor f g = NatAsFunctor (Nat (Dom f) (Cod f) f g)
+newtype NatAsFunctor f g = NatAsFunctor (Nat (Dom f) (Cod f) f g)
 
 -- | A natural transformation @Nat c d@ is isomorphic to a functor from @c :**: 2@ to @d@.
 instance (Functor f, Functor g, Dom f ~ Dom g, Cod f ~ Cod g) => Functor (NatAsFunctor f g) where
-  
+
   type Dom (NatAsFunctor f g) = Dom f :**: Cograph (Hom Unit)
   type Cod (NatAsFunctor f g) = Cod f
   type NatAsFunctor f g :% (a, I1 ()) = f :% a
   type NatAsFunctor f g :% (a, I2 ()) = g :% a
-  
+
   NatAsFunctor (Nat f _ _) % (a :**: I1A Unit) = f % a
   NatAsFunctor (Nat _ g _) % (a :**: I2A Unit) = g % a
   NatAsFunctor n           % (a :**: I12 Unit Unit Hom Unit) = n ! a

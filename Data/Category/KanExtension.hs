@@ -44,7 +44,7 @@ ranF p f = ranF' (ran p f)
 ranF' :: Nat (Dom p) k (RanFam p k f :.: p) f -> Obj (Nat (Cod p) k) (RanFam p k f)
 ranF' (Nat (r :.: _) _ _) = natId r
 
-data RanFunctor (p :: *) (k :: * -> * -> *) = RanFunctor p
+newtype RanFunctor (p :: *) (k :: * -> * -> *) = RanFunctor p
 instance HasRightKan p k => Functor (RanFunctor p k) where
   type Dom (RanFunctor p k) = Nat (Dom p) k
   type Cod (RanFunctor p k) = Nat (Cod p) k
@@ -74,7 +74,7 @@ lanF p f = lanF' (lan p f)
 lanF' :: Nat (Dom p) k f (LanFam p k f :.: p) -> Obj (Nat (Cod p) k) (LanFam p k f)
 lanF' (Nat _ (r :.: _) _) = natId r
 
-data LanFunctor (p :: *) (k :: * -> * -> *) = LanFunctor p
+newtype LanFunctor (p :: *) (k :: * -> * -> *) = LanFunctor p
 instance HasLeftKan p k => Functor (LanFunctor p k) where
   type Dom (LanFunctor p k) = Nat (Dom p) k
   type Cod (LanFunctor p k) = Nat (Cod p) k

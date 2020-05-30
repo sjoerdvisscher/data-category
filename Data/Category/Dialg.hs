@@ -79,13 +79,13 @@ instance HasInitialObject (Dialg (Tuple1 (->) (->) ()) (DiagProd (->))) where
 
   type InitialObject (Dialg (Tuple1 (->) (->) ()) (DiagProd (->))) = NatNum
 
-  initialObject = dialgId (Dialgebra (\x -> x) (Z :**: S))
+  initialObject = dialgId (Dialgebra obj (Z :**: S))
 
   initialize (dialgebra -> d@(Dialgebra _ (z :**: s))) = DialgA (dialgebra initialObject) d (primRec z s)
 
 
 
-data FreeAlg m = FreeAlg (Monad m)
+newtype FreeAlg m = FreeAlg (Monad m)
 -- | @FreeAlg@ M takes @x@ to the free algebra @(M x, mu_x)@ of the monad @M@.
 instance (Functor m, Dom m ~ k, Cod m ~ k) => Functor (FreeAlg m) where
   type Dom (FreeAlg m) = Dom m

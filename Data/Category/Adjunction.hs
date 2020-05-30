@@ -104,8 +104,8 @@ data AdjArrow c d where
 -- | The category with categories as objects and adjunctions as arrows.
 instance Category AdjArrow where
 
-  src (AdjArrow (Adjunction _ _ _ _)) = AdjArrow idAdj
-  tgt (AdjArrow (Adjunction _ _ _ _)) = AdjArrow idAdj
+  src (AdjArrow Adjunction{}) = AdjArrow idAdj
+  tgt (AdjArrow Adjunction{}) = AdjArrow idAdj
 
   AdjArrow x . AdjArrow y = AdjArrow (composeAdj x y)
 
@@ -127,7 +127,7 @@ postcomposeAdj adj@(Adjunction f g _ _) = mkAdjunctionUnits
 
 contAdj :: Adjunction (Op (->)) (->) (Opposite ((->) :-*: r) :.: OpOpInv (->)) ((->) :-*: r)
 contAdj = mkAdjunction
-  (Opposite (Hom_X (\x -> x)) :.: OpOpInv)
-  (Hom_X (\x -> x))
+  (Opposite (Hom_X obj) :.: OpOpInv)
+  (Hom_X obj)
   (\_ -> \(Op f) -> \b a -> f a b)
   (\_ -> \f -> Op (\b a -> f a b))

@@ -10,6 +10,7 @@
   UndecidableInstances,
   TypeSynonymInstances,
   FlexibleInstances,
+  TupleSections,
   NoImplicitPrelude #-}
 -----------------------------------------------------------------------------
 -- |
@@ -61,7 +62,7 @@ instance CartesianClosed (->) where
   type Exponential (->) y z = y -> z
 
   apply _ _ (f, y) = f y
-  tuple _ _ z      = \y -> (z, y)
+  tuple _ _ z      = (z,)
   f ^^^ h          = \g -> f . g . h
 
 
@@ -94,7 +95,7 @@ instance Category k => CartesianClosed (Presheaves k) where
   type Exponential (Presheaves k) y z = PShExponential k y z
 
   apply yn@(Nat y _ _) zn@(Nat z _ _) = Nat (PshExponential yn zn :*: y) z (\(Op i) (n, yi) -> (n ! Op i) (i, yi))
-  tuple yn zn@(Nat z _ _) = Nat z (PshExponential yn (zn *** yn)) (\(Op i) zi -> (Nat (Hom_X i) z (\_ j2i -> (z % Op j2i) zi) *** yn))
+  tuple yn zn@(Nat z _ _) = Nat z (PshExponential yn (zn *** yn)) (\(Op i) zi -> Nat (Hom_X i) z (\_ j2i -> (z % Op j2i) zi) *** yn)
   zn ^^^ yn = Nat (PshExponential (tgt yn) (src zn)) (PshExponential (src yn) (tgt zn)) (\(Op i) n -> zn . n . (natId (Hom_X i) *** yn))
 
 

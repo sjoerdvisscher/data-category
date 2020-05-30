@@ -80,11 +80,11 @@ njk@(Nat j k _) `o` nfg@(Nat f g _) = Nat (j :.: f) (k :.: g) ((njk !) . (nfg !)
 
 -- | The identity natural transformation of a functor.
 natId :: Functor f => f -> Nat (Dom f) (Cod f) f f
-natId f = Nat f f (\i -> f % i)
+natId f = Nat f f (f %)
 
 pattern NatId :: Functor f => f -> Nat (Dom f) (Cod f) f f
-pattern NatId f <- Nat f _ _ where 
-  NatId f = Nat f f (\i -> f % i)
+pattern NatId f <- Nat f _ _ where
+  NatId f = Nat f f (f %)
 
 srcF :: Nat c d f g -> f
 srcF (Nat f _ _) = f
@@ -196,4 +196,4 @@ instance (Category c1, Category c2) => Functor (Tuple c1 c2) where
   type Dom (Tuple c1 c2) = c1
   type Cod (Tuple c1 c2) = Nat c2 (c1 :**: c2)
   type Tuple c1 c2 :% a = Tuple1 c1 c2 a
-  Tuple % f = Nat (Tuple1 (src f)) (Tuple1 (tgt f)) (\z -> f :**: z)
+  Tuple % f = Nat (Tuple1 (src f)) (Tuple1 (tgt f)) (f :**:)

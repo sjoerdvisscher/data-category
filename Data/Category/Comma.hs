@@ -59,7 +59,7 @@ initialUniversalComma u = case initialObject :: Obj c (a_, a) of
     initialUniversal u a mor factorizer
       where
         factorizer :: forall y. Obj (Dom u) y -> Cod u x (u :% y) -> Dom u a y
-        factorizer y arr = case (init (commaId (CommaO y arr y))) of CommaA _ _ f _ -> f
+        factorizer y arr = case init (commaId (CommaO y arr y)) of CommaA _ _ f _ -> f
           where
             init :: Obj c (y, y) -> c (a_, a) (y, y)
             init = initialize
@@ -72,7 +72,7 @@ terminalUniversalComma u = case terminalObject :: Obj c (a, a_) of
     terminalUniversal u a mor factorizer
       where
         factorizer :: forall y. Obj (Dom u) y -> Cod u (u :% y) x -> Dom u y a
-        factorizer y arr = case (term (commaId (CommaO y arr y))) of CommaA _ f _ _ -> f
+        factorizer y arr = case term (commaId (CommaO y arr y)) of CommaA _ f _ _ -> f
           where
             term :: Obj c (y, y) -> c (y, y) (a, a_)
             term = terminate
