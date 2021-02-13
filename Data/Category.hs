@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeFamilies, GADTs, RankNTypes, PolyKinds, NoImplicitPrelude #-}
+{-# LANGUAGE TypeFamilies, GADTs, RankNTypes, PolyKinds, LinearTypes, FlexibleInstances, NoImplicitPrelude #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category
@@ -23,8 +23,9 @@ module Data.Category (
 
 ) where
 
-infixr 8 .
+import GHC.Exts
 
+infixr 8 .
 
 -- | Whenever objects are required at value level, they are represented by their identity arrows.
 type Obj k a = k a a
@@ -38,11 +39,12 @@ class Category k where
   (.) :: k b c -> k a b -> k a c
 
 
-obj :: Obj (->) a
+obj :: Obj (FUN m) a
 obj x = x
 
--- | The category with Haskell types as objects and Haskell functions as arrows.
-instance Category (->) where
+-- | For @m ~ Many@: The category with Haskell types as objects and Haskell functions as arrows, i.e. @(->)@.
+-- For @m ~ One@: The category with Haskell types as objects and Haskell linear functions as arrows, i.e. @(%1->)@.
+instance Category (FUN m) where
 
   src _ = obj
   tgt _ = obj

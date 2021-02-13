@@ -2,9 +2,12 @@
     TypeOperators
   , TypeFamilies
   , GADTs
+  , PolyKinds
+  , DataKinds
   , Rank2Types
   , ViewPatterns
   , TypeSynonymInstances
+  , FlexibleContexts
   , FlexibleInstances
   , UndecidableInstances
   , NoImplicitPrelude
@@ -27,12 +30,15 @@ import Data.Category.Adjunction
 import Data.Category.Limit
 import Data.Category.Product
 
+import GHC.Exts (FUN)
+import GHC.Types (Multiplicity(One))
+
 
 -- | A monoidal category is a category with some kind of tensor product.
 --   A tensor product is a bifunctor, with a unit object.
 class (Functor f, Dom f ~ (Cod f :**: Cod f)) => TensorProduct f where
 
-  type Unit f :: *
+  type Unit f :: Kind (Cod f)
   unitObject :: f -> Obj (Cod f) (Unit f)
 
   leftUnitor     :: Cod f ~ k => f -> Obj k a -> k (f :% (Unit f, a)) a
@@ -95,6 +101,28 @@ instance Category k => TensorProduct (EndoFunctorCompose k) where
 
   associator    _ (Nat f _ _) (Nat g _ _) (Nat h _ _) = compAssoc f g h
   associatorInv _ (Nat f _ _) (Nat g _ _) (Nat h _ _) = compAssocInv f g h
+
+data LinearTensor = LinearTensor
+instance Functor LinearTensor where
+  type Dom LinearTensor = FUN 'One :**: FUN 'One
+  type Cod LinearTensor = FUN 'One
+  type LinearTensor :% (a, b) = (a, b)
+
+  LinearTensor % (f :**: g) = \(a, b) -> (f a, g b)
+
+instance TensorProduct LinearTensor where
+  type Unit LinearTensor = ()
+  unitObject _ = obj
+
+  leftUnitor     _ _ = \((), a) -> a
+  leftUnitorInv  _ _ = \a -> ((), a)
+  rightUnitor    _ _ = \(a, ()) -> a
+  rightUnitorInv _ _ = \a -> (a, ())
+  associator    _ _ _ _ = \((a, b), c) -> (a, (b, c))
+  associatorInv _ _ _ _ = \(a, (b, c)) -> ((a, b), c)
+
+instance SymmetricTensorProduct LinearTensor where
+  swap _ _ _ = \(a, b) -> (b, a)
 
 
 -- | @MonoidObject f a@ defines a monoid @a@ in a monoidal category with tensor product @f@.

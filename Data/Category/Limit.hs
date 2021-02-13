@@ -4,6 +4,10 @@
   GADTs,
   PolyKinds,
   DataKinds,
+  LinearTypes,
+  LambdaCase,
+  EmptyCase,
+  BlockArguments,
   MultiParamTypeClasses,
   RankNTypes,
   ScopedTypeVariables,
@@ -65,10 +69,12 @@ module Data.Category.Limit (
   , ProductFunctor(..)
   , (:*:)(..)
   , prodAdj
+  , type (&)(..)
   , HasBinaryCoproducts(..)
   , CoproductFunctor(..)
   , (:+:)(..)
   , coprodAdj
+  , Either(..)
 
 ) where
 
@@ -81,6 +87,9 @@ import Data.Category.Product
 import Data.Category.Coproduct
 import Data.Category.Unit
 import Data.Category.Void
+
+import GHC.Exts (FUN)
+import GHC.Types (Multiplicity(One))
 
 infixl 3 ***
 infixl 3 &&&
@@ -313,12 +322,12 @@ instance (Category k, HasInitialObject k) => HasColimits Void k where
 data Zero
 
 -- | Any empty data type is an initial object in @Hask@.
-instance HasInitialObject (->) where
-  type InitialObject (->) = Zero
+instance HasInitialObject (FUN m) where
+  type InitialObject (FUN m) = Zero
 
   initialObject = obj
 
-  initialize = initialize
+  initialize = \case
 
 -- | The empty category is the initial object in @Cat@.
 instance HasInitialObject Cat where
@@ -408,6 +417,25 @@ instance HasBinaryProducts (->) where
 
   f &&& g = \x -> (f x, g x)
   f *** g = \(x, y) -> (f x, g y)
+
+
+newtype x & y = AddConj (forall r. Either (x %1-> r) (y %1-> r) %1-> r)
+
+-- | The product in the category of linear types is a & b, where you have access to a and b, but not both at the same time.
+instance HasBinaryProducts (FUN 'One) where
+  type BinaryProduct (FUN 'One) x y = x & y
+
+  proj1 _ _ = \(AddConj f) -> f (Left obj)
+  proj2 _ _ = \(AddConj f) -> f (Right obj)
+
+  f &&& g = \x -> AddConj \case
+    Left h -> h (f x)
+    Right h -> h (g x)
+  f *** g = \(AddConj h) -> AddConj \case
+    Left l -> h (Left (\x -> l (f x)))
+    Right r -> h (Right (\x -> r (g x)))
+
+
 
 -- | The product of categories ':**:' is the binary product in 'Cat'.
 instance HasBinaryProducts Cat where
@@ -533,6 +561,20 @@ instance (HasColimits i k, HasColimits j k, HasBinaryCoproducts k) => HasColimit
     |||
     colimitFactorizer (constPostcompOut (c `o` natId Inj2))
 
+
+data Either a b = Left a | Right b
+instance HasBinaryCoproducts (FUN m) where
+  type BinaryCoproduct (FUN m) a b = Either a b
+
+  inj1 _ _ = Left
+  inj2 _ _ = Right
+
+  f ||| g = \case
+    Left a -> f a
+    Right b -> g b
+  f +++ g = \case
+    Left a -> Left (f a)
+    Right b -> Right (g b)
 
 -- | The coproduct of categories ':++:' is the binary coproduct in 'Cat'.
 instance HasBinaryCoproducts Cat where
