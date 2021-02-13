@@ -31,6 +31,7 @@ module Data.Category.Simplex (
 import Data.Category
 import Data.Category.Product
 import Data.Category.Functor
+import Data.Category.NaturalTransformation
 import Data.Category.Monoidal
 import Data.Category.Limit
 
@@ -160,3 +161,11 @@ instance TensorProduct f => Functor (Replicate f a) where
       n' = Replicate f m % X n
       a = tgt (unit m)
       b = src (Replicate f m % n)
+
+data Cobar f d = Cobar (Monad f) (Obj (Dom f) d)
+-- | The cobar construction
+instance Category (Dom f) => Functor (Cobar f d) where
+  type Dom (Cobar f d) = Simplex
+  type Cod (Cobar f d) = Dom f
+  type Cobar f d :% s = (Replicate (EndoFunctorCompose (Dom f)) f :% s) :% d
+  Cobar f d % s = (Replicate FunctorCompose f % s) ! d
