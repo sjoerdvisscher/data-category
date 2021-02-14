@@ -217,6 +217,13 @@ instance ECategory k => EFunctor (EHom k) where
       ba = hom b1 a1
       ab = hom a2 b2
 
+-- | A V-enrichment on a functor @F: V -> V@ is the same thing as tensorial strength @(a, f b) -> f (a, b)@.
+strength :: EFunctorOf (Self v) (Self v) f => f -> Obj v a -> Obj v b -> v (BinaryProduct v a (f :%% b)) (f :%% (BinaryProduct v a b))
+strength f a b = uncurry a fb fab (map f (Self b) (Self (a *** b)) . tuple b a)
+  where
+    Self fb = f %% Self b
+    Self fab = f %% Self (a *** b)
+
 
 -- | Enriched natural transformations.
 data ENat :: (* -> * -> *) -> (* -> * -> *) -> * -> * -> * where
