@@ -44,6 +44,7 @@ Library
     Data.Category.Enriched,
     Data.Category.Yoneda,
     Data.Category.Boolean,
+    Data.Category.Fin,
     Data.Category.Fix,
     Data.Category.Kleisli,
     Data.Category.Dialg,
