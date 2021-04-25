@@ -28,6 +28,8 @@ module Data.Category.Simplex (
 
 ) where
 
+import Data.Kind (Type)
+
 import Data.Category
 import Data.Category.Product
 import Data.Category.Functor
@@ -49,7 +51,7 @@ data S n
 --      XY----+
 --         x ->
 
-data Simplex :: * -> * -> * where
+data Simplex :: Type -> Type -> Type where
   Z ::                    Simplex    Z     Z
   Y :: Simplex x    y  -> Simplex    x  (S y)
   X :: Simplex x (S y) -> Simplex (S x) (S y)
@@ -95,7 +97,7 @@ instance HasTerminalObject Simplex where
   terminate (X (Y f)) = X (terminate f)
 
 
-data Fin :: * -> * where
+data Fin :: Type -> Type where
   Fz ::          Fin (S n)
   Fs :: Fin n -> Fin (S n)
 

@@ -10,6 +10,8 @@
 -----------------------------------------------------------------------------
 module Data.Category.Coproduct where
 
+import Data.Kind (Type)
+
 import Data.Category
 import Data.Category.Functor
 
@@ -21,7 +23,7 @@ import Data.Category.Unit
 data I1 a
 data I2 a
 
-data (:++:) :: (* -> * -> *) -> (* -> * -> *) -> * -> * -> * where
+data (:++:) :: (Type -> Type -> Type) -> (Type -> Type -> Type) -> Type -> Type -> Type where
   I1 :: c1 a1 b1 -> (:++:) c1 c2 (I1 a1) (I1 b1)
   I2 :: c2 a2 b2 -> (:++:) c1 c2 (I2 a2) (I2 b2)
 
@@ -39,7 +41,7 @@ instance (Category c1, Category c2) => Category (c1 :++: c2) where
 
 
 
-data Inj1 (c1 :: * -> * -> *) (c2 :: * -> * -> *) = Inj1
+data Inj1 (c1 :: Type -> Type -> Type) (c2 :: Type -> Type -> Type) = Inj1
 -- | 'Inj1' is a functor which injects into the left category.
 instance (Category c1, Category c2) => Functor (Inj1 c1 c2) where
   type Dom (Inj1 c1 c2) = c1
@@ -47,7 +49,7 @@ instance (Category c1, Category c2) => Functor (Inj1 c1 c2) where
   type Inj1 c1 c2 :% a = I1 a
   Inj1 % f = I1 f
 
-data Inj2 (c1 :: * -> * -> *) (c2 :: * -> * -> *) = Inj2
+data Inj2 (c1 :: Type -> Type -> Type) (c2 :: Type -> Type -> Type) = Inj2
 -- | 'Inj2' is a functor which injects into the right category.
 instance (Category c1, Category c2) => Functor (Inj2 c1 c2) where
   type Dom (Inj2 c1 c2) = c2
@@ -65,7 +67,7 @@ instance (Functor f1, Functor f2) => Functor (f1 :+++: f2) where
   (g :+++: _) % I1 f = I1 (g % f)
   (_ :+++: g) % I2 f = I2 (g % f)
 
-data CodiagCoprod (k :: * -> * -> *) = CodiagCoprod
+data CodiagCoprod (k :: Type -> Type -> Type) = CodiagCoprod
 -- | 'CodiagCoprod' is the codiagonal functor for coproducts.
 instance Category k => Functor (CodiagCoprod k) where
   type Dom (CodiagCoprod k) = k :++: k
@@ -75,7 +77,7 @@ instance Category k => Functor (CodiagCoprod k) where
   CodiagCoprod % I1 f = f
   CodiagCoprod % I2 f = f
 
-newtype Cotuple1 (c1 :: * -> * -> *) (c2 :: * -> * -> *) a = Cotuple1 (Obj c1 a)
+newtype Cotuple1 (c1 :: Type -> Type -> Type) (c2 :: Type -> Type -> Type) a = Cotuple1 (Obj c1 a)
 -- | 'Cotuple1' projects out to the left category, replacing a value from the right category with a fixed object.
 instance (Category c1, Category c2) => Functor (Cotuple1 c1 c2 a1) where
   type Dom (Cotuple1 c1 c2 a1) = c1 :++: c2
@@ -85,7 +87,7 @@ instance (Category c1, Category c2) => Functor (Cotuple1 c1 c2 a1) where
   Cotuple1 _ % I1 f = f
   Cotuple1 a % I2 _ = a
 
-newtype Cotuple2 (c1 :: * -> * -> *) (c2 :: * -> * -> *) a = Cotuple2 (Obj c2 a)
+newtype Cotuple2 (c1 :: Type -> Type -> Type) (c2 :: Type -> Type -> Type) a = Cotuple2 (Obj c2 a)
 -- | 'Cotuple2' projects out to the right category, replacing a value from the left category with a fixed object.
 instance (Category c1, Category c2) => Functor (Cotuple2 c1 c2 a2) where
   type Dom (Cotuple2 c1 c2 a2) = c1 :++: c2
@@ -96,7 +98,7 @@ instance (Category c1, Category c2) => Functor (Cotuple2 c1 c2 a2) where
   Cotuple2 _ % I2 f = f
 
 
-data Cograph f :: * -> * -> * where
+data Cograph f :: Type -> Type -> Type where
   I1A :: Dom f ~ (Op c :**: d) => c a1 b1 -> Cograph f (I1 a1) (I1 b1)
   I2A :: Dom f ~ (Op c :**: d) => d a2 b2 -> Cograph f (I2 a2) (I2 b2)
   I12 :: Dom f ~ (Op c :**: d) => Obj c a -> Obj d b -> f -> f :% (a, b) -> Cograph f (I1 a) (I2 b)

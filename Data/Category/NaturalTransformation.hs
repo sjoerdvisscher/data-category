@@ -48,6 +48,8 @@ module Data.Category.NaturalTransformation (
 
 ) where
 
+import Data.Kind (Type)
+
 import Data.Category
 import Data.Category.Functor
 import Data.Category.Product
@@ -59,7 +61,7 @@ type f :~> g = forall c d. (c ~ Dom f, c ~ Dom g, d ~ Cod f, d ~ Cod g) => Nat c
 
 -- | Natural transformations are built up of components,
 -- one for each object @z@ in the domain category of @f@ and @g@.
-data Nat :: (* -> * -> *) -> (* -> * -> *) -> * -> * -> * where
+data Nat :: (Type -> Type -> Type) -> (Type -> Type -> Type) -> Type -> Type -> Type where
   Nat :: (Functor f, Functor g, c ~ Dom f, c ~ Dom g, d ~ Cod f, d ~ Cod g)
     => f -> g -> (forall z. Obj c z -> Component f g z) -> Nat c d f g
 
@@ -137,7 +139,7 @@ constPostcompOut :: Nat j d f (Const k d x :.: g) -> Nat j d f (Const j d x)
 constPostcompOut (Nat f (Const x :.: _) n) = Nat f (Const x) n
 
 
-data FunctorCompose (c :: * -> * -> *) (d :: * -> * -> *) (e :: * -> * -> *) = FunctorCompose
+data FunctorCompose (c :: Type -> Type -> Type) (d :: Type -> Type -> Type) (e :: Type -> Type -> Type) = FunctorCompose
 
 -- | Composition of functors is a functor.
 instance (Category c, Category d, Category e) => Functor (FunctorCompose c d e) where
@@ -182,7 +184,7 @@ instance (Functor f, Functor h) => Functor (Wrap f h) where
   Wrap f h % n = natId f `o` n `o` natId h
 
 
-data Apply (c1 :: * -> * -> *) (c2 :: * -> * -> *) = Apply
+data Apply (c1 :: Type -> Type -> Type) (c2 :: Type -> Type -> Type) = Apply
 -- | 'Apply' is a bifunctor, @Apply :% (f, a)@ applies @f@ to @a@, i.e. @f :% a@.
 instance (Category c1, Category c2) => Functor (Apply c1 c2) where
   type Dom (Apply c1 c2) = Nat c2 c1 :**: c2
@@ -190,7 +192,7 @@ instance (Category c1, Category c2) => Functor (Apply c1 c2) where
   type Apply c1 c2 :% (f, a) = f :% a
   Apply % (l :**: r) = l ! r
 
-data Tuple (c1 :: * -> * -> *) (c2 :: * -> * -> *) = Tuple
+data Tuple (c1 :: Type -> Type -> Type) (c2 :: Type -> Type -> Type) = Tuple
 -- | 'Tuple' converts an object @a@ to the functor 'Tuple1' @a@.
 instance (Category c1, Category c2) => Functor (Tuple c1 c2) where
   type Dom (Tuple c1 c2) = c1

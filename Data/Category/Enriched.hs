@@ -21,6 +21,8 @@
 -----------------------------------------------------------------------------
 module Data.Category.Enriched where
 
+import Data.Kind (Type)
+
 import Data.Category (Category(..), Obj, Op(..))
 import Data.Category.Product
 import Data.Category.Functor (Functor(..), Hom(..))
@@ -30,12 +32,12 @@ import Data.Category.Boolean
 
 
 -- | An enriched category
-class CartesianClosed (V k) => ECategory (k :: * -> * -> *) where
+class CartesianClosed (V k) => ECategory (k :: Type -> Type -> Type) where
   -- | The category V which k is enriched in
-  type V k :: * -> * -> *
+  type V k :: Type -> Type -> Type
 
   -- | The hom object in V from a to b
-  type k $ ab :: *
+  type k $ ab :: Type
   hom :: Obj k a -> Obj k b -> Obj (V k) (k $ (a, b))
 
   id :: Obj k a -> Arr k a a
@@ -67,7 +69,7 @@ instance ECategory k => ECategory (EOp k) where
   comp (EOp a) (EOp b) (EOp c) = comp c b a . (proj2 (hom c b) (hom b a) &&& proj1 (hom c b) (hom b a))
 
 
-data (:<>:) :: (* -> * -> *) -> (* -> * -> *) -> * -> * -> * where
+data (:<>:) :: (Type -> Type -> Type) -> (Type -> Type -> Type) -> Type -> Type -> Type where
   (:<>:) :: (V k1 ~ V k2) => Obj k1 a1 -> Obj k2 a2 -> (:<>:) k1 k2 (a1, a2) (a1, a2)
 
 -- | The enriched product category of enriched categories @c1@ and @c2@.
@@ -122,12 +124,12 @@ instance Category k => ECategory (InHask k) where
 class (ECategory (EDom ftag), ECategory (ECod ftag), V (EDom ftag) ~ V (ECod ftag)) => EFunctor ftag where
 
   -- | The domain, or source category, of the functor.
-  type EDom ftag :: * -> * -> *
+  type EDom ftag :: Type -> Type -> Type
   -- | The codomain, or target category, of the functor.
-  type ECod ftag :: * -> * -> *
+  type ECod ftag :: Type -> Type -> Type
 
   -- | @:%%@ maps objects at the type level
-  type ftag :%% a :: *
+  type ftag :%% a :: Type
 
   -- | @%%@ maps object at the value level
   (%%) :: ftag -> Obj (EDom ftag) a -> Obj (ECod ftag) (ftag :%% a)
@@ -138,7 +140,7 @@ class (ECategory (EDom ftag), ECategory (ECod ftag), V (EDom ftag) ~ V (ECod fta
 type EFunctorOf a b t = (EFunctor t, EDom t ~ a, ECod t ~ b)
 
 
-data Id (k :: * -> * -> *) = Id
+data Id (k :: Type -> Type -> Type) = Id
 -- | The identity functor on k
 instance ECategory k => EFunctor (Id k) where
   type EDom (Id k) = k
@@ -157,7 +159,7 @@ instance (ECategory (ECod g), ECategory (EDom h), V (EDom h) ~ V (ECod g), ECod 
   (g :.: h) %% a = g %% (h %% a)
   map (g :.: h) a b = map g (h %% a) (h %% b) . map h a b
 
-data Const (c1 :: * -> * -> *) (c2 :: * -> * -> *) x where
+data Const (c1 :: Type -> Type -> Type) (c2 :: Type -> Type -> Type) x where
   Const :: Obj c2 x -> Const c1 c2 x
 -- | The constant functor.
 instance (ECategory c1, ECategory c2, V c1 ~ V c2) => EFunctor (Const c1 c2 x) where
@@ -186,7 +188,7 @@ instance (EFunctor f1, EFunctor f2, V (ECod f1) ~ V (ECod f2)) => EFunctor (f1 :
   (f1 :<*>: f2) %% (a1 :<>: a2) = (f1 %% a1) :<>: (f2 %% a2)
   map (f1 :<*>: f2) (a1 :<>: a2) (b1 :<>: b2) = map f1 a1 b1 *** map f2 a2 b2
 
-data DiagProd (k :: * -> * -> *) = DiagProd
+data DiagProd (k :: Type -> Type -> Type) = DiagProd
 -- | 'DiagProd' is the diagonal functor for products.
 instance ECategory k => EFunctor (DiagProd k) where
   type EDom (DiagProd k) = k
@@ -204,7 +206,7 @@ instance EFunctor f => Functor (UnderlyingF f) where
   UnderlyingF f % Underlying a ab b = Underlying (f %% a) (map f a b . ab) (f %% b)
 
 
-data EHom (k :: * -> * -> *) = EHom
+data EHom (k :: Type -> Type -> Type) = EHom
 instance ECategory k => EFunctor (EHom k) where
   type EDom (EHom k) = EOp k :<>: k
   type ECod (EHom k) = Self (V k)
@@ -226,7 +228,7 @@ strength f a b = uncurry a fb fab (map f (Self b) (Self (a *** b)) . tuple b a)
 
 
 -- | Enriched natural transformations.
-data ENat :: (* -> * -> *) -> (* -> * -> *) -> * -> * -> * where
+data ENat :: (Type -> Type -> Type) -> (Type -> Type -> Type) -> Type -> Type -> Type where
   ENat :: (EFunctorOf c d f, EFunctorOf c d g)
     => f -> g -> (forall z. Obj c z -> Arr d (f :%% z) (g :%% z)) -> ENat c d f g
 
@@ -255,7 +257,7 @@ instance ECategory k => EFunctor (EHom_X k x) where
 type VProfunctor k l t = EFunctorOf (EOp k :<>: l) (Self (V k)) t
 
 class CartesianClosed v => HasEnds v where
-  type End (v :: * -> * -> *) t :: *
+  type End (v :: Type -> Type -> Type) t :: Type
   end :: (VProfunctor k k t, V k ~ v) => t -> Obj v (End v t)
   endCounit :: (VProfunctor k k t, V k ~ v) => t -> Obj k a -> v (End v t) (t :%% (a, a))
   endFactorizer :: (VProfunctor k k t, V k ~ v) => t -> (forall a. Obj k a -> v x (t :%% (a, a))) -> v x (End v t)
@@ -285,7 +287,7 @@ instance (HasEnds (V a), V a ~ V b) => ECategory (FunCat a b) where
     (\a -> comp (t %% a) (s %% a) (r %% a) . (endCounit (s ->> r) a *** endCounit (t ->> s) a))
 
 
-data EndFunctor (k :: * -> * -> *) = EndFunctor
+data EndFunctor (k :: Type -> Type -> Type) = EndFunctor
 instance (HasEnds (V k), ECategory k) => EFunctor (EndFunctor k) where
   type EDom (EndFunctor k) = FunCat (EOp k :<>: k) (Self (V k))
   type ECod (EndFunctor k) = Self (V k)
@@ -296,7 +298,7 @@ instance (HasEnds (V k), ECategory k) => EFunctor (EndFunctor k) where
 
 
 -- d :: j -> k, w :: j -> Self (V k)
-type family WeigtedLimit (k :: * -> * -> *) w d :: *
+type family WeigtedLimit (k :: Type -> Type -> Type) w d :: Type
 type Lim w d = WeigtedLimit (ECod d) w d
 
 class HasEnds (V k) => HasLimits k where
@@ -305,7 +307,7 @@ class HasEnds (V k) => HasLimits k where
   limitInv :: (EFunctorOf j k d, EFunctorOf j (Self (V k)) w) => w -> d -> Obj k e -> V k (k $ (e, Lim w d)) (End (V k) (w :->>: (EHomX_ k e :.: d)))
 
 -- d :: j -> k, w :: EOp j -> Self (V k)
-type family WeigtedColimit (k :: * -> * -> *) w d :: *
+type family WeigtedColimit (k :: Type -> Type -> Type) w d :: Type
 type Colim w d = WeigtedColimit (ECod d) w d
 
 class HasEnds (V k) => HasColimits k where
@@ -337,7 +339,7 @@ yonedaInv f x = endFactorizer (EHomX_ x ->> f) h
         Self fx = f %% x
         Self fa = f %% a
 
-data Y (k :: * -> * -> *) = Y
+data Y (k :: Type -> Type -> Type) = Y
 -- | Yoneda embedding
 instance (ECategory k, HasEnds (V k)) => EFunctor (Y k) where
   type EDom (Y k) = EOp k

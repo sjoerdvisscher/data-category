@@ -19,6 +19,8 @@
 -----------------------------------------------------------------------------
 module Data.Category.KanExtension where
 
+import Data.Kind (Type)
+
 import Data.Category
 import Data.Category.Functor
 import Data.Category.NaturalTransformation
@@ -30,7 +32,7 @@ import Data.Category.Unit
 -- | An instance of @HasRightKan p k@ says there are right Kan extensions for all functors with codomain @k@.
 class (Functor p, Category k) => HasRightKan p k where
   -- | The right Kan extension of a functor @p@ for functors @f@ with codomain @k@.
-  type RanFam p k (f :: *) :: *
+  type RanFam p k (f :: Type) :: Type
   -- | 'ran' gives the defining natural transformation of the right Kan extension of @f@ along @p@.
   ran           :: p -> Obj (Nat (Dom p) k) f -> Nat (Dom p) k (RanFam p k f :.: p) f
   -- | 'ranFactorizer' shows that this extension is universal.
@@ -44,7 +46,7 @@ ranF p f = ranF' (ran p f)
 ranF' :: Nat (Dom p) k (RanFam p k f :.: p) f -> Obj (Nat (Cod p) k) (RanFam p k f)
 ranF' (Nat (r :.: _) _ _) = natId r
 
-newtype RanFunctor (p :: *) (k :: * -> * -> *) = RanFunctor p
+newtype RanFunctor (p :: Type) (k :: Type -> Type -> Type) = RanFunctor p
 instance HasRightKan p k => Functor (RanFunctor p k) where
   type Dom (RanFunctor p k) = Nat (Dom p) k
   type Cod (RanFunctor p k) = Nat (Cod p) k
@@ -60,7 +62,7 @@ ranAdj p = mkAdjunctionTerm (Precompose p) (RanFunctor p) (\_ -> ranFactorizer) 
 -- | An instance of @HasLeftKan p k@ says there are left Kan extensions for all functors with codomain @k@.
 class (Functor p, Category k) => HasLeftKan p k where
   -- | The left Kan extension of a functor @p@ for functors @f@ with codomain @k@.
-  type LanFam (p :: *) (k :: * -> * -> *) (f :: *) :: *
+  type LanFam (p :: Type) (k :: Type -> Type -> Type) (f :: Type) :: Type
   -- | 'lan' gives the defining natural transformation of the left Kan extension of @f@ along @p@.
   lan           :: p -> Obj (Nat (Dom p) k) f -> Nat (Dom p) k f (LanFam p k f :.: p)
   -- | 'lanFactorizer' shows that this extension is universal.
@@ -74,7 +76,7 @@ lanF p f = lanF' (lan p f)
 lanF' :: Nat (Dom p) k f (LanFam p k f :.: p) -> Obj (Nat (Cod p) k) (LanFam p k f)
 lanF' (Nat _ (r :.: _) _) = natId r
 
-newtype LanFunctor (p :: *) (k :: * -> * -> *) = LanFunctor p
+newtype LanFunctor (p :: Type) (k :: Type -> Type -> Type) = LanFunctor p
 instance HasLeftKan p k => Functor (LanFunctor p k) where
   type Dom (LanFunctor p k) = Nat (Dom p) k
   type Cod (LanFunctor p k) = Nat (Cod p) k

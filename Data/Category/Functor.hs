@@ -58,6 +58,8 @@ module Data.Category.Functor (
 
 ) where
 
+import Data.Kind (Type)
+
 import Data.Category
 import Data.Category.Product
 
@@ -70,12 +72,12 @@ infixr 9 :%
 class (Category (Dom ftag), Category (Cod ftag)) => Functor ftag where
 
   -- | The domain, or source category, of the functor.
-  type Dom ftag :: * -> * -> *
+  type Dom ftag :: Type -> Type -> Type
   -- | The codomain, or target category, of the functor.
-  type Cod ftag :: * -> * -> *
+  type Cod ftag :: Type -> Type -> Type
 
   -- | @:%@ maps objects.
-  type ftag :% a :: *
+  type ftag :% a :: Type
 
   -- | @%@ maps arrows.
   (%)  :: ftag -> Dom ftag a b -> Cod ftag (ftag :% a) (ftag :% b)
@@ -84,7 +86,7 @@ type FunctorOf a b t = (Functor t, Dom t ~ a, Cod t ~ b)
 
 
 -- | Functors are arrows in the category Cat.
-data Cat :: (* -> * -> *) -> (* -> * -> *) -> * where
+data Cat :: (Type -> Type -> Type) -> (Type -> Type -> Type) -> Type where
   CatA :: (Functor ftag, Category (Dom ftag), Category (Cod ftag)) => ftag -> Cat (Dom ftag) (Cod ftag)
 
 
@@ -98,7 +100,7 @@ instance Category Cat where
 
 
 
-data Id (k :: * -> * -> *) = Id
+data Id (k :: Type -> Type -> Type) = Id
 
 -- | The identity functor on k
 instance Category k => Functor (Id k) where
@@ -122,7 +124,7 @@ instance (Category (Cod g), Category (Dom h)) => Functor (g :.: h) where
 
 
 
-data Const (c1 :: * -> * -> *) (c2 :: * -> * -> *) x where
+data Const (c1 :: Type -> Type -> Type) (c2 :: Type -> Type -> Type) x where
   Const :: Obj c2 x -> Const c1 c2 x
 
 -- | The constant functor.
@@ -149,7 +151,7 @@ instance (Category (Dom f), Category (Cod f)) => Functor (Opposite f) where
   Opposite f % Op a = Op (f % a)
 
 
-data OpOp (k :: * -> * -> *) = OpOp
+data OpOp (k :: Type -> Type -> Type) = OpOp
 
 -- | The @Op (Op x) = x@ functor.
 instance Category k => Functor (OpOp k) where
@@ -160,7 +162,7 @@ instance Category k => Functor (OpOp k) where
   OpOp % Op (Op f) = f
 
 
-data OpOpInv (k :: * -> * -> *) = OpOpInv
+data OpOpInv (k :: Type -> Type -> Type) = OpOpInv
 
 -- | The @x = Op (Op x)@ functor.
 instance Category k => Functor (OpOpInv k) where
@@ -175,7 +177,7 @@ instance Category k => Functor (OpOpInv k) where
 newtype Any f = Any f deriving Functor
 
 
-data Proj1 (c1 :: * -> * -> *) (c2 :: * -> * -> *) = Proj1
+data Proj1 (c1 :: Type -> Type -> Type) (c2 :: Type -> Type -> Type) = Proj1
 
 -- | 'Proj1' is a bifunctor that projects out the first component of a product.
 instance (Category c1, Category c2) => Functor (Proj1 c1 c2) where
@@ -186,7 +188,7 @@ instance (Category c1, Category c2) => Functor (Proj1 c1 c2) where
   Proj1 % (f1 :**: _) = f1
 
 
-data Proj2 (c1 :: * -> * -> *) (c2 :: * -> * -> *) = Proj2
+data Proj2 (c1 :: Type -> Type -> Type) (c2 :: Type -> Type -> Type) = Proj2
 
 -- | 'Proj2' is a bifunctor that projects out the second component of a product.
 instance (Category c1, Category c2) => Functor (Proj2 c1 c2) where
@@ -208,7 +210,7 @@ instance (Functor f1, Functor f2) => Functor (f1 :***: f2) where
   (g1 :***: g2) % (f1 :**: f2) = (g1 % f1) :**: (g2 % f2)
 
 
-data DiagProd (k :: * -> * -> *) = DiagProd
+data DiagProd (k :: Type -> Type -> Type) = DiagProd
 
 -- | 'DiagProd' is the diagonal functor for products.
 instance Category k => Functor (DiagProd k) where
@@ -231,7 +233,7 @@ pattern Tuple1 a = (Const a :***: Id) :.: DiagProd
 -- tuple2 :: (Category c1, Category c2) => Obj c2 a -> Tuple2 c1 c2 a
 -- tuple2 a = (Id :***: Const a) :.: DiagProd
 
-type Swap (c1 :: * -> * -> *) (c2 :: * -> * -> *) = (Proj2 c1 c2 :***: Proj1 c1 c2) :.: DiagProd (c1 :**: c2)
+type Swap (c1 :: Type -> Type -> Type) (c2 :: Type -> Type -> Type) = (Proj2 c1 c2 :***: Proj1 c1 c2) :.: DiagProd (c1 :**: c2)
 -- | 'swap' swaps the 2 categories of the product of categories.
 pattern Swap :: (Category c1, Category c2) => Swap c1 c2
 pattern Swap = (Proj2 :***: Proj1) :.: DiagProd
@@ -243,7 +245,7 @@ pattern Tuple2 a = Swap :.: Tuple1 a
 
 
 
-data Hom (k :: * -> * -> *) = Hom
+data Hom (k :: Type -> Type -> Type) = Hom
 
 -- | The Hom functor, Hom(--,--), a bifunctor contravariant in its first argument and covariant in its second argument.
 instance Category k => Functor (Hom k) where

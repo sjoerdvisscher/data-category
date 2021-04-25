@@ -25,14 +25,14 @@
 -----------------------------------------------------------------------------
 module Data.Category.Constraint where
 
+import Data.Kind (Constraint, Type)
+import GHC.Exts (Any)
+
 import Data.Category
 import Data.Category.Limit
 import Data.Category.CartesianClosed
 
-import Data.Kind (Constraint)
-import GHC.Exts (Any)
-
-data Dict :: Constraint -> * where
+data Dict :: Constraint -> Type where
   Dict :: a => Dict a
 
 -- | Code mostly stolen from the constraints package

@@ -78,6 +78,11 @@ module Data.Category.Limit (
 
 ) where
 
+import Data.Kind (Type)
+import GHC.Exts (FUN)
+import GHC.Types (Multiplicity(One))
+import Prelude (Either(..))
+
 import Data.Category
 import Data.Category.Functor
 import Data.Category.NaturalTransformation
@@ -88,16 +93,13 @@ import Data.Category.Coproduct
 import Data.Category.Unit
 import Data.Category.Void
 
-import GHC.Exts (FUN)
-import GHC.Types (Multiplicity(One))
-
 infixl 3 ***
 infixl 3 &&&
 infixl 2 +++
 infixl 2 |||
 
 
-data Diag :: (* -> * -> *) -> (* -> * -> *) -> * where
+data Diag :: (Type -> Type -> Type) -> (Type -> Type -> Type) -> Type where
   Diag :: Diag j k
 
 -- | The diagonal functor from (index-) category J to k.
@@ -132,7 +134,7 @@ coconeVertex (Nat _ (Const x) _) = x
 -- | An instance of @HasLimits j k@ says that @k@ has all limits of type @j@.
 class (Category j, Category k) => HasLimits j k where
   -- | Limits in a category @k@ by means of a diagram of type @j@, which is a functor from @j@ to @k@.
-  type LimitFam (j :: * -> * -> *) (k :: * -> * -> *) (f :: *) :: *
+  type LimitFam (j :: Type -> Type -> Type) (k :: Type -> Type -> Type) (f :: Type) :: Type
   -- | 'limit' returns the limiting cone for a functor @f@.
   limit           :: Obj (Nat j k) f -> Cone j k f (LimitFam j k f)
   -- | 'limitFactorizer' shows that the limiting cone is universal – i.e. any other cone of @f@ factors through it
@@ -141,7 +143,7 @@ class (Category j, Category k) => HasLimits j k where
 
 type Limit f = LimitFam (Dom f) (Cod f) f
 
-data LimitFunctor (j :: * -> * -> *) (k :: * -> * -> *) = LimitFunctor
+data LimitFunctor (j :: Type -> Type -> Type) (k :: Type -> Type -> Type) = LimitFunctor
 -- | If every diagram of type @j@ has a limit in @k@ there exists a limit functor.
 --   It can be seen as a generalisation of @(***)@.
 instance HasLimits j k => Functor (LimitFunctor j k) where
@@ -191,7 +193,7 @@ rightAdjointPreservesLimitsInv g t = limitFactorizer (constPrecompIn (g `o` limi
 -- | An instance of @HasColimits j k@ says that @k@ has all colimits of type @j@.
 class (Category j, Category k) => HasColimits j k where
   -- | Colimits in a category @k@ by means of a diagram of type @j@, which is a functor from @j@ to @k@.
-  type ColimitFam (j :: * -> * -> *) (k :: * -> * -> *) (f :: *) :: *
+  type ColimitFam (j :: Type -> Type -> Type) (k :: Type -> Type -> Type) (f :: Type) :: Type
   -- | 'colimit' returns the limiting co-cone for a functor @f@.
   colimit           :: Obj (Nat j k) f -> Cocone j k f (ColimitFam j k f)
   -- | 'colimitFactorizer' shows that the limiting co-cone is universal – i.e. any other co-cone of @f@ factors through it
@@ -200,7 +202,7 @@ class (Category j, Category k) => HasColimits j k where
 
 type Colimit f = ColimitFam (Dom f) (Cod f) f
 
-data ColimitFunctor (j :: * -> * -> *) (k :: * -> * -> *) = ColimitFunctor
+data ColimitFunctor (j :: Type -> Type -> Type) (k :: Type -> Type -> Type) = ColimitFunctor
 -- | If every diagram of type @j@ has a colimit in @k@ there exists a colimit functor.
 --   It can be seen as a generalisation of @(+++)@.
 instance HasColimits j k => Functor (ColimitFunctor j k) where
@@ -320,6 +322,8 @@ instance (Category k, HasInitialObject k) => HasColimits Void k where
 
 
 data Zero
+absurd :: FUN m Zero a
+absurd = \case
 
 -- | Any empty data type is an initial object in @Hask@.
 instance HasInitialObject (FUN m) where
@@ -327,7 +331,7 @@ instance HasInitialObject (FUN m) where
 
   initialObject = obj
 
-  initialize = \case
+  initialize _ = absurd
 
 -- | The empty category is the initial object in @Cat@.
 instance HasInitialObject Cat where
@@ -490,7 +494,7 @@ instance (HasBinaryProducts c1, HasBinaryProducts c2) => HasBinaryProducts (c1 :
   DC (I12 a b1 _ _) &&& DC (I12 _ b2 _ _) = DC (I12 a (b1 *** b2) (Const (\() -> ())) ())
 
 
-data ProductFunctor (k :: * -> * -> *) = ProductFunctor
+data ProductFunctor (k :: Type -> Type -> Type) = ProductFunctor
 -- | Binary product as a bifunctor.
 instance HasBinaryProducts k => Functor (ProductFunctor k) where
   type Dom (ProductFunctor k) = k :**: k
@@ -562,7 +566,6 @@ instance (HasColimits i k, HasColimits j k, HasBinaryCoproducts k) => HasColimit
     colimitFactorizer (constPostcompOut (c `o` natId Inj2))
 
 
-data Either a b = Left a | Right b
 instance HasBinaryCoproducts (FUN m) where
   type BinaryCoproduct (FUN m) a b = Either a b
 
@@ -629,7 +632,7 @@ instance (HasBinaryCoproducts c1, HasBinaryCoproducts c2) => HasBinaryCoproducts
   DC (I12 a1 b _ _) ||| DC (I12 a2 _ _ _) = DC (I12 (a1 +++ a2) b (Const (\() -> ())) ())
 
 
-data CoproductFunctor (k :: * -> * -> *) = CoproductFunctor
+data CoproductFunctor (k :: Type -> Type -> Type) = CoproductFunctor
 -- | Binary coproduct as a bifunctor.
 instance HasBinaryCoproducts k => Functor (CoproductFunctor k) where
   type Dom (CoproductFunctor k) = k :**: k

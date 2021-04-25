@@ -10,6 +10,8 @@
 -----------------------------------------------------------------------------
 module Data.Category.Fix where
 
+import Data.Kind (Type)
+
 import Data.Category
 import Data.Category.Functor
 import Data.Category.Limit
@@ -58,7 +60,7 @@ instance CartesianClosed (f (Fix f)) => CartesianClosed (Fix f) where
   tuple (Fix a) (Fix b) = Fix (tuple a b)
   Fix a ^^^ Fix b = Fix (a ^^^ b)
 
-data Wrap (f :: * -> * -> *) = Wrap
+data Wrap (f :: Type -> Type -> Type) = Wrap
 -- | The `Wrap` functor wraps `Fix` around @f (Fix f)@.
 instance Category (f (Fix f)) => Functor (Wrap (Fix f)) where
   type Dom (Wrap (Fix f)) = f (Fix f)
@@ -66,7 +68,7 @@ instance Category (f (Fix f)) => Functor (Wrap (Fix f)) where
   type Wrap (Fix f) :% a = a
   Wrap % f = Fix f
 
-data Unwrap (f :: * -> * -> *) = Unwrap
+data Unwrap (f :: Type -> Type -> Type) = Unwrap
 -- | The `Unwrap` functor unwraps @Fix f@ to @f (Fix f)@.
 instance Category (f (Fix f)) => Functor (Unwrap (Fix f)) where
   type Dom (Unwrap (Fix f)) = Fix f

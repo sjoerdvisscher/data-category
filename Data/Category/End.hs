@@ -10,6 +10,8 @@
 -----------------------------------------------------------------------------
 module Data.Category.End where
 
+import Data.Kind (Type)
+
 import Data.Category
 import Data.Category.Functor
 import Data.Category.Product
@@ -17,20 +19,20 @@ import Data.Category.NaturalTransformation
 
 
 class Category v => HasEnds v where
-  type End (v :: * -> * -> *) t :: *
+  type End (v :: Type -> Type -> Type) t :: Type
   end :: FunctorOf (Op k :**: k) v t => t -> Obj v (End v t)
   endCounit :: FunctorOf (Op k :**: k) v t => t -> Obj k a -> v (End v t) (t :% (a, a))
   endFactorizer :: FunctorOf (Op k :**: k) v t => t -> (forall a. Obj k a -> v x (t :% (a, a))) -> v x (End v t)
 
 
 class Category v => HasCoends v where
-  type Coend (v :: * -> * -> *) t :: *
+  type Coend (v :: Type -> Type -> Type) t :: Type
   coend :: FunctorOf (Op k :**: k) v t => t -> Obj v (Coend v t)
   coendCounit :: FunctorOf (Op k :**: k) v t => t -> Obj k a -> v (t :% (a, a)) (Coend v t)
   coendFactorizer :: FunctorOf (Op k :**: k) v t => t -> (forall a. Obj k a -> v (t :% (a, a)) x) -> v (Coend v t) x
 
 
-data EndFunctor (k :: * -> * -> *) (v :: * -> * -> *) = EndFunctor
+data EndFunctor (k :: Type -> Type -> Type) (v :: Type -> Type -> Type) = EndFunctor
 instance (HasEnds v, Category k) => Functor (EndFunctor k v) where
   type Dom (EndFunctor k v) = Nat (Op k :**: k) v
   type Cod (EndFunctor k v) = v
@@ -39,7 +41,7 @@ instance (HasEnds v, Category k) => Functor (EndFunctor k v) where
   EndFunctor % Nat f g n = endFactorizer g (\a -> n (Op a :**: a) . endCounit f a)
 
 
-data CoendFunctor (k :: * -> * -> *) (v :: * -> * -> *) = CoendFunctor
+data CoendFunctor (k :: Type -> Type -> Type) (v :: Type -> Type -> Type) = CoendFunctor
 instance (HasCoends v, Category k) => Functor (CoendFunctor k v) where
   type Dom (CoendFunctor k v) = Nat (Op k :**: k) v
   type Cod (CoendFunctor k v) = v

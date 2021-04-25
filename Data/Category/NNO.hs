@@ -10,6 +10,8 @@
 -----------------------------------------------------------------------------
 module Data.Category.NNO where
 
+import Data.Kind (Type)
+
 import Data.Category.Functor
 import Data.Category.Limit
 import Data.Category.Unit
@@ -19,7 +21,7 @@ import Data.Category.Fix (Fix(..))
 
 class HasTerminalObject k => HasNaturalNumberObject k where
 
-  type NaturalNumberObject k :: *
+  type NaturalNumberObject k :: Type
 
   zero :: k (TerminalObject k) (NaturalNumberObject k)
   succ :: k (NaturalNumberObject k) (NaturalNumberObject k)

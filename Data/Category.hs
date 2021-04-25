@@ -24,6 +24,7 @@ module Data.Category (
 ) where
 
 import GHC.Exts
+import Data.Kind (Type)
 
 infixr 8 .
 
@@ -64,5 +65,5 @@ instance Category k => Category (Op k) where
 
 
 -- | @Kind k@ is the kind of the objects of the category @k@.
-type family Kind (k :: o -> o -> *) :: * where
-  Kind (k :: o -> o -> *) = o
+type family Kind (k :: o -> o -> Type) :: Type where
+  Kind (k :: o -> o -> Type) = o

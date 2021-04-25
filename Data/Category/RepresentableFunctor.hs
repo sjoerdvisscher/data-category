@@ -50,9 +50,9 @@ initialUniversal :: Functor u
                  -> Cod u x (u :% a)
                  -> (forall y. Obj (Dom u) y -> Cod u x (u :% y) -> Dom u a y)
                  -> InitialUniversal x u a
-initialUniversal u obj mor factorizer = Representable
+initialUniversal u ob mor factorizer = Representable
   { representedFunctor = HomX_ (src mor) :.: u
-  , representingObject = obj
+  , representingObject = ob
   , represent          = factorizer
   , universalElement   = mor
   }
@@ -65,9 +65,9 @@ terminalUniversal :: Functor u
                   -> Cod u (u :% a) x
                   -> (forall y. Obj (Dom u) y -> Cod u (u :% y) x -> Dom u y a)
                   -> TerminalUniversal x u a
-terminalUniversal u obj mor factorizer = Representable
+terminalUniversal u ob mor factorizer = Representable
   { representedFunctor = Hom_X (tgt mor) :.: Opposite u
-  , representingObject = Op obj
+  , representingObject = Op ob
   , represent          = \(Op y) f -> Op (factorizer y f)
   , universalElement   = mor
   }

@@ -52,6 +52,9 @@ Library
     Data.Category.Simplex,
     Data.Category.Cube,
     Data.Category.Comma
+  build-depends:
+      base >=4.15 && <5,
+      ghc-prim
 
   default-language:    Haskell2010
 

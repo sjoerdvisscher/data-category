@@ -10,6 +10,8 @@
 -----------------------------------------------------------------------------
 module Data.Category.Yoneda where
 
+import Data.Kind (Type)
+
 import Data.Category
 import Data.Category.Functor
 import Data.Category.NaturalTransformation
@@ -24,7 +26,7 @@ pattern YonedaEmbedding :: Category k => YonedaEmbedding k
 pattern YonedaEmbedding = Postcompose Hom :.: (Postcompose Swap :.: Tuple)
 
 
-data Yoneda (k :: * -> * -> *) f = Yoneda
+data Yoneda (k :: Type -> Type -> Type) f = Yoneda
 -- | 'Yoneda' converts a functor @f@ into a natural transformation from the hom functor to f.
 instance (Category k, Functor f, Dom f ~ Op k, Cod f ~ (->)) => Functor (Yoneda k f) where
   type Dom (Yoneda k f) = Op k

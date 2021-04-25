@@ -14,6 +14,8 @@
 -----------------------------------------------------------------------------
 module Data.Category.Boolean where
 
+import Data.Kind (Type)
+
 import Data.Category
 import Data.Category.Limit
 import Data.Category.Monoidal
@@ -191,7 +193,7 @@ instance Category k => HasColimits Boolean k where
 type TgtFunctor = ColimitFunctor Boolean
 
 
-data Terminator (k :: * -> * -> *) = Terminator
+data Terminator (k :: Type -> Type -> Type) = Terminator
 -- | @Terminator k@ is the functor that sends an object to its terminating arrow.
 instance HasTerminalObject k => Functor (Terminator k) where
   type Dom (Terminator k) = k
@@ -206,7 +208,7 @@ terminatorLimitAdj = mkAdjunctionInit LimitFunctor Terminator
   (\_ n -> n ! Fls)
 
 
-data Initializer (k :: * -> * -> *) = Initializer
+data Initializer (k :: Type -> Type -> Type) = Initializer
 -- | @Initializer k@ is the functor that sends an object to its initializing arrow.
 instance HasInitialObject k => Functor (Initializer k) where
   type Dom (Initializer k) = k

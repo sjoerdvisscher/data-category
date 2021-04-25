@@ -12,6 +12,8 @@
 -----------------------------------------------------------------------------
 module Data.Category.Cube where
 
+import Data.Kind (Type)
+
 import Data.Category
 import Data.Category.Product
 import Data.Category.Functor
@@ -25,7 +27,7 @@ data S n
 
 data Sign = M | P
 
-data Cube :: * -> * -> * where
+data Cube :: Type -> Type -> Type where
   Z :: Cube Z Z
   S :: Cube x y -> Cube (S x) (S y)
   Y :: Sign -> Cube x y -> Cube x (S y) -- face maps
@@ -64,7 +66,7 @@ instance HasTerminalObject Cube where
 
 data Sign0 = SM | S0 | SP
 
-data ACube :: * -> * where
+data ACube :: Type -> Type where
   Nil :: ACube Z
   Cons :: Sign0 -> ACube n -> ACube (S n)
 

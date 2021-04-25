@@ -12,17 +12,19 @@
 -----------------------------------------------------------------------------
 module Data.Category.Comma where
 
+import Data.Kind (Type)
+
 import Data.Category
 import Data.Category.Functor
 import Data.Category.Limit
 import Data.Category.RepresentableFunctor
 
 
-data CommaO :: * -> * -> * -> * where
+data CommaO :: Type -> Type -> Type -> Type where
   CommaO :: (Cod t ~ k, Cod s ~ k)
     => Obj (Dom t) a -> k (t :% a) (s :% b) -> Obj (Dom s) b -> CommaO t s (a, b)
 
-data (:/\:) :: * -> * -> * -> * -> * where
+data (:/\:) :: Type -> Type -> Type -> Type -> Type where
   CommaA ::
     CommaO t s (a, b) ->
     Dom t a a' ->
