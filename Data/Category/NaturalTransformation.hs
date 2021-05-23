@@ -42,9 +42,12 @@ module Data.Category.NaturalTransformation (
   , EndoFunctorCompose
   , Precompose, pattern Precompose
   , Postcompose, pattern Postcompose
+  , Curry1, pattern Curry1
+  , Curry2, pattern Curry2
   , Wrap(..)
   , Apply(..)
   , Tuple(..)
+  , Opp(..)
 
 ) where
 
@@ -159,6 +162,7 @@ type Presheaves k = Nat (Op k) (->)
 
 type Profunctors c d = Nat (Op d :**: c) (->)
 
+
 -- | @Precompose f e@ is the functor such that @Precompose f e :% g = g :.: f@,
 --   for functors @g@ that compose with @f@ and with codomain @e@.
 type Precompose f e = FunctorCompose (Dom f) (Cod f) e :.: Tuple2 (Nat (Cod f) e) (Nat (Dom f) (Cod f)) f
@@ -170,6 +174,17 @@ pattern Precompose f = FunctorCompose :.: Tuple2 (NatId f)
 type Postcompose f c = FunctorCompose c (Dom f) (Cod f) :.: Tuple1 (Nat (Dom f) (Cod f)) (Nat c (Dom f)) f
 pattern Postcompose :: (Category e, Functor f) => f -> Postcompose f e
 pattern Postcompose f = FunctorCompose :.: Tuple1 (NatId f)
+
+
+type Curry1 c1 c2 f = Postcompose f c2 :.: Tuple c1 c2
+-- | Curry on the first "argument" of a functor from a product category.
+pattern Curry1 :: (Functor f, Dom f ~ c1 :**: c2, Category c1, Category c2) => f -> Curry1 c1 c2 f
+pattern Curry1 f = Postcompose f :.: Tuple
+
+type Curry2 c1 c2 f = Postcompose f c1 :.: Curry1 c2 c1 (Swap c2 c1)
+-- | Curry on the second "argument" of a functor from a product category.
+pattern Curry2 :: (Functor f, Dom f ~ c1 :**: c2, Category c1, Category c2) => f -> Curry2 c1 c2 f
+pattern Curry2 f = Postcompose f :.: Curry1 Swap
 
 
 data Wrap f h = Wrap f h
@@ -199,3 +214,12 @@ instance (Category c1, Category c2) => Functor (Tuple c1 c2) where
   type Cod (Tuple c1 c2) = Nat c2 (c1 :**: c2)
   type Tuple c1 c2 :% a = Tuple1 c1 c2 a
   Tuple % f = Nat (Tuple1 (src f)) (Tuple1 (tgt f)) (f :**:)
+
+
+data Opp (c1 :: Type -> Type -> Type) (c2 :: Type -> Type -> Type) = Opp
+-- | Turning a functor into its dual is contravariantly functorial.
+instance (Category c1, Category c2) => Functor (Opp c1 c2) where
+  type Dom (Opp c1 c2) = Op (Nat c1 c2)
+  type Cod (Opp c1 c2) = Nat (Op c1) (Op c2)
+  type Opp c1 c2 :% f = Opposite f
+  Opp % Op (Nat g f n) = Nat (Opposite f) (Opposite g) (\(Op z) -> Op (n z))

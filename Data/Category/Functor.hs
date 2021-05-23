@@ -222,16 +222,9 @@ instance Category k => Functor (DiagProd k) where
 
 
 type Tuple1 c1 c2 a = (Const c2 c1 a :***: Id c2) :.: DiagProd c2
-
 -- | 'Tuple1' tuples with a fixed object on the left.
 pattern Tuple1 :: (Category c1, Category c2) => Obj c1 a -> Tuple1 c1 c2 a
 pattern Tuple1 a = (Const a :***: Id) :.: DiagProd
-
--- type Tuple2 c1 c2 a = (Id c1 :***: Const c1 c2 a) :.: DiagProd c1
---
--- -- | 'Tuple2' tuples with a fixed object on the right.
--- tuple2 :: (Category c1, Category c2) => Obj c2 a -> Tuple2 c1 c2 a
--- tuple2 a = (Id :***: Const a) :.: DiagProd
 
 type Swap (c1 :: Type -> Type -> Type) (c2 :: Type -> Type -> Type) = (Proj2 c1 c2 :***: Proj1 c1 c2) :.: DiagProd (c1 :**: c2)
 -- | 'swap' swaps the 2 categories of the product of categories.

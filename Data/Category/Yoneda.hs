@@ -17,13 +17,10 @@ import Data.Category.Functor
 import Data.Category.NaturalTransformation
 import Data.Category.Adjunction
 
-type YonedaEmbedding k =
-  Postcompose (Hom k) (Op k) :.:
-  (Postcompose (Swap k (Op k)) (Op k) :.: Tuple k (Op k))
-
+type YonedaEmbedding k = Curry2 (Op k) k (Hom k)
 -- | The Yoneda embedding functor, @C -> Set^(C^op)@.
 pattern YonedaEmbedding :: Category k => YonedaEmbedding k
-pattern YonedaEmbedding = Postcompose Hom :.: (Postcompose Swap :.: Tuple)
+pattern YonedaEmbedding = Curry2 Hom
 
 
 data Yoneda (k :: Type -> Type -> Type) f = Yoneda
@@ -42,8 +39,9 @@ fromYoneda f = Nat Yoneda f (\(Op a) n -> (n ! Op a) a)
 toYoneda   :: (Category k, Functor f, Dom f ~ Op k, Cod f ~ (->)) => f -> Nat (Op k) (->) f (Yoneda k f)
 toYoneda   f = Nat f Yoneda (\(Op a) fa -> Nat (Hom_X a) f (\_ h -> (f % Op h) fa))
 
+
 haskUnit :: Obj (->) ()
-haskUnit () = ()
+haskUnit = obj
 
 data M1 = M1
 instance Functor M1 where
