@@ -34,7 +34,6 @@ module Data.Category.Functor (
   , Id(..)
   , (:.:)(..)
   , Const(..), ConstF
-  , Opposite(..)
   , OpOp(..)
   , OpOpInv(..)
   , Any(..)
@@ -52,9 +51,6 @@ module Data.Category.Functor (
   , Hom(..)
   , (:*-:), pattern HomX_
   , (:-*:), pattern Hom_X
-  , HomF, pattern HomF
-  , Star, pattern Star
-  , Costar, pattern Costar
 
 ) where
 
@@ -138,17 +134,6 @@ instance (Category c1, Category c2) => Functor (Const c1 c2 x) where
 -- | The constant functor with the same domain and codomain as f.
 type ConstF f = Const (Dom f) (Cod f)
 
-
-data Opposite f where
-  Opposite :: Functor f => f -> Opposite f
-
--- | The dual of a functor
-instance (Category (Dom f), Category (Cod f)) => Functor (Opposite f) where
-  type Dom (Opposite f) = Op (Dom f)
-  type Cod (Opposite f) = Op (Cod f)
-  type Opposite f :% a = f :% a
-
-  Opposite f % Op a = Op (f % a)
 
 
 data OpOp (k :: Type -> Type -> Type) = OpOp
@@ -258,16 +243,3 @@ type k :-*: x = Hom k :.: Tuple2 (Op k) k x
 -- | The contravariant functor Hom(--,X)
 pattern Hom_X :: Category k => Obj k x -> k :-*: x
 pattern Hom_X x = Hom :.: Tuple2 x
-
-
-type HomF f g = Hom (Cod f) :.: (Opposite f :***: g)
-pattern HomF :: (Functor f, Functor g, Cod f ~ Cod g) => f -> g -> HomF f g
-pattern HomF f g = Hom :.: (Opposite f :***: g)
-
-type Star f = HomF (Id (Cod f)) f
-pattern Star :: Functor f => f -> Star f
-pattern Star f = HomF Id f
-
-type Costar f = HomF f (Id (Cod f))
-pattern Costar :: Functor f => f -> Costar f
-pattern Costar f = HomF f Id

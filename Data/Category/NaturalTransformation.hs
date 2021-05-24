@@ -47,7 +47,10 @@ module Data.Category.NaturalTransformation (
   , Wrap(..)
   , Apply(..)
   , Tuple(..)
-  , Opp(..)
+  , Opp(..), Opposite, pattern Opposite
+  , HomF, pattern HomF
+  , Star, pattern Star
+  , Costar, pattern Costar
 
 ) where
 
@@ -219,7 +222,25 @@ instance (Category c1, Category c2) => Functor (Tuple c1 c2) where
 data Opp (c1 :: Type -> Type -> Type) (c2 :: Type -> Type -> Type) = Opp
 -- | Turning a functor into its dual is contravariantly functorial.
 instance (Category c1, Category c2) => Functor (Opp c1 c2) where
-  type Dom (Opp c1 c2) = Op (Nat c1 c2)
-  type Cod (Opp c1 c2) = Nat (Op c1) (Op c2)
-  type Opp c1 c2 :% f = Opposite f
-  Opp % Op (Nat g f n) = Nat (Opposite f) (Opposite g) (\(Op z) -> Op (n z))
+  type Dom (Opp c1 c2) = Op (Nat c1 c2) :**: Op c1
+  type Cod (Opp c1 c2) = Op c2
+  type Opp c1 c2 :% (f, a) = f :% a
+  Opp % (Op n :**: Op f) = Op (n ! f)
+
+type Opposite f = Opp (Dom f) (Cod f) :.: Tuple1 (Op (Nat (Dom f) (Cod f))) (Op (Dom f)) f
+-- | The dual of a functor
+pattern Opposite :: Functor f => f -> Opposite f
+pattern Opposite f = Opp :.: Tuple1 (Op (NatId f))
+
+
+type HomF f g = Hom (Cod f) :.: (Opposite f :***: g)
+pattern HomF :: (Functor f, Functor g, Cod f ~ Cod g) => f -> g -> HomF f g
+pattern HomF f g = Hom :.: (Opposite f :***: g)
+
+type Star f = HomF (Id (Cod f)) f
+pattern Star :: Functor f => f -> Star f
+pattern Star f = HomF Id f
+
+type Costar f = HomF f (Id (Cod f))
+pattern Costar :: Functor f => f -> Costar f
+pattern Costar f = HomF f Id
