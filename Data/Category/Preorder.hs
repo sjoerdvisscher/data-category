@@ -8,7 +8,9 @@ import Data.Category.Limit
 import Data.Category.CartesianClosed
 import Data.Category.Functor
 import Data.Category.Adjunction
-import Data.Category.Enriched hiding (HasEnds(..))
+import Data.Category.Enriched
+import Data.Category.Enriched.Functor
+import Data.Category.Enriched.Limit hiding (HasEnds(..))
 
 data Preorder a x y where
   (:<=:) :: a -> a -> Preorder a x y

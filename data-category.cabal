@@ -42,7 +42,6 @@ Library
     Data.Category.KanExtension,
     Data.Category.Monoidal,
     Data.Category.CartesianClosed,
-    Data.Category.Enriched,
     Data.Category.Yoneda,
     Data.Category.Boolean,
     Data.Category.Fin,
@@ -53,7 +52,12 @@ Library
     Data.Category.Simplex,
     Data.Category.Cube,
     Data.Category.Comma,
-    Data.Category.Preorder
+    Data.Category.Preorder,
+    Data.Category.Enriched,
+    Data.Category.Enriched.Functor,
+    Data.Category.Enriched.Limit,
+    Data.Category.Enriched.Yoneda,
+    Data.Category.Enriched.Poset3
   build-depends:
     base >=4.15 && <5,
     ghc-prim
