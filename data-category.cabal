@@ -38,6 +38,7 @@ Library
     Data.Category.RepresentableFunctor,
     Data.Category.Adjunction,
     Data.Category.Limit,
+    Data.Category.WeightedLimit,
     Data.Category.KanExtension,
     Data.Category.Monoidal,
     Data.Category.CartesianClosed,

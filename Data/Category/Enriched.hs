@@ -5,10 +5,12 @@
   , RankNTypes
   , PatternSynonyms
   , FlexibleContexts
+  , FlexibleInstances
   , NoImplicitPrelude
   , UndecidableInstances
   , ScopedTypeVariables
   , ConstraintKinds
+  , MultiParamTypeClasses
   #-}
 -----------------------------------------------------------------------------
 -- |
@@ -26,10 +28,10 @@ import Data.Kind (Type)
 import Data.Category (Category(..), Obj, Op(..))
 import Data.Category.Product
 import Data.Category.Functor (Functor(..), Hom(..))
-import Data.Category.Limit hiding (HasLimits)
+import Data.Category.Limit (HasBinaryProducts(..), HasTerminalObject(..))
 import Data.Category.CartesianClosed
 import Data.Category.Boolean
-
+import qualified Data.Category.WeightedLimit as Hask
 
 -- | An enriched category
 class CartesianClosed (V k) => ECategory (k :: Type -> Type -> Type) where
@@ -116,7 +118,7 @@ instance Category k => ECategory (InHask k) where
   type V (InHask k) = (->)
   type InHask k $ (a, b) = k a b
   hom (InHask a) (InHask b) = Hom % (Op a :**: b)
-  id (InHask f) () = f -- meh
+  id (InHask f) () = f
   comp _ _ _ (f, g) = f . g
 
 
@@ -205,6 +207,30 @@ instance EFunctor f => Functor (UnderlyingF f) where
   type UnderlyingF f :% a = f :%% a
   UnderlyingF f % Underlying a ab b = Underlying (f %% a) (map f a b . ab) (f %% b)
 
+newtype InHaskF f = InHaskF f
+-- | A regular functor is a functor enriched in Hask.
+instance Functor f => EFunctor (InHaskF f) where
+  type EDom (InHaskF f) = InHask (Dom f)
+  type ECod (InHaskF f) = InHask (Cod f)
+  type InHaskF f :%% a = f :% a
+  InHaskF f %% InHask a = InHask (f % a)
+  map (InHaskF f) _ _ = \g -> f % g
+
+newtype InHaskToHask f = InHaskToHask f
+instance (Functor f, Cod f ~ (->)) => EFunctor (InHaskToHask f) where
+  type EDom (InHaskToHask f) = InHask (Dom f)
+  type ECod (InHaskToHask f) = Self (->)
+  type InHaskToHask f :%% a = f :% a
+  InHaskToHask f %% InHask a = Self (f % a)
+  map (InHaskToHask f) _ _ = \g -> f % g
+
+newtype UnderlyingHask (c :: Type -> Type -> Type) (d :: Type -> Type -> Type) f = UnderlyingHask f
+-- | The underlying functor of an enriched functor @f@ enriched in Hask.
+instance (EFunctor f, EDom f ~ InHask c, ECod f ~ InHask d, Category c, Category d) => Functor (UnderlyingHask c d f) where
+  type Dom (UnderlyingHask c d f) = c
+  type Cod (UnderlyingHask c d f) = d
+  type UnderlyingHask c d f :% a = f :%% a
+  UnderlyingHask f % g = map f (InHask (src g)) (InHask (tgt g)) g
 
 data EHom (k :: Type -> Type -> Type) = EHom
 instance ECategory k => EFunctor (EHom k) where
@@ -301,28 +327,35 @@ instance (HasEnds (V k), ECategory k) => EFunctor (EndFunctor k) where
 type family WeigtedLimit (k :: Type -> Type -> Type) w d :: Type
 type Lim w d = WeigtedLimit (ECod d) w d
 
-class HasEnds (V k) => HasLimits k where
-  limitObj :: (EFunctorOf j k d, EFunctorOf j (Self (V k)) w) => w -> d -> Obj k (Lim w d)
-  limit    :: (EFunctorOf j k d, EFunctorOf j (Self (V k)) w) => w -> d -> Obj k e -> V k (End (V k) (w :->>: (EHomX_ k e :.: d))) (k $ (e, Lim w d))
-  limitInv :: (EFunctorOf j k d, EFunctorOf j (Self (V k)) w) => w -> d -> Obj k e -> V k (k $ (e, Lim w d)) (End (V k) (w :->>: (EHomX_ k e :.: d)))
+class (HasEnds (V k), EFunctor w, ECod w ~ Self (V k)) => HasLimits k w where
+  limitObj :: EFunctorOf (EDom w) k d => w -> d -> Obj k (Lim w d)
+  limit    :: EFunctorOf (EDom w) k d => w -> d -> Obj k e -> V k (k $ (e, Lim w d)) (End (V k) (w :->>: (EHomX_ k e :.: d)))
+  limitInv :: EFunctorOf (EDom w) k d => w -> d -> Obj k e -> V k (End (V k) (w :->>: (EHomX_ k e :.: d))) (k $ (e, Lim w d))
 
 -- d :: j -> k, w :: EOp j -> Self (V k)
 type family WeigtedColimit (k :: Type -> Type -> Type) w d :: Type
 type Colim w d = WeigtedColimit (ECod d) w d
 
-class HasEnds (V k) => HasColimits k where
-  colimitObj :: (EFunctorOf j k d, EFunctorOf (EOp j) (Self (V k)) w) => w -> d -> Obj k (Colim w d)
-  colimit    :: (EFunctorOf j k d, EFunctorOf (EOp j) (Self (V k)) w) => w -> d -> Obj k e -> V k (End (V k) (w :->>: (EHom_X k e :.: Opposite d))) (k $ (Colim w d, e))
-  colimitInv :: (EFunctorOf j k d, EFunctorOf (EOp j) (Self (V k)) w) => w -> d -> Obj k e -> V k (k $ (Colim w d, e)) (End (V k) (w :->>: (EHom_X k e :.: Opposite d)))
+class (HasEnds (V k), EFunctor w, ECod w ~ Self (V k)) => HasColimits k w where
+  colimitObj :: (EFunctorOf j k d, EOp j ~ EDom w) => w -> d -> Obj k (Colim w d)
+  colimit    :: (EFunctorOf j k d, EOp j ~ EDom w) => w -> d -> Obj k e -> V k (k $ (Colim w d, e)) (End (V k) (w :->>: (EHom_X k e :.: Opposite d)))
+  colimitInv :: (EFunctorOf j k d, EOp j ~ EDom w) => w -> d -> Obj k e -> V k (End (V k) (w :->>: (EHom_X k e :.: Opposite d))) (k $ (Colim w d, e))
 
 
 type instance WeigtedLimit (Self v) w d = End v (w :->>: d)
-instance HasEnds v => HasLimits (Self v) where
+instance (HasEnds v, EFunctor w, ECod w ~ Self v) => HasLimits (Self v) w where
   limitObj w d = Self (end (w ->> d))
-  limit w d (Self e) = let wed = w ->> (EHomX_ (Self e) :.: d) in curry (end wed) e (end (w ->> d))
-    (endFactorizer (w ->> d) (\a -> let { Self wa = w %% a; Self da = d %% a } in apply e (da ^^^ wa) . (flip wa e da . endCounit wed a *** e)))
-  limitInv w d (Self e) = let wed = w ->> (EHomX_ (Self e) :.: d) in endFactorizer wed
+  limit    w d (Self e) = let wed = w ->> (EHomX_ (Self e) :.: d) in endFactorizer wed
     (\a -> let { Self wa = w %% a; Self da = d %% a } in flip e wa da . (endCounit (w ->> d) a ^^^ e))
+  limitInv w d (Self e) = let wed = w ->> (EHomX_ (Self e) :.: d) in curry (end wed) e (end (w ->> d))
+    (endFactorizer (w ->> d) (\a -> let { Self wa = w %% a; Self da = d %% a } in apply e (da ^^^ wa) . (flip wa e da . endCounit wed a *** e)))
+
+type instance WeigtedLimit (InHask k) (InHaskToHask w) d = Hask.WeightedLimit k w (UnderlyingHask (Dom w) k d)
+instance Hask.HasWLimits k w => HasLimits (InHask k) (InHaskToHask w) where
+  limitObj (InHaskToHask w) d = InHask (Hask.limitObj w (UnderlyingHask d))
+  limit    (InHaskToHask w) d _ el = HaskEnd (\_ (InHask a) wa -> Hask.limit w (UnderlyingHask d) a wa . el)
+  limitInv (InHaskToHask w) d (InHask e) (HaskEnd n) =
+    Hask.limitFactorizer w (UnderlyingHask d) e (n (InHaskToHask w ->> (EHomX_ (InHask e) :.: d)) . InHask)
 
 
 
