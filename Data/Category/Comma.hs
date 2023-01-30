@@ -15,6 +15,7 @@ module Data.Category.Comma where
 import Data.Kind (Type)
 
 import Data.Category
+import Data.Category.Adjunction
 import Data.Category.Functor
 import Data.Category.Limit
 import Data.Category.RepresentableFunctor
@@ -50,8 +51,6 @@ type (f `ObjectsFOver`  a) = f :/\: ConstF f a
 type (c `ObjectsUnder` a) = Id c `ObjectsFUnder` a
 type (c `ObjectsOver`  a) = Id c `ObjectsFOver`  a
 
-type Arrows c = Id c :/\: Id c
-
 
 initialUniversalComma :: forall u x c a a_
                        . (Functor u, c ~ (u `ObjectsFUnder` x), HasInitialObject c, (a_, a) ~ InitialObject c)
@@ -78,3 +77,39 @@ terminalUniversalComma u = case terminalObject :: Obj c (a, a_) of
           where
             term :: Obj c (y, y) -> c (y, y) (a, a_)
             term = terminate
+
+
+type Arrows k = Id k :/\: Id k
+
+data IdArrow (k :: Type -> Type -> Type) = IdArrow
+instance Category k => Functor (IdArrow k) where
+  type Dom (IdArrow k) = k
+  type Cod (IdArrow k) = Arrows k
+  type IdArrow k :% a = (a, a)
+  IdArrow % f = CommaA
+    (CommaO (src f) (src f) (src f))
+    f
+    f
+    (CommaO (tgt f) (tgt f) (tgt f))
+
+data Src (k :: Type -> Type -> Type) = Src
+instance Category k => Functor (Src k) where
+  type Dom (Src k) = Arrows k
+  type Cod (Src k) = k
+  type Src k :% (a, b) = a
+  Src % (CommaA _ aa' _ _) = aa'
+
+data Tgt (k :: Type -> Type -> Type) = Tgt
+instance Category k => Functor (Tgt k) where
+  type Dom (Tgt k) = Arrows k
+  type Cod (Tgt k) = k
+  type Tgt k :% (a, b) = b
+  Tgt % (CommaA _ _ bb' _) = bb'
+
+-- | Taking the target of an arrow is left adjoint to taking the identity of an object
+tgtIdAdj :: Category k => Adjunction k (Arrows k) (Tgt k) (IdArrow k)
+tgtIdAdj = mkAdjunctionUnits Tgt IdArrow (\(CommaA o@(CommaO _ ab b) _ _ _) -> CommaA o ab b (CommaO b b b)) (\o -> o)
+
+-- | Taking the source of an arrow is right adjoint to taking the identity of an object
+idSrcAdj :: Category k => Adjunction (Arrows k) k (IdArrow k) (Src k)
+idSrcAdj = mkAdjunctionUnits IdArrow Src (\o -> o) (\(CommaA o@(CommaO a ab _) _ _ _) -> CommaA (CommaO a a a) a ab o)
