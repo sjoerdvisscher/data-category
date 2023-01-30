@@ -36,7 +36,7 @@ import Data.Category.Enriched.Limit
 yoneda    :: forall f k x. (HasEnds (V k), EFunctorOf k (Self (V k)) f) => f -> Obj k x -> V k (End (V k) (EHomX_ k x :->>: f)) (f :%% x)
 yoneda f x = apply (hom x x) (getSelf (f %% x)) . (endCounit (EHomX_ x ->> f) x &&& id x . terminate (end (EHomX_ x ->> f)))
 
-yonedaInv :: forall f k x. (HasEnds (V k), EFunctorOf k (Self (V k)) f) => f -> Obj k x -> V k (f :%% x) (End (V k) (EHomX_ k x :->>: f))
+yonedaInv :: forall f k x. (HasEnds (V k), EFunctor f, EDom f ~ k, ECod f ~ Self (V k)) => f -> Obj k x -> V k (f :%% x) (End (V k) (EHomX_ k x :->>: f))
 yonedaInv f x = endFactorizer (EHomX_ x ->> f) h
   where
     h :: Obj k a -> V k (f :%% x) (Exponential (V k) (k $ (x, a)) (f :%% a))
