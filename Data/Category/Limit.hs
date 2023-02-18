@@ -263,6 +263,16 @@ instance HasTerminalObject (->) where
 
   terminate _ _ = ()
 
+data Top where
+  Top :: a %1 -> Top
+-- | The terminal object in the category of linear types is `Top`.
+instance HasTerminalObject (FUN 'One) where
+  type TerminalObject (FUN 'One) = Top
+
+  terminalObject = obj
+
+  terminate _ = Top
+
 -- | @Unit@ is the terminal category.
 instance HasTerminalObject Cat where
   type TerminalObject Cat = Unit
