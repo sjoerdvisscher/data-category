@@ -1,5 +1,5 @@
 {-# LANGUAGE TypeFamilies, GADTs, PolyKinds, DataKinds, FlexibleInstances, FlexibleContexts, UndecidableInstances, NoImplicitPrelude #-}
-{-# LANGUAGE EmptyCase, TypeApplications, ScopedTypeVariables #-}
+{-# LANGUAGE EmptyCase, TypeApplications, ScopedTypeVariables, TypeOperators #-}
 module Data.Category.Fin where
 
 import Data.Category

@@ -57,7 +57,7 @@ type t :->>: s = EHom (ECod t) :.: (Opposite t :<*>: s)
 (->>) :: (EFunctor t, EFunctor s, ECod t ~ ECod s, V (ECod t) ~ V (ECod s)) => t -> s -> t :->>: s
 t ->> s = EHom :.: (Opposite t :<*>: s)
 -- | The enriched functor category @[a, b]@
-instance (HasEnds (V a), V a ~ V b) => ECategory (FunCat a b) where
+instance (HasEnds (V a), CartesianClosed (V a), V a ~ V b) => ECategory (FunCat a b) where
   type V (FunCat a b) = V a
   type FunCat a b $ (t, s) = End (V a) (t :->>: s)
   hom (FArr t _) (FArr s _) = end (t ->> s)
