@@ -16,6 +16,7 @@ module Data.Category.NaturalTransformation (
   , (!)
   , o
   , natId
+  , pattern NatId
   , srcF
   , tgtF
 
@@ -51,6 +52,8 @@ module Data.Category.NaturalTransformation (
   , HomF, pattern HomF
   , Star, pattern Star
   , Costar, pattern Costar
+  , (:*%:), pattern HomXF
+  , (:%*:), pattern HomFX
 
 ) where
 
@@ -90,9 +93,10 @@ njk@(Nat j k _) `o` nfg@(Nat f g _) = Nat (j :.: f) (k :.: g) ((njk !) . (nfg !)
 natId :: Functor f => f -> Nat (Dom f) (Cod f) f f
 natId f = Nat f f (f %)
 
-pattern NatId :: Functor f => f -> Nat (Dom f) (Cod f) f f
+pattern NatId :: () => (Functor f, c ~ Dom f, d ~ Cod f) => f -> Nat c d f f
 pattern NatId f <- Nat f _ _ where
   NatId f = Nat f f (f %)
+{-# COMPLETE NatId #-}
 
 srcF :: Nat c d f g -> f
 srcF (Nat f _ _) = f
@@ -175,7 +179,7 @@ pattern Precompose f = FunctorCompose :.: Tuple2 (NatId f)
 -- | @Postcompose f c@ is the functor such that @Postcompose f c :% g = f :.: g@,
 --   for functors @g@ that compose with @f@ and with domain @c@.
 type Postcompose f c = FunctorCompose c (Dom f) (Cod f) :.: Tuple1 (Nat (Dom f) (Cod f)) (Nat c (Dom f)) f
-pattern Postcompose :: (Category e, Functor f) => f -> Postcompose f e
+pattern Postcompose :: (Category c, Functor f) => f -> Postcompose f c
 pattern Postcompose f = FunctorCompose :.: Tuple1 (NatId f)
 
 
@@ -231,16 +235,32 @@ type Opposite f = Opp (Dom f) (Cod f) :.: Tuple1 (Op (Nat (Dom f) (Cod f))) (Op 
 -- | The dual of a functor
 pattern Opposite :: Functor f => f -> Opposite f
 pattern Opposite f = Opp :.: Tuple1 (Op (NatId f))
+{-# COMPLETE Opposite #-}
 
 
 type HomF f g = Hom (Cod f) :.: (Opposite f :***: g)
 pattern HomF :: (Functor f, Functor g, Cod f ~ Cod g) => f -> g -> HomF f g
 pattern HomF f g = Hom :.: (Opposite f :***: g)
+{-# COMPLETE HomF #-}
 
 type Star f = HomF (Id (Cod f)) f
 pattern Star :: Functor f => f -> Star f
 pattern Star f = HomF Id f
+{-# COMPLETE Star #-}
 
 type Costar f = HomF f (Id (Cod f))
 pattern Costar :: Functor f => f -> Costar f
 pattern Costar f = HomF f Id
+{-# COMPLETE Costar #-}
+
+type x :*%: f = (x :*-: Cod f) :.: f
+-- | The covariant functor Hom(X,F-)
+pattern HomXF :: Functor f => Obj (Cod f) x -> f -> x :*%: f
+pattern HomXF x f = HomX_ x :.: f
+{-# COMPLETE HomXF #-}
+
+type f :%*: x = (Cod f :-*: x) :.: Opposite f
+-- | The contravariant functor Hom(F-,X)
+pattern HomFX :: Functor f => f -> Obj (Cod f) x -> f :%*: x
+pattern HomFX f x = Hom_X x :.: Opposite f
+{-# COMPLETE HomFX #-}

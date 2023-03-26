@@ -98,13 +98,13 @@ instance (Category c1, Category c2) => Functor (Cotuple2 c1 c2 a2) where
   Cotuple2 _ % I2 f = f
 
 
-data Cograph f :: Type -> Type -> Type where
-  I1A :: Dom f ~ (Op c :**: d) => c a1 b1 -> Cograph f (I1 a1) (I1 b1)
-  I2A :: Dom f ~ (Op c :**: d) => d a2 b2 -> Cograph f (I2 a2) (I2 b2)
-  I12 :: Dom f ~ (Op c :**: d) => Obj c a -> Obj d b -> f -> f :% (a, b) -> Cograph f (I1 a) (I2 b)
+data Cograph c d f :: Type -> Type -> Type where
+  I1A :: c a1 b1 -> Cograph c d f (I1 a1) (I1 b1)
+  I2A :: d a2 b2 -> Cograph c d f (I2 a2) (I2 b2)
+  I12 :: Obj c a -> Obj d b -> f -> f :% (a, b) -> Cograph c d f (I1 a) (I2 b)
 
 -- | The cograph of the profunctor @f@.
-instance (Functor f, Dom f ~ (Op c :**: d), Cod f ~ (->), Category c, Category d) => Category (Cograph f) where
+instance ProfunctorOf c d f => Category (Cograph c d f) where
 
   src (I1A a)       = I1A (src a)
   src (I2A a)       = I2A (src a)
@@ -119,7 +119,7 @@ instance (Functor f, Dom f ~ (Op c :**: d), Cod f ~ (->), Category c, Category d
   (I2A a) . (I2A b) = I2A (a . b)
 
 -- | The directed coproduct category of categories @c1@ and @c2@.
-newtype (c1 :>>: c2) a b = DC (Cograph (Const (Op c1 :**: c2) (->) ()) a b) deriving Category
+newtype (c1 :>>: c2) a b = DC (Cograph c1 c2 (Const (Op c1 :**: c2) (->) ()) a b) deriving Category
 
 
 newtype NatAsFunctor f g = NatAsFunctor (Nat (Dom f) (Cod f) f g)
@@ -127,7 +127,7 @@ newtype NatAsFunctor f g = NatAsFunctor (Nat (Dom f) (Cod f) f g)
 -- | A natural transformation @Nat c d@ is isomorphic to a functor from @c :**: 2@ to @d@.
 instance (Functor f, Functor g, Dom f ~ Dom g, Cod f ~ Cod g) => Functor (NatAsFunctor f g) where
 
-  type Dom (NatAsFunctor f g) = Dom f :**: Cograph (Hom Unit)
+  type Dom (NatAsFunctor f g) = Dom f :**: Cograph Unit Unit (Hom Unit)
   type Cod (NatAsFunctor f g) = Cod f
   type NatAsFunctor f g :% (a, I1 ()) = f :% a
   type NatAsFunctor f g :% (a, I2 ()) = g :% a

@@ -52,6 +52,9 @@ module Data.Category.Functor (
   , (:*-:), pattern HomX_
   , (:-*:), pattern Hom_X
 
+  -- *** Profunctors
+  , ProfunctorOf
+
 ) where
 
 import Data.Kind (Type)
@@ -243,3 +246,6 @@ type k :-*: x = Hom k :.: Tuple2 (Op k) k x
 -- | The contravariant functor Hom(--,X)
 pattern Hom_X :: Category k => Obj k x -> k :-*: x
 pattern Hom_X x = Hom :.: Tuple2 x
+
+
+type ProfunctorOf c d t = (FunctorOf (Op c :**: d) (->) t, Category c, Category d)

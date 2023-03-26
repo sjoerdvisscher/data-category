@@ -42,7 +42,7 @@ contravariantHomRepr x = Representable
   , universalElement   = x
   }
 
-type InitialUniversal x u a = Representable ((x :*-: Cod u) :.: u) a
+type InitialUniversal x u a = Representable (x :*%: u) a
 -- | An initial universal property, a universal morphism from x to u.
 initialUniversal :: Functor u
                  => u
@@ -51,13 +51,13 @@ initialUniversal :: Functor u
                  -> (forall y. Obj (Dom u) y -> Cod u x (u :% y) -> Dom u a y)
                  -> InitialUniversal x u a
 initialUniversal u ob mor factorizer = Representable
-  { representedFunctor = HomX_ (src mor) :.: u
+  { representedFunctor = HomXF (src mor) u
   , representingObject = ob
   , represent          = factorizer
   , universalElement   = mor
   }
 
-type TerminalUniversal x u a = Representable ((Cod u :-*: x) :.: Opposite u) a
+type TerminalUniversal x u a = Representable (u :%*: x) a
 -- | A terminal universal property, a universal morphism from u to x.
 terminalUniversal :: Functor u
                   => u
@@ -66,7 +66,7 @@ terminalUniversal :: Functor u
                   -> (forall y. Obj (Dom u) y -> Cod u (u :% y) x -> Dom u y a)
                   -> TerminalUniversal x u a
 terminalUniversal u ob mor factorizer = Representable
-  { representedFunctor = Hom_X (tgt mor) :.: Opposite u
+  { representedFunctor = HomFX u (tgt mor)
   , representingObject = Op ob
   , represent          = \(Op y) f -> Op (factorizer y f)
   , universalElement   = mor
