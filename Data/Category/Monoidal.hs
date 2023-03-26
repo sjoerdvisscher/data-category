@@ -29,6 +29,7 @@ import Data.Category.NaturalTransformation
 import Data.Category.Adjunction
 import Data.Category.Limit
 import Data.Category.Product
+import Data.Category.KanExtension
 
 import GHC.Exts (FUN)
 import GHC.Types (Multiplicity(One))
@@ -123,6 +124,36 @@ instance TensorProduct LinearTensor where
 
 instance SymmetricTensorProduct LinearTensor where
   swap _ _ _ = \(a, b) -> (b, a)
+
+
+-- | Day convolution
+data Day t = Day t
+instance TensorProduct t => Functor (Day t) where
+  type Dom (Day t) = Nat (Cod t) (->) :**: Nat (Cod t) (->)
+  type Cod (Day t) = Nat (Cod t) (->)
+  type Day t :% (f, g) = LanHaskF t (ProductFunctor (->) :.: (f :***: g))
+  Day _ % (nf :**: ng) =
+    Nat LanHaskF LanHaskF (\_ (LanHask x@(x1 :**: x2) tx fgx) -> LanHask x tx ((nf ! x1 *** ng ! x2) fgx))
+
+instance TensorProduct t => TensorProduct (Day t) where
+  type Unit (Day t) = Curry1 (Op (Cod t)) (Cod t) (Hom (Cod t)) :% Unit t
+  unitObject (Day t) = Curry1 Hom % Op (unitObject t)
+  leftUnitor (Day t) (NatId a) =
+    Nat LanHaskF a (\_ (LanHask (_ :**: c2) tcz (uc1, ac2)) -> (a % (tcz . t % (uc1 :**: c2) . leftUnitorInv t c2)) ac2)
+  leftUnitorInv (Day t) (NatId a) =
+    Nat a LanHaskF (\z az -> LanHask (unitObject t :**: z) (leftUnitor t z) (unitObject t, az))
+  rightUnitor (Day t) (NatId a) =
+    Nat LanHaskF a (\_ (LanHask (c1 :**: _) tcz (ac1, uc2)) -> (a % (tcz . t % (c1 :**: uc2) . rightUnitorInv t c1)) ac1)
+  rightUnitorInv (Day t) (NatId a) =
+    Nat a LanHaskF (\z az -> LanHask (z :**: unitObject t) (rightUnitor t z) (az, unitObject t))
+  associator (Day t) _ _ _ =
+    Nat LanHaskF LanHaskF (\_ (LanHask (_e :**: d) eda (LanHask (b :**: c) bce (fb, gc), hd)) ->
+      let cd = c :**: d; tcd = t % cd
+      in LanHask (b :**: tcd) (eda . t % (bce :**: d) . associatorInv t b c d) (fb, LanHask cd tcd (gc, hd)))
+  associatorInv (Day t) _ _ _ =
+    Nat LanHaskF LanHaskF (\_ (LanHask (b :**: _c) bca (fb, LanHask (d :**: e) dec (gd, he))) ->
+      let bd = b :**: d; tbd = t % bd
+      in LanHask (tbd :**: e) (bca . t % (b :**: dec) . associator t b d e) (LanHask bd tbd (fb, gd), he))
 
 
 -- | @MonoidObject f a@ defines a monoid @a@ in a monoidal category with tensor product @f@.
