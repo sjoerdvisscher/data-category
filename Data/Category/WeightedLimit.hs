@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeOperators, RankNTypes, GADTs, TypeFamilies, MultiParamTypeClasses, FlexibleInstances, UndecidableInstances, NoImplicitPrelude #-}
+{-# LANGUAGE TypeOperators, RankNTypes, GADTs, TypeFamilies, MultiParamTypeClasses, FlexibleInstances, UndecidableInstances, NoImplicitPrelude, FlexibleContexts #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category.WeightedLimit
@@ -19,21 +19,32 @@ import Data.Category.NaturalTransformation
 import qualified Data.Category.Limit as L
 
 
+type WeightedCone w d e = forall a. Obj (Dom w) a -> w :% a -> Cod d e (d :% a)
+
 -- | @w@-weighted limits in the category @k@.
 class (Functor w, Cod w ~ (->), Category k) => HasWLimits k w where
   type WeightedLimit k w d :: Type
   limitObj :: FunctorOf (Dom w) k d => w -> d -> Obj k (WLimit w d)
-  limit :: FunctorOf (Dom w) k d => w -> d -> Obj (Dom w) a -> w :% a -> k (WLimit w d) (d :% a)
-  limitFactorizer :: FunctorOf (Dom w) k d => w -> d -> Obj k e -> (forall a. Obj (Dom w) a -> w :% a -> k e (d :% a)) -> k e (WLimit w d)
+  limit :: FunctorOf (Dom w) k d => w -> d -> WeightedCone w d (WLimit w d)
+  limitFactorizer :: FunctorOf (Dom w) k d => w -> d -> Obj k e -> WeightedCone w d e -> k e (WLimit w d)
 
 type WLimit w d = WeightedLimit (Cod d) w d
+
+data LimitFunctor (k :: Type -> Type -> Type) w = LimitFunctor w
+instance HasWLimits k w => Functor (LimitFunctor k w) where
+  type Dom (LimitFunctor k w) = Nat (Dom w) k
+  type Cod (LimitFunctor k w) = k
+  type LimitFunctor k w :% d = WeightedLimit k w d
+
+  LimitFunctor w % Nat d d' n = limitFactorizer w d' (limitObj w d) (\a wa -> n a . limit w d a wa)
+
 
 -- | Regular limits as weigthed limits, weighted by the constant functor to '()'.
 instance L.HasLimits j k => HasWLimits k (Const j (->) ()) where
   type WeightedLimit k (Const j (->) ()) d = L.Limit d
-  limitObj (Const _) d = L.coneVertex (L.limit (natId d))
-  limit (Const _) d a () = L.limit (natId d) ! a
-  limitFactorizer (Const _) d e f = L.limitFactorizer (Nat (Const e) d (`f` ()))
+  limitObj Const{} d = L.coneVertex (L.limit (natId d))
+  limit Const{} d a () = L.limit (natId d) ! a
+  limitFactorizer Const{} d e f = L.limitFactorizer (Nat (Const e) d (`f` ()))
 
 
 class Category v => HasEnds v where
@@ -65,14 +76,25 @@ instance HasEnds (->) where
   endFactorizer _ e x = HaskEnd (\_ a -> e a x)
 
 
+type WeightedCocone w d e = forall a. Obj (Dom w) a -> w :% a -> Cod d (d :% a) e
+
 -- | @w@-weighted colimits in the category @k@.
 class (Functor w, Cod w ~ (->), Category k) => HasWColimits k w where
   type WeightedColimit k w d :: Type
   colimitObj :: (FunctorOf j k d, Op j ~ Dom w) => w -> d -> Obj k (WColimit w d)
-  colimit :: (FunctorOf j k d, Op j ~ Dom w) => w -> d -> Obj (Dom w) a -> w :% a -> k (d :% a) (WColimit w d)
-  colimitFactorizer :: (FunctorOf j k d, Op j ~ Dom w) => w -> d -> Obj k e -> (forall a. Obj (Dom w) a -> w :% a -> k (d :% a) e) -> k (WColimit w d) e
+  colimit :: (FunctorOf j k d, Op j ~ Dom w) => w -> d -> WeightedCocone w d (WColimit w d)
+  colimitFactorizer :: (FunctorOf j k d, Op j ~ Dom w) => w -> d -> Obj k e -> WeightedCocone w d e -> k (WColimit w d) e
 
 type WColimit w d = WeightedColimit (Cod d) w d
+
+data ColimitFunctor (k :: Type -> Type -> Type) w = ColimitFunctor w
+instance (Functor w, Category k, HasWColimits k (w :.: OpOp (Dom w))) => Functor (ColimitFunctor k w) where
+  type Dom (ColimitFunctor k w) = Nat (Op (Dom w)) k
+  type Cod (ColimitFunctor k w) = k
+  type ColimitFunctor k w :% d = WeightedColimit k (w :.: OpOp (Dom w)) d
+
+  ColimitFunctor w % Nat d d' n = colimitFactorizer (w :.: OpOp) d (colimitObj (w :.: OpOp) d') (\(Op a) wa -> colimit (w :.: OpOp) d' (Op a) wa . n a)
+
 
 -- | Regular colimits as weigthed colimits, weighted by the constant functor to '()'.
 instance L.HasColimits j k => HasWColimits k (Const (Op j) (->) ()) where
