@@ -1,4 +1,4 @@
-{-# LANGUAGE GeneralizedNewtypeDeriving, TypeFamilies, TypeOperators, UndecidableInstances, GADTs, FlexibleContexts, NoImplicitPrelude #-}
+{-# LANGUAGE RankNTypes, GeneralizedNewtypeDeriving, TypeFamilies, TypeOperators, UndecidableInstances, GADTs, FlexibleContexts, NoImplicitPrelude #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Category.Coproduct
@@ -98,13 +98,13 @@ instance (Category c1, Category c2) => Functor (Cotuple2 c1 c2 a2) where
   Cotuple2 _ % I2 f = f
 
 
-data Cograph c d f :: Type -> Type -> Type where
-  I1A :: c a1 b1 -> Cograph c d f (I1 a1) (I1 b1)
-  I2A :: d a2 b2 -> Cograph c d f (I2 a2) (I2 b2)
-  I12 :: Obj c a -> Obj d b -> f -> f :% (a, b) -> Cograph c d f (I1 a) (I2 b)
+data Cograph c d p :: Type -> Type -> Type where
+  I1A :: c a1 b1 -> Cograph c d p (I1 a1) (I1 b1)
+  I2A :: d a2 b2 -> Cograph c d p (I2 a2) (I2 b2)
+  I12 :: Obj c a -> Obj d b -> p -> p :% (a, b) -> Cograph c d p (I1 a) (I2 b)
 
--- | The cograph of the profunctor @f@.
-instance ProfunctorOf c d f => Category (Cograph c d f) where
+-- | The cograph of the profunctor @p@.
+instance ProfunctorOf c d p => Category (Cograph c d p) where
 
   src (I1A a)       = I1A (src a)
   src (I2A a)       = I2A (src a)
@@ -114,9 +114,37 @@ instance ProfunctorOf c d f => Category (Cograph c d f) where
   tgt (I12 _ b _ _) = I2A b
 
   (I1A a) . (I1A b) = I1A (a . b)
-  (I12 _ b f ab) . (I1A a) = I12 (src a) b f ((f % (Op a :**: b)) ab)
-  (I2A b) . (I12 a _ f ab) = I12 a (tgt b) f ((f % (Op a :**: b)) ab)
+  (I12 _ b p ab) . (I1A a) = I12 (src a) b p ((p % (Op a :**: b)) ab)
+  (I2A b) . (I12 a _ p ab) = I12 a (tgt b) p ((p % (Op a :**: b)) ab)
   (I2A a) . (I2A b) = I2A (a . b)
+
+-- | The cograph is a cotabulator with this 2-cell.
+--
+-- > C-Inj1-CG
+-- > |   v   |
+-- > p---@   |
+-- > |   v   |
+-- > D-Inj2-CG
+isCotabulator :: Obj c a -> Obj d b -> p -> p :% (a, b) -> Cograph c d p (Inj1 c d :% a) (Inj2 c d :% b)
+isCotabulator = I12
+
+-- | Any 2-cell of shape p(a, b) -> e(f a, g b) factors through the cotabulator 2-cell.
+--
+-- > C--f--E    C-Inj1-CG--X--E
+-- > |  v  |    |   v   |  v  |
+-- > p--@  | == p---@   |  |  |
+-- > |  v  |    |   v   |  v  |
+-- > D--g--E    D-Inj2-CG--X--E
+data CotabulatorFactorizer (c :: Type -> Type -> Type) (d :: Type -> Type -> Type) (e :: Type -> Type -> Type) p f g
+  = CotabulatorFactorizer f g (forall a b. Obj c a -> Obj d b -> p :% (a, b) -> e (f :% a) (g :% b))
+instance (ProfunctorOf c d p, FunctorOf c e f, FunctorOf d e g) => Functor (CotabulatorFactorizer c d e p f g) where
+  type Dom (CotabulatorFactorizer c d e p f g) = Cograph c d p
+  type Cod (CotabulatorFactorizer c d e p f g) = e
+  type CotabulatorFactorizer c d e p f g :% I1 a = f :% a
+  type CotabulatorFactorizer c d e p f g :% I2 a = g :% a
+  CotabulatorFactorizer f _ _ % I1A a = f % a
+  CotabulatorFactorizer _ g _ % I2A a = g % a
+  CotabulatorFactorizer _ _ p2fg % I12 a b _ pab = p2fg a b pab
 
 -- | The directed coproduct category of categories @c1@ and @c2@.
 newtype (c1 :>>: c2) a b = DC (Cograph c1 c2 (Const (Op c1 :**: c2) (->) ()) a b) deriving Category
